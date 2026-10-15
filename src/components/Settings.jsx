@@ -77,18 +77,18 @@ function CloudUserManagement({ currentUser }) {
       )}
 
       {/* 邀請表單 */}
-      <form onSubmit={handleInvite} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginTop: '16px' }}>
-        <div className="form-group" style={{ flex: '1 1 200px' }}>
+      <form onSubmit={handleInvite} className="invite-user-form">
+        <div className="form-group invite-input-email">
           <label className="form-label" htmlFor="inviteEmail">電子郵件 <span className="req">*</span></label>
           <input type="email" className="form-input edit-active" placeholder="name@company.com" id="inviteEmail"
             value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} required />
         </div>
-        <div className="form-group" style={{ flex: '1 1 160px' }}>
+        <div className="form-group invite-input-name">
           <label className="form-label" htmlFor="inviteName">顯示名稱</label>
           <input type="text" className="form-input edit-active" placeholder="例：陳小明" id="inviteName"
             value={inviteName} onChange={(e) => setInviteName(e.target.value)} />
         </div>
-        <div className="form-group" style={{ flex: '1 1 200px' }}>
+        <div className="form-group invite-input-role">
           <label className="form-label" htmlFor="inviteRole">單位 / 角色</label>
           <select className="form-input edit-active" value={inviteRoleIdx} id="inviteRole"
             onChange={(e) => setInviteRoleIdx(Number(e.target.value))}>
@@ -97,7 +97,7 @@ function CloudUserManagement({ currentUser }) {
             ))}
           </select>
         </div>
-        <div style={{ paddingBottom: '2px' }}>
+        <div className="invite-form-actions">
           <button type="submit" className="btn btn-primary" disabled={inviting}>
             {inviting ? '發送中…' : '📨 發送邀請'}
           </button>

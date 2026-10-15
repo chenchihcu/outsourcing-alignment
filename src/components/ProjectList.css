@@ -650,26 +650,51 @@
     width: 100%;
   }
 
+  .search-clear-btn {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .tab-filter-btn {
     flex: 1 1 calc(50% - 4px);
-    min-height: 38px;
+    min-height: 44px;
     justify-content: center;
-    padding: 6px 10px;
+    padding: 8px 12px;
     border-radius: var(--r-ios-btn, 12px);
     font-size: 13px;
+    font-weight: 600;
   }
 
   .toolbar-settings {
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
     width: 100%;
     border-top: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08));
-    padding-top: 10px;
+    padding-top: 12px;
   }
 
   .control-group {
     justify-content: space-between;
     width: 100%;
+  }
+
+  .control-group .btn-toggle-group {
+    padding: 3px;
+    border-radius: 8px;
+  }
+
+  .control-group .toggle-btn {
+    min-height: 38px;
+    min-width: 44px;
+    padding: 6px 12px;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
   }
 
   .table-pagination {

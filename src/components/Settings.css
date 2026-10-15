@@ -24,11 +24,13 @@
   grid-template-columns: 1fr 2fr;
   gap: 20px;
   margin-top: 20px;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {
   .settings-grid {
     grid-template-columns: 1fr;
+    min-width: 0;
   }
 }
 
@@ -37,6 +39,7 @@
   border-radius: 12px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .settings-section-card h3 {
@@ -56,10 +59,90 @@
   display: flex;
   gap: 10px;
   margin-bottom: 16px;
+  min-width: 0;
 }
 
 .settings-form-inline .form-input {
   flex: 1;
+  min-width: 0;
+}
+
+/* 邀請雲端使用者表單 */
+.invite-user-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.invite-user-form .form-group {
+  min-width: 0;
+}
+
+.invite-user-form .invite-input-email {
+  flex: 1 1 200px;
+}
+
+.invite-user-form .invite-input-name {
+  flex: 1 1 160px;
+}
+
+.invite-user-form .invite-input-role {
+  flex: 1 1 200px;
+}
+
+.invite-user-form .invite-form-actions {
+  padding-bottom: 2px;
+}
+
+@media (max-width: 640px) {
+  .settings-section-card {
+    padding: 16px;
+    border-radius: var(--r-ios-card, 16px);
+  }
+
+  .settings-form-inline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .settings-form-inline .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .invite-user-form {
+    display: flex;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .invite-user-form .form-group,
+  .invite-user-form .invite-input-email,
+  .invite-user-form .invite-input-name,
+  .invite-user-form .invite-input-role {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .invite-user-form .invite-form-actions {
+    width: 100% !important;
+    padding-bottom: 0;
+  }
+
+  .invite-user-form .btn {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
 }
 
 .factory-list-wrapper {
@@ -69,6 +152,7 @@
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.02);
   border: 1px solid rgba(0, 0, 0, 0.08);
+  min-width: 0;
 }
 
 .settings-list {
@@ -95,10 +179,15 @@
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 1rem;
-  padding: 4px 8px;
-  border-radius: 4px;
+  font-size: 1.15rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
   transition: all 0.2s;
+  padding: 0;
 }
 
 .btn-delete-item:hover {
@@ -110,6 +199,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-width: 0;
 }
 
 .add-account-form {
@@ -132,7 +222,10 @@
 }
 
 .accounts-table-container {
+  width: 100%;
+  max-width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.08);
 }

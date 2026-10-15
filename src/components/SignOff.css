@@ -238,6 +238,25 @@
   background: rgba(239, 68, 68, 0.25) !important;
 }
 
+@media (max-width: 640px) {
+  .signature-btn-row .btn {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 14px;
+    border-radius: var(--r-ios-btn, 12px);
+  }
+
+  .signature-btn-danger-xs {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem !important;
+    border-radius: var(--r-ios-btn, 12px);
+  }
+}
+
 /* ===== 品保退件流程 ===== */
 .reject-banner {
   display: flex;

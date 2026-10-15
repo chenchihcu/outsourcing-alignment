@@ -96,6 +96,16 @@ export default function AppShell({
     }
   }, [activeTab]);
 
+  // ESC 鍵關閉手機抽屜
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setDrawerOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [drawerOpen]);
+
   const go = (tab) => {
     onTabChange(tab);
     setDrawerOpen(false);

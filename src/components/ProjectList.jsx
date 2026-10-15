@@ -466,11 +466,11 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
               </div>
             </div>
             <div className="modal-footer" style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
-                取消
-              </button>
               <button type="submit" className="btn btn-primary" disabled={isCreating}>
                 {isCreating ? '建立中…' : '建立機種'}
+              </button>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
+                取消
               </button>
             </div>
           </form>
