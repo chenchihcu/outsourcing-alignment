@@ -55,3 +55,10 @@ supabase/.temp/
 
 # Claude Code 本機設定
 .claude/settings.local.json
+
+# 簽名圖檔 (禁止提交)
+docs/簽名檔*/
+
+# 測試產生之 Excel
+out_*.xlsx
+temp_test_out_*.xlsx

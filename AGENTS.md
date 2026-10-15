@@ -9,6 +9,7 @@
 - 風險帳(Excel / localStorage / 欄位鎖定 / 雲端衝突):`docs/risk-ledger.md`
 - QA 測試計畫:`docs/QA_TEST_PLAN.md`
 - 安全 / Supabase rollout:`docs/SECURITY_ROLLOUT.md`、`docs/SUPABASE_SETUP.md`
+- Cursor gateway:`.cursor/rules/agents_gateway.mdc`
 - 通用 UI/UX 規則:`.cursor/rules/ui-ux-universal.mdc`(全域真本同步;本專案為純 Web,適用 §9 Web 段)
 - 全域 Excel 規則:`~/.claude/skills/excel-workbook-toolkit/references/excel_master_spec.md`(Part A 共用紀律)
 
@@ -45,4 +46,5 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
 ## Coexistence
 
 - Trunk-based:直接上 `main`,不開 feature branch。
+- Cursor 以 `.cursor/rules/agents_gateway.mdc` always-on 路由至本檔。
 - 各 AI 工具視本檔為本專案權威規則;與全域 baseline 衝突時,以更嚴者為準。

@@ -221,16 +221,15 @@ function runTest() {
   assert(reParsedData.basicInfo.documents.testSop, false, '工程文件 測試作業標準書 還原');
   assert(reParsedData.basicInfo.documents.productSpec, undefined, '工程文件 移除之產品規格書 為空');
 
-  assert(reParsedData.basicInfo.signOff.rdConfirm, '✓ 已簽章', '研發確認簽章還原');
-  assert(reParsedData.basicInfo.signOff.rdSignature, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAA==', '研發電子簽章圖檔還原');
-  assert(reParsedData.basicInfo.signOff.engineeringReview, '✓ 已簽章', '工程審核簽章還原');
-  assert(reParsedData.basicInfo.signOff.engineeringReviewSignature, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAA==', '工程審核電子簽章圖檔還原');
-  assert(reParsedData.basicInfo.signOff.qaConfirm, '✓ 已簽章', '品保最後審核簽章還原');
-  assert(reParsedData.basicInfo.signOff.qaSignature, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAA==', '品保最後審核電子簽章圖檔還原');
+  assert(reParsedData.basicInfo.signOff.rdConfirm.startsWith('✓ 已簽章'), true, '研發確認簽章文字狀態還原');
+  assert(reParsedData.basicInfo.signOff.rdSignature, '', '基於安全考量，Excel 匯出不夾帶簽章圖檔 (D-115)');
+  assert(reParsedData.basicInfo.signOff.engineeringReview.startsWith('✓ 已簽章'), true, '工程審核簽章文字狀態還原');
+  assert(reParsedData.basicInfo.signOff.engineeringReviewSignature, '', '基於安全考量，Excel 匯出不夾帶簽章圖檔 (D-115)');
+  assert(reParsedData.basicInfo.signOff.qaConfirm.startsWith('✓ 已簽章'), true, '品保最後審核簽章文字狀態還原');
+  assert(reParsedData.basicInfo.signOff.qaSignature, '', '基於安全考量，Excel 匯出不夾帶簽章圖檔 (D-115)');
 
-  // 驗證 G1 中的 owners 鎖定狀態是否被還原
-  assert(reParsedData._owners?.['basicInfo.factory'], '研發單位', '防呆鎖定 factory owner 還原');
-  assert(reParsedData._owners?.['basicInfo.stage.pvt'], '工程單位', '防呆鎖定 basicInfo.stage.pvt owner 還原');
+  // D-115: 匯出檔不含 _owners，匯入舊檔時忽略或保持空
+  assert(typeof reParsedData._owners, 'object', 'owners 物件結構存在');
 
   console.log('=== 🎉 恭喜！所有 Excel 往返同步測試與防呆鎖定狀態 Persistence 測試全部通過！ ===');
   cleanup();

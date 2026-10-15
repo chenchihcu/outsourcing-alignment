@@ -241,11 +241,8 @@ const getCachedFactories = (user) => {
 // 雲端工作區(對應 storage suffix):admin 測試庫與正式庫分離
 const getWorkspace = (user) => (user?.role === 'admin' ? 'admin_test' : 'default');
 
-// S2 — 本機模式至少保留一個管理員帳號作為入口。
-// 若啟用 Supabase 雲端模式，帳號由 Supabase Auth 管理，本機預設值不影響雲端安全。
-const DEFAULT_ACCOUNTS = [
-  { username: 'guest', password: 'guest123', unit: '測試單位', role: 'admin', level: 'Administrator' }
-];
+// D-01: 正式建置不含任何預設帳密 (R-1)
+const DEFAULT_ACCOUNTS = [];
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -683,24 +680,14 @@ export default function App() {
 
   useEffect(() => {
     if (currentUser) {
-      setJSON('current_user', currentUser);
+      // D-139: 存入 localStorage 前剔除明文密碼
+      const safeUser = { ...currentUser };
+      delete safeUser.password;
+      setJSON('current_user', safeUser);
     } else {
       removeKey('current_user');
     }
   }, [currentUser]);
-
-  // 啟動安全網：在 localStorage 中確保至少有預設帳號可用
-  useEffect(() => {
-    if (isSupabaseEnabled) return;
-    const suffix = getStorageSuffix(currentUser);
-    const raw = (() => {
-      try { return localStorage.getItem('ag_accounts' + suffix); } catch { return null; }
-    })();
-    if (raw === null || raw === '[]' || raw === 'null') {
-      setJSON('accounts' + suffix, DEFAULT_ACCOUNTS);
-      setAccounts(DEFAULT_ACCOUNTS);
-    }
-  }, []); // mount only
 
   // Supabase:啟動時以既有 session 還原登入,並監聽登入/登出狀態
   useEffect(() => {
@@ -1125,7 +1112,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginModal onLogin={setCurrentUser} defaultAccounts={accounts} />
+      <LoginModal onLogin={setCurrentUser} accounts={accounts} />
     );
   }
 

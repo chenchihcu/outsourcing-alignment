@@ -1,10 +1,10 @@
-<!-- BEGIN ui-ux-universal (auto-synced; edit ~/.claude/ui-ux-universal.md) -->
+<!-- BEGIN ui-ux-universal (auto-synced; edit C:/Dropbox/AI_Coding_Agent_Governance/Institution/06-ui-ux-universal.md) -->
 # 通用 UI/UX 規則(單一真本 / Single Source of Truth)
 
 本檔是跨專案、跨工具的通用 UI/UX 規則。各專案的 `AGENTS.md` 可加嚴、不可放寬;
 專案特有的檔案路徑、token 實際色值、widget 名稱寫在各專案,不寫在這裡。
 
-維護方式:只編輯本檔(`~/.claude/ui-ux-universal.md`),再執行
+維護方式:只編輯本檔(`C:/Dropbox/AI_Coding_Agent_Governance/Institution/06-ui-ux-universal.md`),再執行
 `~/.claude/sync-ai-rules.ps1` 同步到各工具全域設定。手動改散佈出去的副本會在下次同步被覆蓋。
 
 **stack 標記**:各段標明適用範圍,不符的段落略過即可。
