@@ -827,4 +827,95 @@ input:checked + .slider:before {
   .temp-points-grid { grid-template-columns: 1fr; }
 }
 
+/* ===== iPhone 16 Pro Max 與行動裝置專屬 Apple HIG 人因工學最佳化 ===== */
+@media (max-width: 640px) {
+  .sections-container {
+    padding-bottom: max(32px, env(safe-area-inset-bottom));
+  }
+
+  /* Inset Grouped 卡片質感 */
+  .form-section-card {
+    border-radius: var(--r-ios-card, 16px);
+    border: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    margin-bottom: 16px;
+    background: var(--c-surface, #ffffff);
+  }
+
+  .card-header {
+    padding: 12px 16px;
+    font-size: 16px;
+    border-top-left-radius: var(--r-ios-card, 16px);
+    border-top-right-radius: var(--r-ios-card, 16px);
+  }
+
+  .card-body {
+    padding: 14px 16px;
+  }
+
+  /* 防 Safari Auto-Zoom: 任何輸入元件在手機上強制 >= 16px */
+  .form-input,
+  .form-select,
+  .table-input,
+  .inline-num-input,
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+    min-height: 44px;
+    border-radius: 10px;
+  }
+
+  /* 觸控熱區：單選/多選標籤卡片化 */
+  .checkbox-flex {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .checkbox-label, 
+  .radio-label {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: var(--r-ios-btn, 12px);
+    background: rgba(0, 0, 0, 0.02);
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .checkbox-label:active,
+  .radio-label:active {
+    transform: scale(0.98);
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* 底部主動作按鈕 (Next Step) 滿版且強化單手熱區 */
+  .action-row {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+    margin-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .action-row .btn-primary {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--r-ios-btn, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+  }
+}
+
+
 

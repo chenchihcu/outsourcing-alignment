@@ -2,7 +2,7 @@
 @import './styles/tokens.css';
 
 :root {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang TC", "Inter", system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -107,12 +107,28 @@ h1, h2, h3, h4 {
 }
 
 .btn:active {
-  transform: translateY(0.5px);
+  transform: scale(0.97);
 }
 
 .btn:focus-visible {
   outline: 2px solid var(--c-accent);
   outline-offset: 2px;
+}
+
+/* Apple HIG 行動裝置觸控與字級防縮放優化 */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important; /* iOS HIG: 16px 防止 Safari 聚焦時觸發頁面自動放大 */
+  }
+
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
 }
 
 /* Custom Scrollbar */
