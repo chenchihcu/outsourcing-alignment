@@ -105,7 +105,7 @@ export default function PrintReport({ data }) {
   const renderCheck = (checked, label = '') => (
     <span className={`print-checkbox-item ${checked ? 'is-checked' : 'is-unchecked'}`}>
       <span className="checkbox-square">{checked ? '✓' : ''}</span>
-      {label && <span className="checkbox-label">{label}</span>}
+      {label && <span className="print-checkbox-label">{label}</span>}
     </span>
   );
 
@@ -129,7 +129,7 @@ export default function PrintReport({ data }) {
         <p className="print-subtitle">SMT 生產前置確認 checklist</p>
       </div>
 
-      <section className="print-section print-keep-block">
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">A. 產品資料與製程範圍</h2>
         <table className="print-table">
           <tbody>
@@ -152,7 +152,7 @@ export default function PrintReport({ data }) {
                 {bi.ecnChange?.has && (
                   <span className="print-checkbox-item is-checked">
                     <span className="checkbox-square">✓</span>
-                    <span className="checkbox-label">工程變更</span>
+                    <span className="print-checkbox-label">工程變更</span>
                   </span>
                 )}
                 {bi.ecnChange?.has && bi.ecnChange?.verificationItem && (
@@ -164,7 +164,57 @@ export default function PrintReport({ data }) {
         </table>
       </section>
 
-      <section className="print-section print-keep-block">
+      {/* 新增: 品質標準與加工項目 (步驟 2，修復 D-127 / R5-2) */}
+      <section className="print-section print-flow-section">
+        <h2 className="print-section-title">A1. 品質標準與加工管制</h2>
+        <table className="print-table">
+          <tbody>
+            <tr>
+              <td className="cell-label" style={{ width: '20%' }}>品質水準要求</td>
+              <td className="cell-value" style={{ width: '30%' }}>
+                {renderCheck(bi.qualityLevel?.class2, 'Class 2')}
+                {renderCheck(bi.qualityLevel?.class3, 'Class 3')}
+              </td>
+              <td className="cell-label" style={{ width: '20%' }}>IPC 驗收標準</td>
+              <td className="cell-value" style={{ width: '30%' }}>
+                {renderCheck(bi.ipcStandard?.ipcA610, 'IPC-A-610')}
+                {renderCheck(bi.ipcStandard?.jStd001, 'J-STD-001')}
+              </td>
+            </tr>
+            <tr>
+              <td className="cell-label">製程管制需求</td>
+              <td className="cell-value" colSpan={3}>
+                {renderCheck(bi.glue, '需要點膠')}
+                {renderCheck(bi.qrCode?.need, '需要 QR Code 掃描')}
+                {renderCheck(bi.snControl?.need, '需要序號管控')}
+                {renderCheck(bi.aoi?.top, 'AOI Top (頂面)')}
+                {renderCheck(bi.aoi?.bottom, 'AOI Bottom (底面)')}
+              </td>
+            </tr>
+            <tr>
+              <td className="cell-label">主要加工項目</td>
+              <td className="cell-value" colSpan={3}>
+                <div className="print-checkbox-grid">
+                  {renderCheck(bi.processItems?.smt, 'SMT')}
+                  {renderCheck(bi.processItems?.dip, 'DIP')}
+                  {renderCheck(bi.processItems?.ict, 'In-Circuit Test')}
+                  {renderCheck(bi.processItems?.assembly, '組裝')}
+                  {renderCheck(bi.processItems?.coating, '三防膠塗覆')}
+                  {renderCheck(bi.processItems?.packing, '包裝')}
+                  {renderCheck(bi.processItems?.fct, 'FCT 功能測試')}
+                  {renderCheck(bi.processItems?.flyingProbe, '飛針測試')}
+                  {renderCheck(bi.processItems?.underfillGlue, 'Underfill 塗膠')}
+                  {renderCheck(bi.processItems?.semiFinishedTest, '半成品測試')}
+                  {renderCheck(bi.processItems?.finalTest, '成品測試')}
+                  {renderCheck(bi.processItems?.otherProcess, `其他: ${bi.processItems?.otherProcessText || ''}`)}
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">B. 製程前置條件</h2>
         <table className="print-table">
           <tbody>
@@ -193,7 +243,7 @@ export default function PrintReport({ data }) {
         </table>
       </section>
 
-      <section className="print-section print-keep-block">
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">C. 鋼板與治工具確認</h2>
         <table className="print-table">
           <thead>
@@ -266,7 +316,7 @@ export default function PrintReport({ data }) {
         </table>
       </section>
 
-      <section className="print-section print-keep-block">
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">D. SMT 製程條件</h2>
         <table className="print-table">
           <colgroup>
@@ -328,21 +378,25 @@ export default function PrintReport({ data }) {
       </section>
 
       {pc.keyParts?.has && (
-        <section className="print-subsection-block print-keep-block">
+        <section className="print-subsection-block print-flow-section">
           <h3 className="print-sub-section-title">D1. 測溫點配置 (關鍵零件要求)</h3>
           {filledTempPoints.length > 0 ? (
             <table className="print-table">
               <thead>
                 <tr>
-                  <th style={{ width: '10%' }}>#</th>
-                  <th style={{ width: '40%' }}>位置 / 位號</th>
+                  <th style={{ width: '8%' }}>#</th>
+                  <th style={{ width: '32%' }}>位置 / 位號</th>
+                  <th style={{ width: '30%' }}>零件描述</th>
+                  <th style={{ width: '30%' }}>備註</th>
                 </tr>
               </thead>
               <tbody>
                 {filledTempPoints.map((pt, idx) => (
                   <tr key={`${pt.pos || pt.desc || 'temp'}-${idx}`}>
                     <td>{idx + 1}</td>
-                    <td>{pt.pos || pt.desc || '—'}</td>
+                    <td>{pt.pos || '—'}</td>
+                    <td>{pt.desc || '—'}</td>
+                    <td>{pt.memo || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -353,7 +407,7 @@ export default function PrintReport({ data }) {
         </section>
       )}
 
-      <section className="print-section print-keep-block">
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">E. 特殊製程條件</h2>
         <table className="print-table">
           <tbody>
@@ -370,14 +424,14 @@ export default function PrintReport({ data }) {
           </tbody>
         </table>
         {shouldShowSpecialProcessMemo && (
-          <div className="print-subsection-block print-keep-block">
+          <div className="print-subsection-block print-flow-section">
             <h3 className="print-sub-section-title">E1. 特殊製程備註</h3>
             <div className="print-memo-box">{specialProcessMemo}</div>
           </div>
         )}
       </section>
 
-      <section className="print-section print-keep-block">
+      <section className="print-section print-flow-section">
         <h2 className="print-section-title">F. 出貨與保護條件</h2>
         <table className="print-table">
           <tbody>
@@ -392,8 +446,6 @@ export default function PrintReport({ data }) {
           </tbody>
         </table>
       </section>
-
-      <div className="page-break"></div>
 
       <section className="print-section print-flow-section">
         <h2 className="print-section-title">G. 試產交付與檢驗紀錄</h2>
