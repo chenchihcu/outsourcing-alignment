@@ -57,6 +57,9 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     }
   };
 
+  const [importError, setImportError] = useState('');
+  const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState(null);
+
   const MAX_IMPORT_SIZE = 10 * 1024 * 1024; // 10 MB
 
   const handleFileChange = async (e) => {
@@ -64,14 +67,15 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     // 立即清空 input value:否則再次選同一個檔案(如格式修正後重傳)不會觸發 onChange
     e.target.value = '';
     if (!file) return;
+    setImportError('');
 
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
-      alert('請選擇有效的 .xlsx 格式檔案！');
+      setImportError('請選擇有效的 .xlsx 格式檔案！');
       return;
     }
     // D3 — 檔案大小限制
     if (file.size > MAX_IMPORT_SIZE) {
-      alert(`檔案過大（${(file.size / 1024 / 1024).toFixed(1)} MB），上限為 10 MB。`);
+      setImportError(`檔案過大（${(file.size / 1024 / 1024).toFixed(1)} MB），上限為 10 MB。`);
       return;
     }
 
@@ -84,7 +88,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           // D3 — 驗證 XLSX 魔術字節 (PK 0x50 0x4B)
           const header = new Uint8Array(arrayBuffer).slice(0, 4);
           if (header[0] !== 0x50 || header[1] !== 0x4B) {
-            alert('檔案格式無效，請確認上傳的是真正的 .xlsx 格式 Excel 檔案。');
+            setImportError('檔案格式無效，請確認上傳的是真正的 .xlsx 格式 Excel 檔案。');
             setIsImporting(false);
             return;
           }
@@ -95,20 +99,20 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           await onImportExcel(file.name, base64);
         } catch (err) {
           if (import.meta.env.DEV) console.error(err);
-          alert(`解析或傳送 Excel 檔案失敗：${err?.message || '請確認檔案格式是否正確。'}`);
+          setImportError(`解析或傳送 Excel 檔案失敗：${err?.message || '請確認檔案格式是否正確。'}`);
         } finally {
           setIsImporting(false);
         }
       };
       // D3 — FileReader 錯誤處理
       reader.onerror = () => {
-        alert('讀取檔案失敗，請重試。');
+        setImportError('讀取檔案失敗，請重試。');
         setIsImporting(false);
       };
       reader.readAsArrayBuffer(file);
     } catch (err) {
       if (import.meta.env.DEV) console.error(err);
-      alert('讀取檔案時出錯！');
+      setImportError('讀取檔案時出錯！');
       setIsImporting(false);
     }
   };
@@ -163,6 +167,11 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
             onChange={handleFileChange}
           />
         </div>
+        {importError && (
+          <div role="alert" className="import-error-banner" style={{ color: '#ef4444', fontSize: '0.85rem', width: '100%', marginTop: '8px' }}>
+            ⚠️ {importError}
+          </div>
+        )}
       </div>
 
       {/* 搜尋篩選器 */}
@@ -333,12 +342,34 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                         >
                           ✏️ 進入編輯
                         </button>
-                        <button type="button"
-                          className="btn btn-danger compact-btn table-action-btn btn-delete"
-                          onClick={() => onDeleteProject(proj.id)}
-                        >
-                          🗑️ 刪除
-                        </button>
+                        {confirmDeleteProjectId === proj.id ? (
+                          <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                            <button
+                              type="button"
+                              className="btn btn-danger compact-btn table-action-btn btn-confirm-delete"
+                              onClick={() => {
+                                setConfirmDeleteProjectId(null);
+                                onDeleteProject(proj.id);
+                              }}
+                            >
+                              確定刪除
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-secondary compact-btn table-action-btn"
+                              onClick={() => setConfirmDeleteProjectId(null)}
+                            >
+                              取消
+                            </button>
+                          </span>
+                        ) : (
+                          <button type="button"
+                            className="btn btn-danger compact-btn table-action-btn btn-delete"
+                            onClick={() => setConfirmDeleteProjectId(proj.id)}
+                          >
+                            🗑️ 刪除
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -385,36 +416,36 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
       )}
 
       {showCreateModal && (
-        <div className="modal-backdrop animate-fade-in" onClick={() => setShowCreateModal(false)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Space') { e.preventDefault(); setShowCreateModal(false); } }}>
-          <div className="modal-content glass-card animate-scale-in" onClick={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Space') { e.preventDefault(); e.stopPropagation(); } }}>
-            <div className="modal-header">
-              <h3>建立新機種</h3>
-              <button type="button" className="close-btn" onClick={() => setShowCreateModal(false)}>×</button>
-            </div>
-            <form onSubmit={handleSubmitCreate}>
-              <div className="modal-body">
-                <div className="form-group">
-                  <label htmlFor="projectName">機種與一覽表名稱</label>
-                  <input 
-                    type="text" 
-                    id="projectName" 
-                    placeholder="例如：新機種製作需求一覽表2026_機種A" name="projectName" 
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
-                  取消
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={isCreating}>
-                  {isCreating ? '建立中…' : '建立機種'}
-                </button>
-              </div>
-            </form>
+        <div className="new-project-card glass-card animate-fade-in" style={{ marginTop: '20px', padding: '24px', border: '1px solid var(--c-border, #e2e8f0)', borderRadius: '12px' }}>
+          <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0 }}>建立新機種</h3>
+            <button type="button" className="close-btn" onClick={() => setShowCreateModal(false)} aria-label="取消">×</button>
           </div>
+          <form onSubmit={handleSubmitCreate}>
+            <div className="modal-body">
+              <div className="form-group">
+                <label htmlFor="projectName" className="form-label">機種與一覽表名稱</label>
+                <input 
+                  type="text" 
+                  id="projectName" 
+                  className="form-input edit-active"
+                  placeholder="例如：新機種製作需求一覽表2026_機種A" 
+                  name="projectName" 
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="modal-footer" style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setShowCreateModal(false)}>
+                取消
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={isCreating}>
+                {isCreating ? '建立中…' : '建立機種'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

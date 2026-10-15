@@ -48,16 +48,19 @@ function CloudUserManagement({ currentUser }) {
     }
   };
 
+  const [roleError, setRoleError] = useState('');
+
   const handleRoleChange = async (userId, newRole) => {
     // U6 — 僅 admin 可修改角色
-    if (currentUser.role !== 'admin') { alert('無權限修改使用者角色。'); return; }
+    if (currentUser.role !== 'admin') { setRoleError('無權限修改使用者角色。'); return; }
     const r = CLOUD_ROLE_OPTIONS.find((o) => o.value === newRole);
     if (!r) return;
     try {
+      setRoleError('');
       await updateUserProfile(userId, { role: r.value, unit: r.unit, level: r.level });
       setProfiles((prev) => prev.map((p) => p.id === userId ? { ...p, role: r.value, unit: r.unit, level: r.level } : p));
     } catch (err) {
-      alert('角色更新失敗：' + err.message);
+      setRoleError('角色更新失敗：' + err.message);
     }
   };
 
@@ -67,6 +70,12 @@ function CloudUserManagement({ currentUser }) {
       <p className="card-desc">
         帳號由管理員統一邀請。對方收到邀請郵件並設定密碼後即可登入；帳號無法自行申請。
       </p>
+
+      {roleError && (
+        <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>
+          ⚠️ {roleError}
+        </div>
+      )}
 
       {/* 邀請表單 */}
       <form onSubmit={handleInvite} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-end', marginTop: '16px' }}>
@@ -184,26 +193,32 @@ export default function Settings({
     setNewFactory('');
   };
 
+  const [userFormError, setUserFormError] = useState('');
+  const [userFormSuccess, setUserFormSuccess] = useState('');
+  const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
+
   const handleAddAccountSubmit = (e) => {
     e.preventDefault();
+    setUserFormError('');
+    setUserFormSuccess('');
     const trimUser = newUsername.trim();
     const trimPass = newPassword.trim();
     if (!trimUser || !trimPass) {
-      alert('請填寫所有必要欄位！');
+      setUserFormError('請填寫所有必要欄位！');
       return;
     }
     // U8 — 密碼長度與帳號格式驗證
     if (trimPass.length < 6) {
-      alert('密碼至少需要 6 個字元。');
+      setUserFormError('密碼至少需要 6 個字元。');
       return;
     }
     if (!/^[a-zA-Z0-9_@.-]+$/.test(trimUser)) {
-      alert('帳號只能包含英數字、底線、@、點與連字符。');
+      setUserFormError('帳號只能包含英數字、底線、@、點與連字符。');
       return;
     }
     // U8 — 大小寫不分的重複帳號檢查
     if (accounts.some(a => a.username.toLowerCase() === trimUser.toLowerCase())) {
-      alert('該帳號已存在（帳號不區分大小寫）！');
+      setUserFormError('該帳號已存在（帳號不區分大小寫）！');
       return;
     }
 
@@ -218,7 +233,7 @@ export default function Settings({
     onAddAccount(newAcc);
     setNewUsername('');
     setNewPassword('');
-    alert('使用者帳號新增成功！');
+    setUserFormSuccess('使用者帳號新增成功！');
   };
 
   const handleUnitChange = (val) => {
@@ -408,6 +423,17 @@ export default function Settings({
                 </div>
               </div>
 
+              {userFormError && (
+                <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>
+                  ⚠️ {userFormError}
+                </div>
+              )}
+              {userFormSuccess && (
+                <div role="status" style={{ color: '#10b981', fontSize: '0.85rem', marginTop: '8px' }}>
+                  ✓ {userFormSuccess}
+                </div>
+              )}
+
               <button type="submit" className="btn btn-secondary btn-block" style={{ marginTop: '12px' }}>
                 ➕ 新增使用者帳號
               </button>
@@ -456,25 +482,44 @@ export default function Settings({
                           </select>
                         </td>
                         <td>
-                          <button type="button"
-                            className="btn-delete-account"
-                            disabled={currentUser.username === acc.username || acc.role === 'admin'}
-                            onClick={() => {
-                              // U7 — 刪除確認
-                              if (window.confirm(`確定要刪除帳號「${acc.username}」？此操作無法還原。`)) {
-                                onRemoveAccount(acc.username);
+                          {confirmDeleteUser === acc.username ? (
+                            <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
+                              <button
+                                type="button"
+                                className="btn btn-danger btn-xs btn-confirm-delete-account"
+                                onClick={() => {
+                                  onRemoveAccount(acc.username);
+                                  setConfirmDeleteUser(null);
+                                }}
+                              >
+                                確認刪除
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-xs"
+                                onClick={() => setConfirmDeleteUser(null)}
+                              >
+                                取消
+                              </button>
+                            </span>
+                          ) : (
+                            <button type="button"
+                              className="btn-delete-account"
+                              disabled={currentUser.username === acc.username || acc.role === 'admin'}
+                              onClick={() => {
+                                setConfirmDeleteUser(acc.username);
+                              }}
+                              title={
+                                currentUser.username === acc.username
+                                  ? '無法刪除目前登入的帳號'
+                                  : acc.role === 'admin'
+                                  ? '系統管理員帳號無法刪除'
+                                  : '刪除此帳號'
                               }
-                            }}
-                            title={
-                              currentUser.username === acc.username
-                                ? '無法刪除目前登入的帳號'
-                                : acc.role === 'admin'
-                                ? '系統管理員帳號無法刪除'
-                                : '刪除此帳號'
-                            }
-                          >
-                            刪除
-                          </button>
+                            >
+                              刪除
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

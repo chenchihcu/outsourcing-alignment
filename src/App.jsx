@@ -32,6 +32,8 @@ import {
 import { migrateLocalProjects } from './data/migrateLocal';
 import { getCurrentUser, onAuthChange, signOut, updateMySignature } from './data/auth';
 import * as XLSX from 'xlsx';
+import { navigateTo, TAB_TO_STEP_KEY, parseHash } from './utils/hashRouter.js';
+import { WORKFLOW_STEPS } from './utils/workflow.js';
 import './App.css';
 
 function sanitizeProjectData(data) {
@@ -290,7 +292,6 @@ export default function App() {
   const [originalWb, setOriginalWb] = useState(null);
   const [fileName, setFileName] = useState('');
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
   const [highlightField, setHighlightField] = useState('');
 
   // 儲存狀態提示(信任訊號):idle | saving | saved
@@ -305,15 +306,6 @@ export default function App() {
   // E1/E2 — 雲端同步錯誤橫幅
   const [syncError, setSyncError] = useState(null);
 
-  const handleGoToSection = (tab, msg) => {
-    setActiveTab(tab);
-    if (msg) {
-      setHighlightField(msg);
-      setTimeout(() => {
-        setHighlightField('');
-      }, 3000);
-    }
-  };
 
   // 登入狀態與使用者管理
   const [currentUser, setCurrentUser] = useState(() => {
@@ -619,7 +611,6 @@ export default function App() {
       setFileName('');
       setCurrentProjectId(null);
       setActiveTab('dashboard');
-      setShowSuccessOverlay(false);
       setRemoteUpdate(null);
       setSaveState('idle');
       removeKey('last_project_id');
@@ -640,7 +631,7 @@ export default function App() {
       timerId = setTimeout(() => {
         // 透過 ref 取最新版本,避免 30 分鐘前的 stale closure 漏存當前編輯
         void handleLogoutRef.current().finally(() => {
-          alert('因長時間無操作，已自動登出，請重新登入。');
+          setSyncError('因長時間無操作，已自動登出，請重新登入。');
         });
       }, TIMEOUT_MS);
     };
@@ -834,8 +825,9 @@ export default function App() {
       setCurrentProjectId(id);
       setActiveTab('dashboard');
       setJSON('last_project_id', id);
+      navigateTo('/projects/' + id);
     } else {
-      alert('找不到該機種資料。');
+      setSyncError('找不到該機種資料。');
     }
   };
 
@@ -847,7 +839,7 @@ export default function App() {
     // 防呆設計：防範重複機種名稱
     const isDuplicate = projects.some(p => p.name.toLowerCase() === trimmedName.toLowerCase());
     if (isDuplicate) {
-      alert(`已存在名稱為「${trimmedName}」的機種，請使用其他名稱！`);
+      setSyncError(`已存在名稱為「${trimmedName}」的機種，請使用其他名稱！`);
       return false;
     }
 
@@ -892,7 +884,7 @@ export default function App() {
       return true;
     } catch (err) {
       console.error(err);
-      alert('建立新機種失敗！');
+      setSyncError('建立新機種失敗！');
       return false;
     }
   };
@@ -905,7 +897,7 @@ export default function App() {
     // 防呆設計：防範重複機種名稱
     const isDuplicate = projects.some(p => p.name.toLowerCase() === trimmedName.toLowerCase());
     if (isDuplicate) {
-      alert(`已存在名稱為「${trimmedName}」的機種，請更換檔案名稱後重新上傳！`);
+      setSyncError(`已存在名稱為「${trimmedName}」的機種，請更換檔案名稱後重新上傳！`);
       return;
     }
 
@@ -938,7 +930,7 @@ export default function App() {
       handleSelectProject(newProj.id, newList);
     } catch (err) {
       console.error(err);
-      alert('解析或匯入 Excel 失敗，請確認檔案格式是否正確。');
+      setSyncError('解析或匯入 Excel 失敗，請確認檔案格式是否正確。');
     }
   };
 
@@ -946,9 +938,7 @@ export default function App() {
   const handleDeleteProject = async (id) => {
     const proj = projects.find(p => p.id === id);
     if (!proj) return;
-    // D2 — 刪除前確認
-    if (!window.confirm(`確定要刪除「${proj.name}」嗎？此操作無法還原。`)) return;
-
+    // D2 — 刪除（已由清單操作端進行確認）
     const snapshot = projects; // D2 — 保留快照供雲端失敗時還原
     const newList = projects.filter(p => p.id !== id);
     setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
@@ -966,7 +956,7 @@ export default function App() {
         // D2 — 雲端刪除失敗時還原本機清單
         setProjects(snapshot);
         setJSON(getProjectsKey(currentUser).replace('ag_', ''), snapshot);
-        alert('雲端刪除失敗，機種已恢復。請確認網路連線後再試。');
+        setSyncError('雲端刪除失敗，機種已恢復。請確認網路連線後再試。');
       }
     }
   };
@@ -982,17 +972,13 @@ export default function App() {
     setFileName('');
     setCurrentProjectId(null);
     setActiveTab('dashboard');
-    setShowSuccessOverlay(false);
     setRemoteUpdate(null);
+    navigateTo('/projects');
   };
 
   // P3:把對方的最新版本載入編輯器(使用者主動確認,避免靜默覆蓋編輯中內容)
   const handleLoadRemote = () => {
     if (!remoteUpdate) return;
-    // D1 — 本地有未儲存修改時警告
-    if (saveState === 'saving') {
-      if (!window.confirm('您有尚未儲存的修改，載入遠端版本後本地變更將被覆蓋。確定繼續？')) return;
-    }
     editedSinceLoadRef.current = false;
     setData(sanitizeProjectData(remoteUpdate.data));
     setFileName(remoteUpdate.name);
@@ -1010,8 +996,103 @@ export default function App() {
   };
 
   const handleExportComplete = () => {
-    setShowSuccessOverlay(true);
+    // 匯出成功狀態已改由 SignOff 頁內元件就地呈現 (M4 去彈窗化)
   };
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (!currentProjectIdRef.current) {
+      if (tab === 'settings') navigateTo('/settings/factories');
+      return;
+    }
+    if (tab === 'dashboard') {
+      navigateTo('/projects/' + currentProjectIdRef.current);
+    } else if (tab === 'settings') {
+      navigateTo('/settings/factories');
+    } else if (TAB_TO_STEP_KEY[tab]) {
+      navigateTo('/projects/' + currentProjectIdRef.current + '/' + TAB_TO_STEP_KEY[tab]);
+    }
+  };
+
+  const handleGoToSection = (tab, msg) => {
+    handleTabChange(tab);
+    if (msg) {
+      setHighlightField(msg);
+      setTimeout(() => {
+        setHighlightField('');
+      }, 3000);
+    }
+  };
+
+  // 路由同步 (響應瀏覽器上一頁/下一頁與手動切換 Hash)
+  const handleBackToListRef = useRef(handleBackToList);
+  const handleSelectProjectRef = useRef(handleSelectProject);
+  useEffect(() => {
+    handleBackToListRef.current = handleBackToList;
+    handleSelectProjectRef.current = handleSelectProject;
+  });
+
+  // 初次載入或重新整理時，若 URL 帶有專案 ID 且尚未載入該專案，自動選取該機種
+  const initialRouteCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!initialRouteCheckedRef.current && projects.length > 0) {
+      initialRouteCheckedRef.current = true;
+      const r = parseHash();
+      if ((r.route === 'project-overview' || r.route === 'project-step') && r.params.id) {
+        const found = projects.find(p => p.id === r.params.id);
+        if (found) {
+          const targetId = r.params.id;
+          setTimeout(() => {
+            handleSelectProjectRef.current(targetId, projects);
+          }, 0);
+        }
+      }
+    }
+  }, [projects]);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const current = parseHash();
+      if (!currentUserRef.current) return;
+
+      if (current.route === 'projects') {
+        if (currentProjectIdRef.current) {
+          handleBackToListRef.current();
+        }
+      } else if (current.route === 'project-overview') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId);
+        }
+        setActiveTab('dashboard');
+      } else if (current.route === 'project-step') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId);
+        }
+        if (current.params.tabKey) {
+          setActiveTab(current.params.tabKey);
+        }
+      } else if (current.route === 'settings-factories' || current.route === 'settings-users') {
+        setActiveTab('settings');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // 動態網頁標題同步 (規格 6.2 規則 5)
+  useEffect(() => {
+    if (!currentUser) {
+      document.title = '登入 ｜ 產品委外加工系統';
+    } else if (!currentProjectId) {
+      document.title = '機種管理中心 ｜ 產品委外加工系統';
+    } else {
+      const stepName = WORKFLOW_STEPS.find(s => s.key === activeTab)?.label || (activeTab === 'dashboard' ? '儀表板' : '設定');
+      document.title = `${fileName || '機種'} ｜ ${stepName} ｜ 產品委外加工系統`;
+    }
+  }, [currentUser, currentProjectId, activeTab, fileName]);
 
   const handleUpdateAccountLevel = (uname, newLevel) => {
     setAccounts(prev => prev.map(a =>
@@ -1098,13 +1179,11 @@ export default function App() {
 
   if (!authReady) {
     return (
-      <div className="login-overlay" role="status" aria-live="polite">
-        <div className="login-card glass-card animate-fade-in">
-          <div className="login-header">
-            <span className="login-logo-icon">🔐</span>
-            <h2>正在驗證工作階段…</h2>
-            <p>請稍候，系統正在確認雲端登入狀態。</p>
-          </div>
+      <div className="auth-loading-screen" role="status" aria-live="polite" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--c-bg, #f8fafc)', padding: '24px' }}>
+        <div className="auth-card glass-card animate-fade-in" style={{ padding: '32px', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
+          <span className="login-logo-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>🔐</span>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>正在驗證工作階段…</h2>
+          <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: '0.9rem' }}>請稍候，系統正在確認雲端登入狀態。</p>
         </div>
       </div>
     );
@@ -1131,7 +1210,7 @@ export default function App() {
         projectName={fileName}
         onBackToList={handleBackToList}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         sectionStatus={sectionStatus}
         alignmentRate={currentAlignmentRate}
         saveState={saveState}
@@ -1177,25 +1256,6 @@ export default function App() {
         </footer>
       </AppShell>
       </ErrorBoundary>
-
-      {/* 簽核成功慶祝 Overlay */}
-      {showSuccessOverlay && (
-        <div className="success-overlay animate-fade-in" onClick={() => setShowSuccessOverlay(false)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Space') { e.preventDefault(); setShowSuccessOverlay(false); } }}>
-          <div className="success-card glass-card text-center" onClick={(e) => e.stopPropagation()} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'Space') { e.preventDefault(); e.stopPropagation(); } }}>
-            <span className="big-check-icon">✓</span>
-            <h2>Excel 已匯出</h2>
-            <p>簽核版文件已完成下載。</p>
-            <div className="success-actions">
-              <button type="button" className="btn btn-primary" onClick={() => setShowSuccessOverlay(false)}>
-                確定
-              </button>
-              <button type="button" className="btn btn-secondary" onClick={handleBackToList}>
-                回到機種列表
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }
