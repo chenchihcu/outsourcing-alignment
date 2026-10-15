@@ -4,14 +4,15 @@ import './LoginModal.css';
 import { isSupabaseEnabled } from '../data/supabaseClient';
 import { signIn } from '../data/auth';
 
-export default function LoginModal({ onLogin, defaultAccounts }) {
+export default function LoginModal({ onLogin, accounts = [] }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const tryLocalLogin = (uname, pw) => {
-    const account = defaultAccounts.find((a) => a.username === uname && a.password === pw);
+    const list = accounts || [];
+    const account = list.find((a) => a.username === uname && a.password === pw);
     if (account) { onLogin(account); setError(''); return true; }
     return false;
   };
@@ -20,32 +21,24 @@ export default function LoginModal({ onLogin, defaultAccounts }) {
     e.preventDefault();
     setError('');
 
-    // 無論本機/雲端模式，先試本機帳號清單（讓 guest 帳號在部屬站台也能登入）
-    if (tryLocalLogin(username, password)) return;
-
-    if (!isSupabaseEnabled) {
-      setError('帳號或密碼錯誤！');
+    // 雲端模式：僅允許經由 Supabase Auth 驗證，絕不比對本機快取帳號 (D-01)
+    if (isSupabaseEnabled) {
+      setBusy(true);
+      try {
+        const user = await signIn(username, password);
+        if (user) onLogin(user);
+        else setError('登入失敗，請確認帳號與密碼。');
+      } catch (err) {
+        setError(err?.message || '操作失敗，請稍後再試。');
+      } finally {
+        setBusy(false);
+      }
       return;
     }
 
-    // 雲端模式：本機沒比對到，改走 Supabase Auth
-    setBusy(true);
-    try {
-      const user = await signIn(username, password);
-      if (user) onLogin(user);
-      else setError('登入失敗，請確認帳號與密碼。');
-    } catch (err) {
-      setError(err?.message || '操作失敗，請稍後再試。');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleQuickLogin = (acc) => {
-    setUsername(acc.username);
-    setPassword(acc.password);
-    // 先讓 state 更新 flush 到輸入欄位，再執行登入
-    setTimeout(() => tryLocalLogin(acc.username, acc.password), 0);
+    // 離線模式：比對本機已建立之帳號
+    if (tryLocalLogin(username, password)) return;
+    setError('帳號或密碼錯誤！');
   };
 
   return (
@@ -71,7 +64,8 @@ export default function LoginModal({ onLogin, defaultAccounts }) {
               className="form-input edit-active"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="請輸入帳號(例:pe)" name="username"
+              placeholder="請輸入帳號"
+              name="username"
               autoComplete="username"
               autoCapitalize="none"
               autoCorrect="off"
@@ -87,7 +81,8 @@ export default function LoginModal({ onLogin, defaultAccounts }) {
               className="form-input edit-active"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="請輸入密碼" name="password"
+              placeholder="請輸入密碼"
+              name="password"
               autoComplete="current-password"
               required
             />
@@ -103,28 +98,6 @@ export default function LoginModal({ onLogin, defaultAccounts }) {
             </p>
           )}
         </form>
-
-        {defaultAccounts.length > 0 && (
-          <div className="quick-login-section">
-            <p className="quick-login-title">
-              {isSupabaseEnabled
-                ? '⚡ 本機測試帳號（快速登入，資料儲存於本機瀏覽器）：'
-                : '⚡ 快速測試登入 (免手動輸入)：'}
-            </p>
-            <div className="quick-login-grid">
-              {defaultAccounts.map((acc) => (
-                <button
-                  key={acc.username}
-                  className={`quick-login-btn role-${acc.role}`}
-                  onClick={() => handleQuickLogin(acc)}
-                >
-                  <strong>{acc.username}</strong>
-                  <span>{acc.unit}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -132,14 +105,13 @@ export default function LoginModal({ onLogin, defaultAccounts }) {
 
 LoginModal.propTypes = {
   onLogin: PropTypes.func.isRequired,
-  defaultAccounts: PropTypes.arrayOf(
+  accounts: PropTypes.arrayOf(
     PropTypes.shape({
       username: PropTypes.string.isRequired,
-      password: PropTypes.string.isRequired,
+      password: PropTypes.string,
       unit: PropTypes.string,
       role: PropTypes.string,
       level: PropTypes.string,
     })
-  ).isRequired,
+  ),
 };
-

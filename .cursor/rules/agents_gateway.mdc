@@ -1,0 +1,12 @@
+---
+description: "React/Vite, Excel round-trip, Supabase RLS, and QA gate repository gateway directing Cursor to AGENTS.md"
+globs: "*"
+alwaysApply: true
+---
+
+# Repository Rules Gateway (Cursor)
+
+Read and follow the repository policy before editing:
+→ **[AGENTS.md](file:///C:/Users/user/Documents/新機種製作需求一覽表/AGENTS.md)**
+
+For Excel, cloud, PDF, or UI changes, follow the project-specific verification gates and security guardrails.

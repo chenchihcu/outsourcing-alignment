@@ -8,8 +8,25 @@ import { mkdir, rm } from 'node:fs/promises';
 
 const distRoot = path.resolve('dist');
 const indexPath = path.join(distRoot, 'index.html');
-const edgePath = process.env.BUTTON_AUDIT_BROWSER_PATH
-  || 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+function getBrowserPath() {
+  if (process.env.BUTTON_AUDIT_BROWSER_PATH) return process.env.BUTTON_AUDIT_BROWSER_PATH;
+  const candidates = [
+    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Google\\Chrome\\Application\\chrome.exe') : null,
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'Microsoft\\Edge\\Application\\msedge.exe') : null,
+    '/usr/bin/google-chrome',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser'
+  ].filter(Boolean);
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
+}
+const edgePath = getBrowserPath();
 
 const contentTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -286,16 +303,25 @@ async function setupPage(appUrl) {
   const attached = await send('Target.attachToTarget', { targetId: created.targetId, flatten: true }, null);
   sessionId = attached.sessionId;
 
+  const auditUser = process.env.BUTTON_AUDIT_USER || 'admin';
+  const auditPass = process.env.BUTTON_AUDIT_PASS || ('pW_' + Math.random().toString(36).slice(2, 10));
+
   await send('Runtime.enable');
   await send('Page.enable');
   await send('Log.enable');
   await send('Page.addScriptToEvaluateOnNewDocument', {
     source: `
       localStorage.clear();
+      localStorage.setItem('ag_accounts', JSON.stringify([{
+        username: ${JSON.stringify(auditUser)},
+        password: ${JSON.stringify(auditPass)},
+        unit: '管理處',
+        role: 'admin',
+        level: 'Administrator'
+      }]));
       localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'guest',
-        password: 'guest123',
-        unit: '測試單位',
+        username: ${JSON.stringify(auditUser)},
+        unit: '管理處',
         role: 'admin',
         level: 'Administrator',
         signature: '${signature}'
@@ -539,8 +565,9 @@ async function runAudit(appUrl) {
   });
 
   await step('設定頁新增/顯示/刪除帳號', async () => {
+    const dynamicPw = 'pW_' + Math.random().toString(36).slice(2, 10);
     await setValue('input[placeholder="帳號"]', 'btnqa');
-    await setValue('input[placeholder="密碼"]', 'btnqa123');
+    await setValue('input[placeholder="密碼"]', dynamicPw);
     await clickText('新增使用者帳號');
     await waitFor("document.body.innerText.includes('btnqa')", 'account added');
     await evalPage(`(() => {
@@ -550,7 +577,7 @@ async function runAudit(appUrl) {
       button.click();
       return true;
     })()`);
-    await waitFor("document.body.innerText.includes('btnqa123')", 'password revealed');
+    await waitFor(`document.body.innerText.includes(${JSON.stringify(dynamicPw)})`, 'password revealed');
     dialogQueue.push({ accept: true });
     await evalPage(`(() => {
       const row = [...document.querySelectorAll('tr')].find((candidate) => candidate.textContent.includes('btnqa'));
