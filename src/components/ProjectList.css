@@ -480,15 +480,15 @@
 
 /* Use light theme colors as defaults */
 
-/* 響應式優化：機種管理中心手機版排版幾何衝突修正 */
+/* 響應式優化：機種管理中心手機版排版幾何衝突修正與 Apple HIG 卡片化 */
 @media (max-width: 768px) {
   .hide-on-mobile {
     display: none !important;
   }
   
   .project-list-container {
-    padding: 12px 8px;
-    gap: 12px;
+    padding: 12px 12px 32px 12px;
+    gap: 14px;
   }
 
   .project-list-header {
@@ -497,10 +497,12 @@
     padding: 16px;
     gap: 12px;
     text-align: center;
+    border-radius: var(--r-ios-card, 16px);
   }
 
   .project-list-header h2 {
     font-size: 20px;
+    font-weight: 700;
   }
 
   .header-actions {
@@ -511,37 +513,50 @@
 
   .header-actions .btn {
     width: 100%;
+    min-height: 44px;
     justify-content: center;
+    border-radius: var(--r-ios-btn, 12px);
+    font-size: 15px;
   }
 
   .project-search-container {
-    padding: 10px 14px;
+    padding: 12px 16px;
+    border-radius: var(--r-ios-card, 16px);
+  }
+
+  .search-input {
+    font-size: 16px !important; /* 防止 Safari 自動縮放 */
   }
 
   .project-list-toolbar {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px;
+    padding: 14px;
     gap: 12px;
+    border-radius: var(--r-ios-card, 16px);
   }
 
   .toolbar-tabs {
-    flex-direction: column;
-    gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
     width: 100%;
   }
 
   .tab-filter-btn {
-    width: 100%;
+    flex: 1 1 calc(50% - 4px);
+    min-height: 38px;
     justify-content: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
+    border-radius: var(--r-ios-btn, 12px);
+    font-size: 13px;
   }
 
   .toolbar-settings {
     flex-direction: column;
     gap: 10px;
     width: 100%;
-    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+    border-top: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08));
     padding-top: 10px;
   }
 
@@ -550,52 +565,131 @@
     width: 100%;
   }
 
+  .table-pagination {
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: var(--r-ios-card, 16px);
+  }
+}
+
+/* 手機端與 iPhone 16 Pro Max 專屬：iOS Inset Grouped 卡片化結構 */
+@media (max-width: 640px) {
+  .project-table-wrapper {
+    background: transparent !important;
+    border: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .project-table {
+    display: block !important;
+    width: 100% !important;
+    border: none !important;
+  }
+
+  .project-table thead {
+    display: none !important; /* 隱藏桌機表頭，轉為卡片內部自我描述 */
+  }
+
+  .project-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .project-table tbody tr {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    background: var(--c-surface, rgba(255, 255, 255, 0.85)) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08)) !important;
+    border-radius: var(--r-ios-card, 16px) !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  .project-table tbody tr td {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  .proj-name-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #111827 !important;
+  }
+
   .proj-name-text {
-    max-width: 140px;
+    max-width: none !important;
+    white-space: normal !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
   }
 
   .table-progress-wrapper {
-    max-width: 120px;
-    gap: 6px;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 4px 0 !important;
+    gap: 10px !important;
+  }
+
+  .table-progress-bar-bg {
+    height: 8px !important;
+    border-radius: 4px !important;
   }
 
   .table-progress-rate {
-    font-size: 11px;
-    width: 28px;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    width: 40px !important;
   }
 
   .table-actions-cell {
-    flex-direction: column;
-    gap: 4px;
-    align-items: stretch;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 4px !important;
+  }
+
+  .table-actions-cell > span {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
   }
 
   .table-action-btn {
-    width: 100%;
-    justify-content: center;
-    padding: 4px 6px !important;
-    font-size: 11px !important;
+    min-height: 44px !important;
+    font-size: 14px !important;
+    border-radius: var(--r-ios-btn, 12px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 14px !important;
   }
 
-  .table-pagination {
-    gap: 8px;
-    padding: 8px 12px;
+  .table-action-btn.btn-edit {
+    flex: 1 !important;
+  }
+
+  .table-action-btn.btn-delete {
+    flex: 0 0 auto !important;
+  }
+
+  .btn-confirm-delete {
+    flex: 1 !important;
   }
 }
 
-@media (max-width: 480px) {
-  .proj-name-text {
-    max-width: 90px;
-  }
-  
-  .table-progress-wrapper {
-    max-width: 80px;
-  }
-
-  .project-table th, .project-table td {
-    padding: 8px 6px;
-  }
-}
 
 
 

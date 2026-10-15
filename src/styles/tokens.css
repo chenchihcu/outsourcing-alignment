@@ -70,6 +70,17 @@
   --shell-bottombar-h: 60px;
   --shell-content-max: 1120px;
 
+  /* ---- Apple HIG 毛玻璃材質與視網膜細線 ---- */
+  --c-blur-surface: rgba(255, 255, 255, 0.82);
+  --c-blur-surface-subtle: rgba(255, 255, 255, 0.65);
+  --c-blur-bg: blur(20px) saturate(180%);
+  --c-border-hairline: rgba(0, 0, 0, 0.08);
+
+  /* ---- Apple HIG 連續圓角尺度 ---- */
+  --r-ios-card: 16px;
+  --r-ios-btn: 12px;
+  --r-ios-input: 10px;
+
   /* ---- 動效(收斂) ---- */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --dur: 0.16s;
