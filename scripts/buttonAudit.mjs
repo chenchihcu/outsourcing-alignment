@@ -125,38 +125,49 @@ async function eventText(data) {
   return String(data);
 }
 
-async function waitForVersion(port) {
-  for (let i = 0; i < 80; i++) {
+async function waitForVersion(port, edgeProcess, getStderr) {
+  for (let i = 0; i < 200; i++) {
+    if (edgeProcess && edgeProcess.exitCode !== null) {
+      throw new Error(`Browser process exited early with code ${edgeProcess.exitCode}: ${getStderr()}`);
+    }
     try {
       const res = await fetch(`http://127.0.0.1:${port}/json/version`);
       if (res.ok) return await res.json();
     } catch {
-      // Edge is still starting.
+      // Browser is still starting.
     }
     await sleep(100);
   }
-  throw new Error('Edge CDP endpoint did not start');
+  throw new Error(`Edge/Chrome CDP endpoint did not start within 20s. Stderr: ${getStderr()}`);
 }
 
-async function startBrowser() {
-  assert(fs.existsSync(edgePath), `找不到 Edge 瀏覽器：${edgePath}`);
+async function launchBrowserOnce() {
+  assert(fs.existsSync(edgePath), `找不到 Edge/Chrome 瀏覽器：${edgePath}`);
 
   const cdpPort = 10800 + Math.floor(Math.random() * 1000);
-  userDataDir = path.resolve('scratch', `edge-button-audit-${Date.now()}`);
+  userDataDir = path.resolve('scratch', `edge-button-audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`);
   await mkdir(userDataDir, { recursive: true });
 
+  let stderrOutput = '';
   edge = spawn(edgePath, [
     '--headless=new',
     '--disable-gpu',
+    '--disable-dev-shm-usage',
+    '--disable-software-rasterizer',
+    '--disable-extensions',
     '--no-sandbox',
     '--no-first-run',
     '--no-default-browser-check',
     `--remote-debugging-port=${cdpPort}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: 'ignore', windowsHide: true });
+  ], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
 
-  const version = await waitForVersion(cdpPort);
+  edge.stderr?.on('data', (chunk) => {
+    stderrOutput += chunk.toString('utf8');
+  });
+
+  const version = await waitForVersion(cdpPort, edge, () => stderrOutput.trim());
   ws = new WebSocket(version.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
     ws.addEventListener('open', resolve, { once: true });
@@ -206,6 +217,23 @@ async function startBrowser() {
     for (const [, item] of pending) item.reject(new Error('WebSocket closed'));
     pending.clear();
   });
+}
+
+async function startBrowser() {
+  try {
+    await launchBrowserOnce();
+  } catch (err) {
+    console.warn(`[buttonAudit] 首次啟動瀏覽器失敗 (${err.message})，正在進行自動重試...`);
+    try { ws?.close(); } catch {}
+    try { edge?.kill(); } catch {}
+    if (userDataDir) {
+      await sleep(200);
+      await rm(userDataDir, { recursive: true, force: true }).catch(() => {});
+      userDataDir = null;
+    }
+    await sleep(500);
+    await launchBrowserOnce();
+  }
 }
 
 function send(method, params = {}, sid = sessionId) {
