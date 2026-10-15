@@ -92,12 +92,12 @@
 
 - 版面同時考量桌面與行動寬度;觸控目標約 ≥ 44px。
 - 行動端輸入與安全區適配:輸入框、選單與文字區字級保持 ≥ 16px,防止 iOS Safari 自動放大破壞視圖;頂欄與置底動作列以 env(safe-area-inset-top) 與 env(safe-area-inset-bottom) 進行動態島與手勢條安全區避讓。
+- 行動端 Chrome 與觸控適配:網頁專案在手機端 Chrome 運作時,版面高度優先採動態視區單位(`100dvh` / `100svh`)以平滑適配行動端 Chrome 網址列與工具列之收合展開;全域或按鍵設定 `touch-action: manipulation` 消除點擊延遲;彈窗與底部選單預防行動端虛擬鍵盤擠壓變形。
 - 版面型態:滿版利用主內容區 vs 限寬可讀,依頁型選擇,勿自訂繞過共用版型 / 模板。
 - 捲動只給長 / 無界區域(清單、長堆疊);避免整頁捲動破壞固定預覽高度。
 - 用語意 HTML;互動元件補必要 ARIA(對應第 5 節無障礙)。
 - client-side 關鍵狀態(含 lock / owner 等衍生旗標)要寫入持久層並於載入還原;持久化物件需涵蓋這些旗標,勿只存主資料。檢查:重整 / 切換後狀態完整還原。
 - 離線可用的 web app:build 後 precache 不可變 artifact,並跑切過主要路由的離線 smoke。
-
 
 ## 10. 圖表 / 資料視覺化 [全;有圖表才適用]
 
@@ -114,5 +114,6 @@
   檢查清單:長 CJK 文字、密集表格 / 圖表、按鈕可見性、捲動邊界、最小寬度不切字。
   視覺驗收在 100% / 125% / 150% DPI 各看一次(badge、limit labels、sample disclosure 無裁切)。
 - Web:在桌面與行動寬度都檢查;確認空 / 載入 / 錯誤狀態;確認鍵盤可操作。
+- Web 無頭 Chrome 測試與 CI 穩定性:若透過無頭 Chrome (CDP / Playwright / 巡檢腳本) 於 Linux 容器或 CI (如 GitHub Actions) 執行頁面巡檢或自動化測試,啟動參數必須包含 `--disable-dev-shm-usage` (防止 `/dev/shm` 64MB 限制導致崩潰) 與 `--disable-gpu`;進程須捕獲 stderr 並設置 15~20 秒啟動寬限與自動重試保護。
 - 不確定或無法判定的項目標記為 VERIFY,單獨列出,不臆測填值。
 <!-- END ui-ux-universal -->
