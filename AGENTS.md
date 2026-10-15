@@ -38,6 +38,10 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   為了同時相容 GitHub Pages (需要 '/Product-outsourcing-alignment-platform/' 子路徑) 與 Netlify / Cloudflare Pages (需要 '/' 根目錄) 部署，**嚴禁將 vite.config.js 的 base 參數寫死**。必須統一使用動態環境變數判定：`process.env.GITHUB_ACTIONS ? '/Product-outsourcing-alignment-platform/' : '/'`。
 - **Cloudflare 邊緣靜態部署與安全標頭**:
   專案配置 `wrangler.jsonc` 託管 `./dist`，支援單頁應用 `single-page-application` 轉向；`public/_headers` 必須維護嚴格 CSP（僅允許 Supabase 與 Google Fonts）、`X-Frame-Options: DENY`、`X-Robots-Tag: noindex` 與 `/assets/*` 長期快取（`max-age=31536000, immutable`）。可透過 `npm run deploy:cf` 一鍵發布。
+- **離線測試環境隔離與禁建 `.env.local` 覆寫**:
+  嚴禁在專案根目錄建立空白的 `.env.local` 進行離線測試，因其覆寫優先權高於 `.env`，會導致 `npm run dev` 永久失去雲端設定誤入離線模式。離線自動化巡檢一律使用專屬 `.env.offline` 搭配 `vite build --mode offline`（`npm run build:offline`）進行，確保開發伺服器與生產打包環境純淨。
+- **ESLint 跨平台 Node 全域環境相容性**:
+  在 `vite.config.js` 等前端打包設定檔中存取 `process.env` 時，必須在頂部明確宣告 `import process from 'node:process'`，避免在嚴格瀏覽器/Flat Config 下觸發 `no-undef` 阻斷 CI 檢查。
 
 ## 驗收 gate
 
