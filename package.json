@@ -8,7 +8,6 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:offline": "vite build --mode offline",
     "qa:storage": "node scripts/testLocalStorage.mjs",
     "qa:concurrency": "node scripts/concurrencyTest.mjs",
     "qa:stress": "node scripts/stressTest.mjs",
@@ -17,7 +16,7 @@
     "qa:cloud-security": "node --env-file=.env scripts/cloudSecurityAudit.mjs",
     "qa:buttons": "node scripts/buttonAudit.mjs",
     "qa:offline": "npm run qa:storage && npm run qa:concurrency && npm run qa:stress && npm run qa:workflow && npm run qa:security",
-    "qa:gate": "npm run build:offline && npm run qa:offline && npm run qa:buttons && npm run build",
+    "qa:gate": "npm run build && npm run qa:offline && npm run qa:buttons",
     "deploy:cf": "npx wrangler deploy"
   },
   "dependencies": {

@@ -248,8 +248,6 @@ const getCachedFactories = (user) => {
 // 雲端工作區(對應 storage suffix):admin 測試庫與正式庫分離
 const getWorkspace = (user) => (user?.role === 'admin' ? 'admin_test' : 'default');
 
-// D-01: 正式建置不含任何預設帳密 (R-1)
-const DEFAULT_ACCOUNTS = [];
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -312,7 +310,7 @@ export default function App() {
   const [syncError, setSyncError] = useState(null);
 
 
-  // 登入狀態與使用者管理
+  // 登入狀態與使用者管理（純雲端上線模式，啟動時絕不信任本機快取）
   const [currentUser, setCurrentUser] = useState(() => {
     return isSupabaseEnabled ? null : getJSON('current_user', null);
   });
@@ -324,28 +322,6 @@ export default function App() {
     return getCachedFactories(currentUser);
   });
 
-  const [accounts, setAccounts] = useState(() => {
-    const suffix = getStorageSuffix(currentUser);
-    const saved = getJSON('accounts' + suffix, null);
-    // 沒有存檔，或存檔為空陣列（被前次 session 清空）→ 用預設值填回，確保至少一個入口
-    if (saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
-      return DEFAULT_ACCOUNTS;
-    }
-    return saved;
-  });
-
-  const handleCreateAdmin = useCallback((adminUser) => {
-    const suffix = getStorageSuffix(adminUser);
-    setAccounts([adminUser]);
-    setJSON('accounts' + suffix, [adminUser]);
-    setCurrentUser(adminUser);
-  }, []);
-
-  const handleResetLocalAccounts = useCallback(() => {
-    const suffix = getStorageSuffix(currentUser);
-    setAccounts([]);
-    setJSON('accounts' + suffix, []);
-  }, [currentUser]);
 
   const currentAlignmentRate = useMemo(
     () => data ? validateAlignment(data).alignmentRate : 0,
@@ -683,33 +659,7 @@ export default function App() {
     }
     setJSON(key, normalizeFactories(factories));
   }, [factories, currentUser]);
-
-  // 身分命名空間(admin 測試庫)切換時:改為從新命名空間「載入」,
-  // 避免把上一個身分的 in-memory 狀態寫進新身分的 key(互相汙染)
-  const accountsSuffixRef = useRef(getStorageSuffix(currentUser));
-  useEffect(() => {
-    const suffix = getStorageSuffix(currentUser);
-    if (suffix !== accountsSuffixRef.current) {
-      accountsSuffixRef.current = suffix;
-      const saved = getJSON('accounts' + suffix, null);
-      setAccounts(saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0) ? DEFAULT_ACCOUNTS : saved);
-      return;
-    }
-    setJSON('accounts' + suffix, accounts);
-  }, [accounts, currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      // D-139: 存入 localStorage 前剔除明文密碼
-      const safeUser = { ...currentUser };
-      delete safeUser.password;
-      setJSON('current_user', safeUser);
-    } else {
-      removeKey('current_user');
-    }
-  }, [currentUser]);
-
-  // Supabase:啟動時以既有 session 還原登入,並監聽登入/登出狀態
+  // Supabase: 啟動時以既有 session 還原登入，並監聽登入/登出狀態
   useEffect(() => {
     if (!isSupabaseEnabled) return;
     let cancelled = false;
@@ -814,13 +764,6 @@ export default function App() {
     }
   };
 
-  const handleAddAccount = (acc) => {
-    setAccounts([...accounts, acc]);
-  };
-
-  const handleRemoveAccount = (uname) => {
-    setAccounts(accounts.filter(a => a.username !== uname));
-  };
 
   // 3. 選取機種並載入詳細資料
   const handleSelectProject = (id, currentList = projects) => {
@@ -1121,19 +1064,9 @@ export default function App() {
     }
   }, [currentUser, currentProjectId, activeTab, fileName]);
 
-  const handleUpdateAccountLevel = (uname, newLevel) => {
-    setAccounts(prev => prev.map(a =>
-      a.username === uname ? { ...a, level: newLevel } : a
-    ));
-  };
-
   const handleUpdateAccountSignature = (uname, signature) => {
-    setAccounts(prev => prev.map(a =>
-      a.username === uname ? { ...a, signature } : a
-    ));
     if (currentUser && currentUser.username === uname) {
       setCurrentUser(prev => ({ ...prev, signature }));
-      // 雲端模式:寫回 Supabase profile;否則 token 刷新或重新登入後簽章會遺失
       if (isSupabaseEnabled) {
         updateMySignature(signature).catch((e) => {
           if (import.meta.env.DEV) console.warn('[auth] 簽章雲端同步失敗', e);
@@ -1191,10 +1124,6 @@ export default function App() {
             factories={factories}
             onAddFactory={handleAddFactory}
             onRemoveFactory={handleRemoveFactory}
-            accounts={accounts}
-            onAddAccount={handleAddAccount}
-            onRemoveAccount={handleRemoveAccount}
-            onUpdateAccountLevel={handleUpdateAccountLevel}
             onUpdateAccountSignature={handleUpdateAccountSignature}
             currentUser={currentUser}
           />
@@ -1218,12 +1147,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginModal
-        onLogin={setCurrentUser}
-        accounts={accounts}
-        onCreateAdmin={handleCreateAdmin}
-        onResetAccounts={handleResetLocalAccounts}
-      />
+      <LoginModal onLogin={setCurrentUser} />
     );
   }
 

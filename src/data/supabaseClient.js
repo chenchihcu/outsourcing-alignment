@@ -1,23 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
 /**
- * Supabase 連線(離線優先設計)。
- * 未設定環境變數時 isSupabaseEnabled = false,整個 App 退回純 localStorage 行為,
- * 與導入 Supabase 前完全一致。設定後即啟用雲端同步與即時協作。
+ * Supabase 連線（純雲端上線架構）。
+ * 網站架於 Cloudflare，全域支援手機與跨網連線，所有專案皆為純雲端上線模式（無本機離線模式）。
  *
- * 設定方式:於專案根目錄建立 .env(可複製 .env.example):
+ * 設定方式：於環境變數（如 .env 或 Cloudflare Dashboard / GitHub Secrets）設定：
  *   VITE_SUPABASE_URL=https://xxxx.supabase.co
  *   VITE_SUPABASE_ANON_KEY=xxxxx
  */
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// E5 — 環境變數不完整時提示
-if ((url && !anonKey) || (!url && anonKey)) {
-  console.error('[supabase] 設定不完整：VITE_SUPABASE_URL 與 VITE_SUPABASE_ANON_KEY 必須同時設定或同時留空。');
-}
+export const isSupabaseConfigured = Boolean(url && anonKey);
+export const isSupabaseEnabled = isSupabaseConfigured;
 
-export const isSupabaseEnabled = Boolean(url && anonKey);
+if (!isSupabaseConfigured) {
+  console.warn('[supabase] 尚未配置雲端服務金鑰 (VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY)。本系統為純雲端模式，請配置環境變數。');
+}
 
 export const supabase = isSupabaseEnabled
   ? createClient(url, anonKey, {

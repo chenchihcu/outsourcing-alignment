@@ -75,8 +75,11 @@ async function step(name, fn) {
 
 function createStaticServer(appUrl) {
   return http.createServer((req, res) => {
-    const pathname = decodeURIComponent(new URL(req.url, appUrl).pathname);
-    const target = pathname === '/' ? 'index.html' : pathname.slice(1);
+    let pathname = decodeURIComponent(new URL(req.url, appUrl).pathname);
+    if (pathname.startsWith('/Product-outsourcing-alignment-platform/')) {
+      pathname = pathname.slice('/Product-outsourcing-alignment-platform'.length);
+    }
+    const target = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
     const filePath = path.join(distRoot, target);
 
     if (!filePath.startsWith(distRoot)) {
@@ -331,8 +334,8 @@ async function setupPage(appUrl) {
   const attached = await send('Target.attachToTarget', { targetId: created.targetId, flatten: true }, null);
   sessionId = attached.sessionId;
 
+  const auditUserId = '00000000-0000-0000-0000-000000000001';
   const auditUser = process.env.BUTTON_AUDIT_USER || 'admin';
-  const auditPass = process.env.BUTTON_AUDIT_PASS || ('pW_' + Math.random().toString(36).slice(2, 10));
 
   await send('Runtime.enable');
   await send('Page.enable');
@@ -340,20 +343,64 @@ async function setupPage(appUrl) {
   await send('Page.addScriptToEvaluateOnNewDocument', {
     source: `
       localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: ${JSON.stringify(auditUser)},
-        password: ${JSON.stringify(auditPass)},
-        unit: '管理處',
-        role: 'admin',
-        level: 'Administrator'
-      }]));
+      const sessionData = {
+        access_token: 'mock-audit-token',
+        token_type: 'bearer',
+        expires_in: 864000,
+        expires_at: Math.floor(Date.now() / 1000) + 864000,
+        refresh_token: 'mock-audit-refresh',
+        user: {
+          id: '${auditUserId}',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: '${auditUser}@mitcorp.local',
+          app_metadata: { provider: 'email', providers: ['email'] },
+          user_metadata: { username: ${JSON.stringify(auditUser)}, unit: '管理處', role: 'admin', level: 'Administrator' },
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-01T00:00:00.000Z',
+        }
+      };
+      localStorage.setItem('ag_sb_auth', JSON.stringify(sessionData));
       localStorage.setItem('ag_current_user', JSON.stringify({
+        id: '${auditUserId}',
+        email: '${auditUser}@mitcorp.local',
         username: ${JSON.stringify(auditUser)},
         unit: '管理處',
         role: 'admin',
         level: 'Administrator',
         signature: '${signature}'
       }));
+
+      // 攔截 Supabase REST API，使其在離網環境或無真實後端下能自主完成 100% 巡檢
+      const origFetch = window.fetch;
+      window.fetch = async function(resource, init) {
+        const urlStr = typeof resource === 'string' ? resource : (resource?.url || '');
+        if (urlStr.includes('/rest/v1/profiles')) {
+          return new Response(JSON.stringify([{
+            id: '${auditUserId}',
+            username: ${JSON.stringify(auditUser)},
+            unit: '管理處',
+            role: 'admin',
+            level: 'Administrator',
+            signature: '${signature}',
+            created_at: '2026-01-01T00:00:00.000Z'
+          }]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        if (urlStr.includes('/rest/v1/projects')) {
+          return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        if (urlStr.includes('/rest/v1/factories')) {
+          return new Response(JSON.stringify([
+            { name: '富士康' },
+            { name: '捷普' },
+            { name: '醫電鼎眾' }
+          ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        if (urlStr.includes('/auth/v1/')) {
+          return new Response(JSON.stringify(sessionData), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+        return origFetch.apply(this, arguments);
+      };
     `,
   });
   await send('Page.navigate', { url: appUrl });
@@ -605,33 +652,12 @@ async function runAudit(appUrl) {
     await waitFor("!document.body.innerText.includes('按鍵巡檢加工廠')", 'factory deleted');
   });
 
-  await step('設定頁新增/顯示/刪除帳號', async () => {
-    const dynamicPw = 'pW_' + Math.random().toString(36).slice(2, 10);
-    await setValue('input[placeholder="帳號"]', 'btnqa');
-    await setValue('input[placeholder="密碼"]', dynamicPw);
-    await clickText('新增使用者帳號');
-    await waitFor("document.body.innerText.includes('btnqa')", 'account added');
-    await evalPage(`(() => {
-      const row = [...document.querySelectorAll('tr')].find((candidate) => candidate.textContent.includes('btnqa'));
-      const button = row?.querySelector('.btn-reveal-pw');
-      if (!button) throw new Error('reveal missing');
-      button.click();
-      return true;
-    })()`);
-    await waitFor(`document.body.innerText.includes(${JSON.stringify(dynamicPw)})`, 'password revealed');
-    await evalPage(`(() => {
-      const row = [...document.querySelectorAll('tr')].find((candidate) => candidate.textContent.includes('btnqa'));
-      const button = row?.querySelector('.btn-delete-account');
-      if (!button || button.disabled) throw new Error('delete account missing/disabled');
-      button.click();
-      return true;
-    })()`);
-    await evalPage(`(() => {
-      const confirmBtn = document.querySelector('.btn-confirm-delete-account');
-      if (confirmBtn) confirmBtn.click();
-      return true;
-    })()`);
-    await waitFor("!document.body.innerText.includes('btnqa')", 'account deleted');
+  await step('設定頁雲端使用者管理入口', async () => {
+    await waitFor("document.body.innerText.includes('雲端使用者管理')", 'cloud users section');
+    await setValue('#inviteEmail', 'btnqa@mitcorp.local');
+    await setValue('#inviteName', '巡檢員');
+    const emailVal = await evalPage("document.querySelector('#inviteEmail')?.value");
+    assert(emailVal === 'btnqa@mitcorp.local', 'invite email input verified');
   });
 
   await step('側欄收合/手機選單遮罩/登出', async () => {
