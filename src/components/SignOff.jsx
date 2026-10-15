@@ -42,11 +42,16 @@ export default function SignOff({
     };
   }, []);
 
+  const warningsList = report?.warnings || [];
+  const hasBlockingErrors = warningsList.some(it => it.type === 'error');
+  const blockingErrorsCount = warningsList.filter(it => it.type === 'error').length;
+
   // ===== 品保退件流程(硬性鎖定)=====
   const signOff = data.basicInfo?.signOff || {};
   const rejection = signOff.rejection || null;
   const isRejected = !!rejection;
-  const finalApprovalComplete = !!signOff.qaSignature && !isRejected;
+  // D-116: 必須三方簽核全部完成且無退件才算最終簽核完成
+  const finalApprovalComplete = !!signOff.rdSignature && !!signOff.engineeringReviewSignature && !!signOff.qaSignature && !isRejected;
   const isQA = currentUser.role === 'qa' || currentUser.role === 'admin';
   const canResubmit = currentUser.role === 'rd' || currentUser.role === 'eng' || currentUser.role === 'admin';
   const [rejectReason, setRejectReason] = useState('');
@@ -64,14 +69,23 @@ export default function SignOff({
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
 
-  // QA 退件:記錄原因並作廢三方簽章(修正後須重新簽核)
+  // QA 退件:記錄原因並作廢三方簽章(修正後須重新簽核，D-109 累計歷程)
   const handleReject = () => {
     const reason = rejectReason.trim();
     if (!reason) { setRejectError('請填寫退件原因。'); return; }
     setRejectError('');
+    const historyItem = {
+      type: 'reject',
+      reason,
+      by: currentUser.username,
+      byUnit: currentUser.unit,
+      at: new Date().toISOString()
+    };
+    const currentHistory = Array.isArray(signOff.signOffHistory) ? signOff.signOffHistory : [];
     const updatedSign = {
       ...data.basicInfo.signOff,
-      rejection: { reason, by: currentUser.username, byUnit: currentUser.unit, at: new Date().toISOString() },
+      rejection: { reason, by: currentUser.username, byUnit: currentUser.unit, at: historyItem.at },
+      signOffHistory: [...currentHistory, historyItem],
       rdSignature: '',
       engineeringReviewSignature: '',
       qaSignature: '',
@@ -88,24 +102,37 @@ export default function SignOff({
     setRejectReason('');
   };
 
-  // 發包方修正後重新送審:解除退件鎖定
+  // 發包方修正後重新送審:解除退件鎖定 (D-109 累計歷程)
   const handleResubmit = () => {
     setResubmitError('');
-    // D5 — 防呆：退件資訊遺失時中止
     if (!rejection) { setResubmitError('退件資訊遺失，無法執行重新送審。'); return; }
-    // D6 — 必須填寫修正說明
     if (!resubmitNote.trim()) { setResubmitError('請填寫「修正說明」，說明本次修正了哪些內容。'); return; }
-    // D6 — 必須勾選已閱讀確認
     if (!rejectionRead) { setResubmitError('請勾選「已閱讀退件原因並完成修正」後才可重新送審。'); return; }
-    const updatedSign = { ...data.basicInfo.signOff };
+    const historyItem = {
+      type: 'resubmit',
+      note: resubmitNote.trim(),
+      by: currentUser.username,
+      byUnit: currentUser.unit,
+      at: new Date().toISOString()
+    };
+    const currentHistory = Array.isArray(signOff.signOffHistory) ? signOff.signOffHistory : [];
+    const updatedSign = {
+      ...data.basicInfo.signOff,
+      signOffHistory: [...currentHistory, historyItem],
+      rejectionResponse: { note: resubmitNote.trim(), by: currentUser.username, at: historyItem.at }
+    };
     delete updatedSign.rejection;
-    updatedSign.rejectionResponse = { note: resubmitNote.trim(), by: currentUser.username, at: new Date().toISOString() };
     onChange({ ...data, basicInfo: { ...data.basicInfo, signOff: updatedSign } });
     setResubmitNote('');
     setRejectionRead(false);
   };
 
   const handleSignChange = (field, val) => {
+    // D-25: 一般角色尚有 error 級必填檢查未完成時，阻擋簽章
+    if (val && hasBlockingErrors && currentUser?.role !== 'admin') {
+      setExportError(`尚有 ${blockingErrorsCount} 項必填檢查未完成，無法簽章。請先至前面步驟完成填寫。`);
+      return;
+    }
     const signedAtField = SIGNED_AT_FIELDS[field];
     const updatedSign = { ...data.basicInfo.signOff, [field]: val };
     if (signedAtField) {
@@ -123,9 +150,13 @@ export default function SignOff({
   };
 
   const handleExport = () => {
-    // U4 — 防止重複點擊
     if (exportLoading) return;
     setExportError('');
+    // D-25: 一般角色尚有 error 級必填檢查未完成時，阻擋匯出
+    if (hasBlockingErrors && currentUser?.role !== 'admin') {
+      setExportError(`尚有 ${blockingErrorsCount} 項必填檢查未完成，無法匯出正式 Excel。請先完成所有必填項目。`);
+      return;
+    }
     if (!originalWb) {
       setExportError('無法匯出：缺少原始 Excel 範本資料。請重新載入機種或從範本重新建立。');
       return;
@@ -213,6 +244,14 @@ export default function SignOff({
   return (
     <div className="signoff-container glass-card animate-fade-in">
       <h2 className="section-title">簽章與匯出</h2>
+
+      {/* D-25: 阻擋未完成項目簽核與匯出提示橫幅 */}
+      {hasBlockingErrors && (
+        <div className="blocking-warning-banner" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
+          <strong>⚠️ 尚有 {blockingErrorsCount} 項必填檢查未完成</strong>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>必須先至前面步驟完成所有防呆必填項目，方可套用簽章或匯出正式需求表。</p>
+        </div>
+      )}
 
       {/* 品保退件提示(硬性鎖定:簽章與匯出皆已封鎖) */}
       {isRejected && (
@@ -651,6 +690,26 @@ export default function SignOff({
             <button type="button" className="btn btn-secondary" onClick={onFinalBackToList}>
               回到機種列表
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* D-109: 簽核與審查退件歷程記錄時間軸 */}
+      {Array.isArray(signOff.signOffHistory) && signOff.signOffHistory.length > 0 && (
+        <div className="signoff-history-card" style={{ marginTop: '24px', padding: '16px', background: 'rgba(248, 250, 252, 0.9)', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 600, color: '#334155' }}>📋 簽核與審查歷程記錄</h3>
+          <div className="history-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {signOff.signOffHistory.map((item, idx) => (
+              <div key={idx} style={{ padding: '8px 12px', background: item.type === 'reject' ? '#fff1f2' : '#f0fdf4', borderLeft: `4px solid ${item.type === 'reject' ? '#e11d48' : '#16a34a'}`, borderRadius: '4px', fontSize: '0.88rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: item.type === 'reject' ? '#9f1239' : '#166534' }}>
+                  <span>{item.type === 'reject' ? '⛔ 品保退件' : '↩️ 重新送審'} ({item.byUnit ? `${item.byUnit} · ` : ''}{item.by})</span>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{fmtDateTime(item.at)}</span>
+                </div>
+                <div style={{ marginTop: '4px', color: '#334155' }}>
+                  {item.type === 'reject' ? `原因：${item.reason}` : `修正說明：${item.note}`}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

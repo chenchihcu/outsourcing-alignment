@@ -466,8 +466,18 @@ async function runAudit(appUrl) {
     })()`);
     assert(removed, 'remove RD button missing');
     await waitFor("document.querySelectorAll('.sign-box')[0].innerText.includes('尚未設定電子簽章')", 'RD signature cleared');
-    const finalStillVisibleByPolicy = await evalPage("document.body.innerText.includes('最終簽核已完成')");
-    return `RD cleared; final gate still visible by QA policy=${finalStillVisibleByPolicy}`;
+    const finalHiddenWhenMissingRD = !(await evalPage("document.body.innerText.includes('最終簽核已完成')"));
+    assert(finalHiddenWhenMissingRD, 'final approval banner should be hidden when RD signature is missing (D-116)');
+
+    // D-116 / D-150: 重新補齊 RD 簽章，恢復三方完整簽核供後續步驟使用
+    await evalPage(`(() => {
+      const box = document.querySelectorAll('.sign-box')[0];
+      const button = [...box.querySelectorAll('button')]
+        .find((candidate) => candidate.textContent.includes('套用我的簽章') && !candidate.disabled);
+      if (button) button.click();
+    })()`);
+    await waitFor("document.body.innerText.includes('最終簽核已完成')", 'final approval restored');
+    return 'RD cleared and re-applied; final approval behavior verified (D-116, D-150)';
   });
 
   await step('簽章上傳入口按鈕', async () => {

@@ -122,15 +122,26 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     proj.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 2. 根據完成進度過濾
+  // 2. 根據完成進度與退件狀態過濾 (D-21, 9A)
+  const isProjectRejected = (p) => !!p.data?.basicInfo?.signOff?.rejection;
+  const isProjectCompleted = (p) => !isProjectRejected(p) && p.alignmentRate === 100;
+
   const filteredProjects = searchedProjects.filter(proj => {
     if (filterMode === 'in-progress') {
-      return proj.alignmentRate < 100;
+      return !isProjectRejected(proj) && !isProjectCompleted(proj);
+    }
+    if (filterMode === 'rejected') {
+      return isProjectRejected(proj);
     }
     if (filterMode === 'completed') {
-      return proj.alignmentRate === 100;
+      return isProjectCompleted(proj);
     }
     return true; // 'all'
+  }).sort((a, b) => {
+    // D-148: 預設依 updatedAt 降冪排序，最新更新在最前
+    const tA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+    const tB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+    return tB - tA;
   });
 
   // 3. 分頁計算 (預設每頁 10 筆)
@@ -205,13 +216,20 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
             className={`tab-filter-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
             onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
           >
-            ⏳ 進行中 ({searchedProjects.filter(p => p.alignmentRate < 100).length})
+            ⏳ 進行中 ({searchedProjects.filter(p => !isProjectRejected(p) && !isProjectCompleted(p)).length})
+          </button>
+          <button type="button" 
+            className={`tab-filter-btn ${filterMode === 'rejected' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
+            style={{ color: filterMode === 'rejected' ? '#e11d48' : undefined }}
+          >
+            ⛔ 已退件 ({searchedProjects.filter(isProjectRejected).length})
           </button>
           <button type="button" 
             className={`tab-filter-btn ${filterMode === 'completed' ? 'active' : ''}`}
             onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
           >
-            ✅ 已完成 ({searchedProjects.filter(p => p.alignmentRate === 100).length})
+            ✅ 已完成 ({searchedProjects.filter(isProjectCompleted).length})
           </button>
           <button type="button" 
             className={`tab-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
@@ -329,9 +347,19 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                       </div>
                     </td>
                     <td className="hide-on-mobile">
-                      <span className={`status-badge ${proj.alignmentRate === 100 ? 'aligned' : 'in-progress'}`}>
-                        {proj.alignmentRate === 100 ? '已完成 ✓' : '進行中 ⏳'}
-                      </span>
+                      {isProjectRejected(proj) ? (
+                        <span className="status-badge" style={{ background: '#ffe4e6', color: '#e11d48', border: '1px solid #fecdd3' }}>
+                          ⛔ 已退件 待修正
+                        </span>
+                      ) : isProjectCompleted(proj) ? (
+                        <span className="status-badge aligned">
+                          已核准 ✓
+                        </span>
+                      ) : (
+                        <span className="status-badge in-progress">
+                          進行中 ⏳
+                        </span>
+                      )}
                     </td>
                     <td className="table-date-cell hide-on-mobile">{dateStr}</td>
                     <td>
