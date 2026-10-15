@@ -334,6 +334,13 @@ export default function App() {
     return saved;
   });
 
+  const handleCreateAdmin = useCallback((adminUser) => {
+    const suffix = getStorageSuffix(adminUser);
+    setAccounts([adminUser]);
+    setJSON('accounts' + suffix, [adminUser]);
+    setCurrentUser(adminUser);
+  }, []);
+
   const currentAlignmentRate = useMemo(
     () => data ? validateAlignment(data).alignmentRate : 0,
     [data]
@@ -1205,7 +1212,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginModal onLogin={setCurrentUser} accounts={accounts} />
+      <LoginModal onLogin={setCurrentUser} accounts={accounts} onCreateAdmin={handleCreateAdmin} />
     );
   }
 
