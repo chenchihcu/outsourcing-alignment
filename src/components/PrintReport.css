@@ -58,8 +58,8 @@
 
   .print-section {
     margin: 0 0 12px;
-    break-inside: avoid-page;
-    page-break-inside: avoid;
+    break-inside: auto;
+    page-break-inside: auto;
   }
 
   .print-keep-block {
@@ -263,7 +263,7 @@
     color: #ffffff !important; /* 白色打勾 */
   }
 
-  .print-checkbox-item.is-checked .checkbox-label {
+  .print-checkbox-item.is-checked .print-checkbox-label {
     color: #0f172a !important;
     font-weight: bold !important;
   }
@@ -275,7 +275,7 @@
     color: transparent !important;
   }
 
-  .print-checkbox-item.is-unchecked .checkbox-label {
+  .print-checkbox-item.is-unchecked .print-checkbox-label {
     color: #94a3b8 !important;
   }
 

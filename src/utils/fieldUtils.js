@@ -44,13 +44,7 @@ export function isFieldDisabled(data, currentUser, fieldPath) {
   if (fieldPath === 'basicInfo.stage.pvt' || fieldPath === 'basicInfo.stage.politRun') {
     return currentUser.role !== 'eng';
   }
-  if (fieldPath === 'basicInfo.ecnChange.has' || fieldPath === 'basicInfo.ecnChange.no') {
-    const owner = data._owners?.['basicInfo.ecnChange'];
-    if (owner && owner !== currentUser.unit) {
-      return true;
-    }
-    return false;
-  }
+
   const parts = fieldPath.split('.');
   let currentPath = '';
   for (let i = 0; i < parts.length; i++) {

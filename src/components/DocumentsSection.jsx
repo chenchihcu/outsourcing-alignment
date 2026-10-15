@@ -24,19 +24,19 @@ export default function DocumentsSection({ data, onChange, currentUser, onNext }
         ].map(([key, label, desc]) => {
           const checked = data.basicInfo.documents?.[key] || false;
           return (
-            <div key={key} className={`document-card glass-card ${checked ? 'checked-active' : ''}`} style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'flex-start', transition: 'all 0.25s' }}>
-              <label className="checkbox-label" style={{ margin: 0, display: 'flex', gap: '10px', alignItems: 'flex-start', cursor: 'pointer', flex: 1 }}>
+            <div key={key} className={`document-card glass-card ${checked ? 'checked-active' : ''}`} style={{ padding: '16px', display: 'flex', gap: '12px', alignItems: 'center', transition: 'all 0.25s' }}>
+              <label className="checkbox-label" style={{ margin: 0, display: 'flex', gap: '14px', alignItems: 'center', cursor: 'pointer', flex: 1 }}>
                 <input 
                   type="checkbox" 
                   checked={checked} 
                   onChange={(e) => setField(`basicInfo.documents.${key}`, e.target.checked)}
                   disabled={isFieldDisabled(data, currentUser, `basicInfo.documents.${key}`)}
-                  style={{ marginTop: '12px' }}
+                  style={{ width: '22px', height: '22px', minWidth: '22px', minHeight: '22px', accentColor: 'var(--c-accent, #2563eb)', cursor: 'pointer' }}
                 />
                 <div className="doc-icon-container">{getDocumentIcon(key)}</div>
                 <div style={{ flex: 1 }}>
-                  <span className="doc-label" style={{ fontWeight: 600, fontSize: '0.95rem' }}>{label}</span>
-                  <p className="doc-desc" style={{ fontSize: '0.78rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>{desc}</p>
+                  <span className="doc-label" style={{ fontWeight: 600, fontSize: '0.98rem' }}>{label}</span>
+                  <p className="doc-desc" style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>{desc}</p>
                 </div>
               </label>
             </div>
