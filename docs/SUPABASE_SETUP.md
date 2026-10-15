@@ -30,13 +30,16 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 supabase/migrations/0001_init.sql
 supabase/migrations/0002_admin_rls.sql
 supabase/migrations/0003_factories.sql
+supabase/migrations/0004_security_hardening.sql
+supabase/migrations/0005_signoff_guard.sql
 ```
 
-這會建立 `profiles`、`projects`、`factories` 資料表、Row-Level Security 規則、自動建立 profile 的 trigger,並把需即時同步的資料表加入 Realtime publication。
+這會建立 `profiles`、`projects`、`factories` 資料表、Row-Level Security 嚴格隔離規則、三方簽章授權驗證、刪除防護、版本號自動遞增、自動建立 profile 的 trigger,並把需即時同步的資料表加入 Realtime publication。
 
-### 4.(開發便利)關閉 Email 驗證
-Authentication → Providers → Email → 視需要關閉「Confirm email」,
-讓註冊後可直接登入(正式環境建議保留驗證)。
+### 4. 嚴格帳號安全設定 (必做)
+前往 Supabase Dashboard → **Authentication**：
+1. **關閉公開註冊 (Allow new users to sign up = off)**：禁止外部任意人自行註冊帳號，所有帳號必須由管理員透過系統邀請建立。
+2. **保留 Email 驗證 (Confirm email = on)**：確保所有邀請與帳號信箱皆為真實可接收通知之信箱。
 
 ### 5. 重新啟動開發伺服器
 ```bash

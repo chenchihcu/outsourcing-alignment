@@ -1,8 +1,9 @@
 import { serve } from 'https://deno.land/std@0.208.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.108.0';
 
+const ALLOWED_ORIGIN = Deno.env.get('ALLOWED_ORIGIN') || '*';
 const CORS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
@@ -81,7 +82,15 @@ serve(async (req) => {
 
     return json({ success: true, userId: data.user.id });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : '邀請失敗';
+    console.error('[invite-user error]', err);
+    let msg = '邀請使用者處理失敗，請稍後再試或檢查網路與權限。';
+    if (err instanceof Error) {
+      if (err.message.includes('already registered') || err.message.includes('already exists')) {
+        msg = '此 Email 已經註冊過，無法重複邀請。';
+      } else if (err.message.includes('rate limit')) {
+        msg = '發送頻率過高，請稍候重試。';
+      }
+    }
     return json({ error: msg }, 500);
   }
 });

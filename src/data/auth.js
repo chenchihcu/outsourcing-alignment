@@ -9,14 +9,14 @@ export function toLoginEmail(identifier) {
   return id.includes('@') ? id : `${id}@${LOGIN_DOMAIN}`;
 }
 
-/* Supabase session + profile → App 的 currentUser 形狀 */
+/* Supabase session + profile → App 的 currentUser 形狀 (D-08: 讀不到 profile 預設為 readonly 唯讀) */
 function toCurrentUser(profile, user) {
   return {
     id: user?.id,
     email: user?.email,
     username: profile?.username || user?.email || '',
     unit: profile?.unit || '',
-    role: profile?.role || 'rd',
+    role: profile?.role || 'readonly',
     level: profile?.level || '',
     signature: profile?.signature || null,
   };
@@ -50,6 +50,9 @@ export async function getCurrentUser() {
     .select('*')
     .eq('id', session.user.id)
     .maybeSingle();
+  if (!profile) {
+    throw new Error('帳號尚未完成開通，請聯絡管理員。');
+  }
   return toCurrentUser(profile, session.user);
 }
 

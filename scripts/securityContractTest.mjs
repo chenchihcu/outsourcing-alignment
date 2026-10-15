@@ -79,5 +79,27 @@ check(
   'an explicit emergency rollback exists and warns that security is weakened',
 );
 
+const migration0005 = read('supabase/migrations/0005_signoff_guard.sql');
+check(
+  migration0005.includes('guard_project_mutations') && migration0005.includes('version bigint'),
+  '0005 enforces sign-off mutations guard and optimistic locking version column',
+);
+check(
+  migration0005.includes('guard_project_deletion') && migration0005.includes('default-template'),
+  '0005 enforces server-side deletion protection and default-template guard',
+);
+
+const rollback0005 = read('supabase/rollback/0005_signoff_guard_rollback.sql');
+check(
+  rollback0005.includes('project_guard_mutations_trigger') && rollback0005.includes('project_guard_deletion_trigger'),
+  '0005 rollback cleanly removes guard triggers and functions',
+);
+
+const headers = read('public/_headers');
+check(
+  headers.includes('Content-Security-Policy') && headers.includes('Strict-Transport-Security'),
+  'public/_headers defines CSP and HSTS security headers',
+);
+
 console.log(`\nSecurity contract results: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exitCode = 1;
