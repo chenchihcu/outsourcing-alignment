@@ -116,6 +116,19 @@ h1, h2, h3, h4 {
 }
 
 /* Apple HIG 行動裝置觸控與字級防縮放優化 */
+@media (max-width: 1024px) {
+  button,
+  .btn,
+  a,
+  [role="button"],
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 @media (max-width: 768px) {
   input[type="text"],
   input[type="password"],
