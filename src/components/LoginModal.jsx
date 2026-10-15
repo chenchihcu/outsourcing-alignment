@@ -4,7 +4,7 @@ import './LoginModal.css';
 import { isSupabaseEnabled } from '../data/supabaseClient';
 import { signIn } from '../data/auth';
 
-export default function LoginModal({ onLogin, accounts = [], onCreateAdmin }) {
+export default function LoginModal({ onLogin, accounts = [], onCreateAdmin, onResetAccounts }) {
   const isFirstLaunch = !isSupabaseEnabled && (!accounts || accounts.length === 0);
 
   const [username, setUsername] = useState('');
@@ -65,7 +65,16 @@ export default function LoginModal({ onLogin, accounts = [], onCreateAdmin }) {
         if (user) onLogin(user);
         else setError('登入失敗，請確認帳號與密碼。');
       } catch (err) {
-        setError(err?.message || '操作失敗，請稍後再試。');
+        const msg = err?.message || '';
+        if (msg.includes('Invalid login credentials')) {
+          setError('帳號或密碼錯誤，請重新確認。');
+        } else if (msg.includes('Email not confirmed')) {
+          setError('該帳號信箱尚未完成驗證，請至信箱收取確認信。');
+        } else if (msg.includes('User not found')) {
+          setError('此帳號不存在，請聯絡系統管理員開通。');
+        } else {
+          setError(msg || '操作失敗，請稍後再試。');
+        }
       } finally {
         setBusy(false);
       }
@@ -204,10 +213,33 @@ export default function LoginModal({ onLogin, accounts = [], onCreateAdmin }) {
               {busy ? '驗證中…' : '確認登入'}
             </button>
 
-            {isSupabaseEnabled && (
+            {isSupabaseEnabled ? (
               <p className="login-contact-hint">
                 尚無 Supabase 帳號？請聯絡系統管理員開通。
               </p>
+            ) : (
+              <>
+                {onResetAccounts && (
+                  <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                    <button
+                      type="button"
+                      className="btn-link"
+                      style={{ fontSize: '0.82rem', color: '#64748b', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                      onClick={() => {
+                        if (window.confirm('確定要清除本機登入帳號並重新設定管理員嗎？\n（此操作不會刪除已儲存的機種表單資料）')) {
+                          onResetAccounts();
+                          setError('');
+                        }
+                      }}
+                    >
+                      忘記密碼？重設本機管理員
+                    </button>
+                  </div>
+                )}
+                <p className="login-contact-hint" style={{ fontSize: '0.78rem', color: '#94a3b8', textAlign: 'center', marginTop: '8px' }}>
+                  提示：目前為本機離線模式。若需啟用雲端多端同步，請於專案目錄設定 .env 金鑰。
+                </p>
+              </>
             )}
           </form>
         )}
@@ -219,6 +251,7 @@ export default function LoginModal({ onLogin, accounts = [], onCreateAdmin }) {
 LoginModal.propTypes = {
   onLogin: PropTypes.func.isRequired,
   onCreateAdmin: PropTypes.func,
+  onResetAccounts: PropTypes.func,
   accounts: PropTypes.arrayOf(
     PropTypes.shape({
       username: PropTypes.string.isRequired,

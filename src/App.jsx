@@ -341,6 +341,12 @@ export default function App() {
     setCurrentUser(adminUser);
   }, []);
 
+  const handleResetLocalAccounts = useCallback(() => {
+    const suffix = getStorageSuffix(currentUser);
+    setAccounts([]);
+    setJSON('accounts' + suffix, []);
+  }, [currentUser]);
+
   const currentAlignmentRate = useMemo(
     () => data ? validateAlignment(data).alignmentRate : 0,
     [data]
@@ -1212,7 +1218,12 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginModal onLogin={setCurrentUser} accounts={accounts} onCreateAdmin={handleCreateAdmin} />
+      <LoginModal
+        onLogin={setCurrentUser}
+        accounts={accounts}
+        onCreateAdmin={handleCreateAdmin}
+        onResetAccounts={handleResetLocalAccounts}
+      />
     );
   }
 
