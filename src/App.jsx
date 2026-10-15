@@ -58,8 +58,9 @@ function sanitizeProjectData(data) {
       clone.basicInfo.ecnChange = { has: !!legacyEcn, no: !legacyEcn };
     }
     delete clone.basicInfo._legacyEcn;
+    // D-106: 必填題不替使用者預設回答
     if (clone.basicInfo.ecnChange === undefined) {
-      clone.basicInfo.ecnChange = { has: false, no: true };
+      clone.basicInfo.ecnChange = { has: false, no: false };
     }
     stage.mp = stage.mp ?? false;
     clone.basicInfo.stage = { ...stage };
@@ -69,8 +70,12 @@ function sanitizeProjectData(data) {
     clone.processControl = { ...clone.processControl };
     clone.processControl.smtFirstPiece = { ...(clone.processControl.smtFirstPiece || {}) };
     const legacyApertureRatio = clone.basicInfo?.tooling?.stencil?.apertureRatio;
+    // D-149: 遷移舊開孔比例後立即刪除舊欄位，確保清空能被正確存檔
     if (!clone.processControl.smtFirstPiece.stencilApertureRatio && legacyApertureRatio) {
       clone.processControl.smtFirstPiece.stencilApertureRatio = legacyApertureRatio;
+    }
+    if (clone.basicInfo?.tooling?.stencil?.apertureRatio !== undefined) {
+      delete clone.basicInfo.tooling.stencil.apertureRatio;
     }
     
     // 1. tempPoints
@@ -508,23 +513,36 @@ export default function App() {
     return () => { unsub(); setOnlineUsers([]); };
   }, [currentUser, currentProjectId]);
 
-  // 2. 自動存檔功能 (提供即時與 Debounce 800ms 機制)
+  // 2. 自動存檔功能 (提供即時與 Debounce 800ms 機制，D-153 單一寫入與版本號遞增)
   const saveProjectData = useCallback((projId, name, projData) => {
     if (!projId || !projData) return;
     const report = validateAlignment(projData);
     const updatedAt = new Date().toISOString();
-    const next = projectsRef.current.map(p =>
-      p.id === projId
-        ? { ...p, name, data: projData, alignmentRate: report.alignmentRate, updatedAt }
-        : p
-    );
+    const user = currentUserRef.current;
+    const storageKey = user ? getProjectsKey(user).replace('ag_', '') : null;
+
+    // D-153: 重新讀取儲存區最新資料，只更新當前機種，防止覆寫其他分頁的修改
+    const currentList = storageKey ? getJSON(storageKey, projectsRef.current) : projectsRef.current;
+    const exists = currentList.some(p => p.id === projId);
+    let next;
+    if (exists) {
+      next = currentList.map(p =>
+        p.id === projId
+          ? { ...p, name, data: projData, alignmentRate: report.alignmentRate, updatedAt, version: (p.version || 0) + 1 }
+          : p
+      );
+    } else {
+      next = [...currentList, { id: projId, name, data: projData, alignmentRate: report.alignmentRate, createdAt: updatedAt, updatedAt, version: 1 }];
+    }
+
     projectsRef.current = next;
     setProjects(next);
     // 同步落盤:beforeunload / 登出等時機 setState 不會再 commit,persist effect 不會執行
-    const user = currentUserRef.current;
-    if (user) setJSON(getProjectsKey(user).replace('ag_', ''), sanitizeProjects(next));
+    if (storageKey) {
+      setJSON(storageKey, sanitizeProjects(next));
+    }
     // 雲端同步(關閉時 pushProject 為 no-op)
-    if (isSupabaseEnabled) {
+    if (isSupabaseEnabled && user) {
       const base = next.find(p => p.id === projId);
       if (base) {
         pushProject(getWorkspace(user), base, user?.id).catch(e => {
@@ -592,10 +610,8 @@ export default function App() {
   // 共用登出流程:先儲存當前編輯(write-through 落盤+上雲),再清除登入狀態與
   // 「上次開啟機種」記錄,避免共用工作站上下一位登入者自動開啟上一位的機種
   const handleLogout = async () => {
+    // D-75: 僅在有未儲存的變更時才執行存檔，瀏覽不更新 updatedAt
     flushPendingSaveRef.current();
-    if (currentProjectId && data) {
-      saveProjectData(currentProjectId, fileName, data);
-    }
     try {
       const result = await signOut();
       if (result?.remoteRevoked === false && import.meta.env.DEV) {
@@ -962,10 +978,8 @@ export default function App() {
   };
 
   const handleBackToList = () => {
-    // 強制立即同步儲存最新的變更，防止 Debounce 尚未觸發
-    if (currentProjectId && data) {
-      saveProjectData(currentProjectId, fileName, data);
-    }
+    // D-75: 僅在有未儲存的變更時強制同步存檔，純瀏覽不更新 updatedAt
+    flushPendingSaveRef.current();
     setSaveState('saved');
     setData(null);
     setOriginalWb(null);
