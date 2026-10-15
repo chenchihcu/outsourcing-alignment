@@ -52,6 +52,11 @@ export default function SignOff({
   const [rejectReason, setRejectReason] = useState('');
   const [resubmitNote, setResubmitNote] = useState('');
   const [rejectionRead, setRejectionRead] = useState(false);
+  const [rejectError, setRejectError] = useState('');
+  const [resubmitError, setResubmitError] = useState('');
+  const [exportError, setExportError] = useState('');
+  const [printError, setPrintError] = useState('');
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   const fmtDateTime = (iso) => {
     if (!iso) return '';
@@ -62,9 +67,8 @@ export default function SignOff({
   // QA 退件:記錄原因並作廢三方簽章(修正後須重新簽核)
   const handleReject = () => {
     const reason = rejectReason.trim();
-    if (!reason) { alert('請填寫退件原因。'); return; }
-    // U2 — 退件前確認
-    if (!window.confirm('此操作將清除三方簽章，並鎖定「簽章與匯出」功能；表單內容仍可由發包方(研發/工程)依退件原因修正後重新送審。確定退件？')) return;
+    if (!reason) { setRejectError('請填寫退件原因。'); return; }
+    setRejectError('');
     const updatedSign = {
       ...data.basicInfo.signOff,
       rejection: { reason, by: currentUser.username, byUnit: currentUser.unit, at: new Date().toISOString() },
@@ -86,12 +90,13 @@ export default function SignOff({
 
   // 發包方修正後重新送審:解除退件鎖定
   const handleResubmit = () => {
+    setResubmitError('');
     // D5 — 防呆：退件資訊遺失時中止
-    if (!rejection) { alert('退件資訊遺失，無法執行重新送審。'); return; }
+    if (!rejection) { setResubmitError('退件資訊遺失，無法執行重新送審。'); return; }
     // D6 — 必須填寫修正說明
-    if (!resubmitNote.trim()) { alert('請填寫「修正說明」，說明本次修正了哪些內容。'); return; }
+    if (!resubmitNote.trim()) { setResubmitError('請填寫「修正說明」，說明本次修正了哪些內容。'); return; }
     // D6 — 必須勾選已閱讀確認
-    if (!rejectionRead) { alert('請勾選「已閱讀退件原因並完成修正」後才可重新送審。'); return; }
+    if (!rejectionRead) { setResubmitError('請勾選「已閱讀退件原因並完成修正」後才可重新送審。'); return; }
     const updatedSign = { ...data.basicInfo.signOff };
     delete updatedSign.rejection;
     updatedSign.rejectionResponse = { note: resubmitNote.trim(), by: currentUser.username, at: new Date().toISOString() };
@@ -120,15 +125,16 @@ export default function SignOff({
   const handleExport = () => {
     // U4 — 防止重複點擊
     if (exportLoading) return;
+    setExportError('');
     if (!originalWb) {
-      alert('無法匯出：缺少原始 Excel 範本資料。請重新載入機種或從範本重新建立。');
+      setExportError('無法匯出：缺少原始 Excel 範本資料。請重新載入機種或從範本重新建立。');
       return;
     }
     // D8 — 匯出前驗證簽章圖片格式
     const sigs = data.basicInfo?.signOff || {};
     for (const k of ['rdSignature', 'engineeringReviewSignature', 'qaSignature']) {
       if (sigs[k] && !String(sigs[k]).startsWith('data:image/')) {
-        alert(`匯出失敗：${k} 簽章圖片格式無效，請重新上傳簽章。`);
+        setExportError(`匯出失敗：${k} 簽章圖片格式無效，請重新上傳簽章。`);
         return;
       }
     }
@@ -154,10 +160,11 @@ export default function SignOff({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        setExportSuccess(true);
         onExportComplete();
       } catch (err) {
         console.error(err);
-        alert('匯出 Excel 檔案出錯！');
+        setExportError('匯出 Excel 檔案出錯！');
       } finally {
         setExportLoading(false);
         exportTimerRef.current = null;
@@ -167,7 +174,7 @@ export default function SignOff({
 
   const handlePrintReport = () => {
     if (printLoading) return;
-
+    setPrintError('');
     setPrintLoading(true);
 
     const resetPrintLoading = () => {
@@ -181,13 +188,13 @@ export default function SignOff({
     try {
       const reportNode = document.querySelector('.print-report-container');
       if (!reportNode) {
-        alert('列印報表尚未載入完成，請稍候再試一次。');
+        setPrintError('列印報表尚未載入完成，請稍候再試一次。');
         resetPrintLoading();
         return;
       }
 
       if (typeof window.print !== 'function') {
-        alert('此瀏覽器不支援網頁列印，請改用瀏覽器的分享/列印功能或桌面版 Chrome。');
+        setPrintError('此瀏覽器不支援網頁列印，請改用瀏覽器的分享/列印功能或桌面版 Chrome。');
         resetPrintLoading();
         return;
       }
@@ -196,7 +203,7 @@ export default function SignOff({
       printTimerRef.current = setTimeout(resetPrintLoading, 1000);
     } catch (err) {
       console.error(err);
-      alert('列印視窗開啟失敗，請稍後再試一次。');
+      setPrintError('列印視窗開啟失敗，請稍後再試一次。');
       resetPrintLoading();
     }
   };
@@ -237,6 +244,11 @@ export default function SignOff({
                 />
                 已閱讀退件原因並完成修正
               </label>
+              {resubmitError && (
+                <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>
+                  ⚠️ {resubmitError}
+                </div>
+              )}
               <button
                 type="button"
                 className="btn btn-primary reject-resubmit"
@@ -513,6 +525,11 @@ export default function SignOff({
                   value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                 />
+                {rejectError && (
+                  <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>
+                    ⚠️ {rejectError}
+                  </div>
+                )}
                 <div className="reject-form-actions">
                   <button type="button" className="btn btn-xs reject-confirm" onClick={handleReject}>
                     ⛔ 退件並要求修正
@@ -610,6 +627,33 @@ export default function SignOff({
           )}
         </button>
       </div>
+
+      {exportError && (
+        <div role="alert" style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: '14px', textAlign: 'center' }}>
+          ⚠️ {exportError}
+        </div>
+      )}
+      {printError && (
+        <div role="alert" style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: '14px', textAlign: 'center' }}>
+          ⚠️ {printError}
+        </div>
+      )}
+
+      {exportSuccess && (
+        <div className="export-success-card glass-card animate-fade-in" role="status" style={{ marginTop: '20px', padding: '24px', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center', background: 'rgba(16, 185, 129, 0.05)' }}>
+          <span style={{ fontSize: '2rem', color: '#10b981', display: 'block', marginBottom: '8px' }}>✓</span>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: '1.4rem' }}>Excel 已匯出</h3>
+          <p style={{ margin: '0 0 16px 0', color: 'var(--c-text-2, #64748b)' }}>簽核版文件已完成下載（{fileName}_對齊簽核版.xlsx）。</p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button type="button" className="btn btn-primary" onClick={() => setExportSuccess(false)}>
+              確定
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={onFinalBackToList}>
+              回到機種列表
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

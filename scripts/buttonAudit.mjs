@@ -387,8 +387,12 @@ async function runAudit(appUrl) {
       return true;
     })()`);
     assert(found, 'test project delete button missing');
-    dialogQueue.push({ accept: true });
     await evalPage('window.__deleteBtn.click(); true');
+    await evalPage(`(() => {
+      const confirmBtn = document.querySelector('.btn-confirm-delete');
+      if (confirmBtn) confirmBtn.click();
+      return true;
+    })()`);
     await waitFor("![...document.querySelectorAll('tr')].some((tr) => tr.textContent.includes('按鍵巡檢_'))", 'test project deleted');
   });
 
@@ -526,7 +530,6 @@ async function runAudit(appUrl) {
 
   await step('退件與重新送審按鈕', async () => {
     await setValue('textarea[name="rejectReason"]', '按鍵巡檢退件測試');
-    dialogQueue.push({ accept: true });
     await clickText('退件並要求修正');
     await waitFor("document.body.innerText.includes('已被品保退件')", 'rejected state');
     await setValue('.resubmit-note', '按鍵巡檢已修正');
@@ -578,12 +581,16 @@ async function runAudit(appUrl) {
       return true;
     })()`);
     await waitFor(`document.body.innerText.includes(${JSON.stringify(dynamicPw)})`, 'password revealed');
-    dialogQueue.push({ accept: true });
     await evalPage(`(() => {
       const row = [...document.querySelectorAll('tr')].find((candidate) => candidate.textContent.includes('btnqa'));
       const button = row?.querySelector('.btn-delete-account');
       if (!button || button.disabled) throw new Error('delete account missing/disabled');
       button.click();
+      return true;
+    })()`);
+    await evalPage(`(() => {
+      const confirmBtn = document.querySelector('.btn-confirm-delete-account');
+      if (confirmBtn) confirmBtn.click();
       return true;
     })()`);
     await waitFor("!document.body.innerText.includes('btnqa')", 'account deleted');
@@ -666,6 +673,9 @@ try {
   printSummary();
 }
 
-if (failed > 0 || consoleIssues.length > 0 || exceptions.length > 0) {
+if (failed > 0 || consoleIssues.length > 0 || exceptions.length > 0 || dialogs.length > 0) {
+  if (dialogs.length > 0) {
+    console.error(`\n❌ 去彈窗化檢核失敗：測試期間觸發了 ${dialogs.length} 個原生對話框（要求為 0）！`);
+  }
   process.exit(1);
 }
