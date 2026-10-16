@@ -539,6 +539,14 @@ async function runAudit(appUrl) {
   });
 
   await step('設定頁新增/顯示/刪除帳號', async () => {
+    const hasInviteEmail = await evalPage("!!document.getElementById('inviteEmail')");
+    if (hasInviteEmail) {
+      await setValue('#inviteEmail', 'btnqa@mitcorp.local');
+      await setValue('#inviteName', 'btnqa');
+      await clickText('發送邀請');
+      await sleep(200);
+      return 'cloud user invite tested';
+    }
     const dynamicPw = 'pW_' + Math.random().toString(36).slice(2, 10);
     await setValue('input[placeholder="帳號"]', 'btnqa');
     await setValue('input[placeholder="密碼"]', dynamicPw);

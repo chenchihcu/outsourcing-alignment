@@ -13,7 +13,7 @@ export async function migrateLocalProjects(workspace, localProjects, userId) {
       await pushProject(workspace, p, userId);
       migrated += 1;
     } catch (e) {
-      console.warn('[migrate] 機種遷移失敗:', p?.id, e);
+      if (import.meta.env.DEV) console.warn('[migrate] 機種遷移失敗:', p?.id, e);
     }
   }
   return migrated;

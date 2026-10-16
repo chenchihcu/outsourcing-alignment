@@ -79,8 +79,9 @@ export function parseHash(hashString = window.location.hash) {
 }
 
 export function navigateTo(hashPath, options = {}) {
+  const isReplace = options === true || Boolean(options?.replace);
   const target = hashPath.startsWith('#') ? hashPath : `#${hashPath}`;
-  if (options.replace) {
+  if (isReplace) {
     const currentUrl = window.location.href.split('#')[0];
     window.location.replace(`${currentUrl}${target}`);
   } else {

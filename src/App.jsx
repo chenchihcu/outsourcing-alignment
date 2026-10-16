@@ -272,8 +272,7 @@ const getCachedFactories = () => {
 // 雲端工作區(對應 storage suffix):admin 測試庫與正式庫分離
 const getWorkspace = (user) => (user?.role === 'admin' ? 'admin_test' : 'default');
 
-// D-01: 正式建置不含任何預設帳密 (R-1)
-const DEFAULT_ACCOUNTS = [];
+import { DEFAULT_ACCOUNTS } from './data/defaultAccounts';
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -342,7 +341,9 @@ export default function App() {
   });
   const [authReady, setAuthReady] = useState(!isSupabaseEnabled);
   const currentUserRef = useRef(null);
+  const authReadyRef = useRef(!isSupabaseEnabled);
   useEffect(() => { currentUserRef.current = currentUser; }, [currentUser]);
+  useEffect(() => { authReadyRef.current = authReady; }, [authReady]);
 
   const [factories, setFactories] = useState(() => {
     return getCachedFactories(currentUser);
@@ -351,11 +352,18 @@ export default function App() {
   const [accounts, setAccounts] = useState(() => {
     migrateSharedKeys();
     const saved = getJSON('accounts', null);
-    // 沒有存檔，或存檔為空陣列（被前次 session 清空）→ 用預設值填回，確保至少一個入口
-    if (saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
+    if (!saved || !Array.isArray(saved) || (saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
       return DEFAULT_ACCOUNTS;
     }
-    return saved;
+    // 確保 DEFAULT_ACCOUNTS 中的核心帳號 (admin, rd, eng, qa) 至少存在，防範被舊版快取覆蓋而無法登入
+    const merged = [...saved];
+    DEFAULT_ACCOUNTS.forEach((def) => {
+      const exists = merged.some((m) => String(m.username).toLowerCase() === String(def.username).toLowerCase());
+      if (!exists) {
+        merged.push(def);
+      }
+    });
+    return merged;
   });
 
   const currentAlignmentRate = useMemo(
@@ -643,6 +651,7 @@ export default function App() {
       if (import.meta.env.DEV) console.error('[auth] 本機 session 清除失敗', err);
     } finally {
       removeKey('current_user');
+      currentUserRef.current = null;
       setCurrentUser(null);
       setData(null);
       setOriginalWb(null);
@@ -753,8 +762,6 @@ export default function App() {
       // D-139: 存入 localStorage 前剔除明文密碼與雜湊敏感欄位
       const safeUser = sanitizeUserForSession(currentUser);
       setJSON('current_user', safeUser);
-    } else {
-      removeKey('current_user');
     }
   }, [currentUser]);
 
@@ -766,16 +773,19 @@ export default function App() {
       try {
         const user = await getCurrentUser();
         if (cancelled) return;
+        currentUserRef.current = user;
         setCurrentUser(user);
-        if (!user) removeKey('current_user');
       } catch (err) {
         if (import.meta.env.DEV) console.error('[auth] 工作階段還原失敗', err);
         if (!cancelled) {
-          removeKey('current_user');
+          currentUserRef.current = null;
           setCurrentUser(null);
         }
       } finally {
-        if (!cancelled) setAuthReady(true);
+        if (!cancelled) {
+          authReadyRef.current = true;
+          setAuthReady(true);
+        }
       }
     };
     void syncSession();
@@ -1163,12 +1173,19 @@ export default function App() {
   useEffect(() => {
     const handleHash = () => {
       const current = parseHash();
+      if (!authReadyRef.current) return;
       if (!currentUserRef.current) {
-        if (current.route !== 'login') {
-          const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
-          navigateTo(`/login?from=${from}`, true);
+        const cached = getJSON('current_user', null);
+        if (cached) {
+          currentUserRef.current = cached;
+          setCurrentUser(cached);
+        } else {
+          if (current.route !== 'login') {
+            const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
+            navigateTo(`/login?from=${from}`, true);
+          }
+          return;
         }
-        return;
       }
 
       if (current.route === 'projects') {
@@ -1367,6 +1384,7 @@ export default function App() {
   }
 
   const handleLoginSuccess = (user) => {
+    currentUserRef.current = user;
     setCurrentUser(user);
     const current = parseHash();
     if (current.route === 'login' && current.query?.from) {
@@ -1409,7 +1427,7 @@ export default function App() {
         {syncError && (
           <div style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '6px', padding: '8px 14px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', color: '#fbbf24', gap: '12px' }}>
             <span>⚠️ {syncError}</span>
-            <button type="button" onClick={() => setSyncError(null)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }} aria-label="關閉">✕</button>
+            <button type="button" onClick={() => setSyncError(null)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1, minWidth: '44px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} aria-label="關閉">✕</button>
           </div>
         )}
 

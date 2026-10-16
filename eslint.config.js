@@ -7,7 +7,7 @@ import jsxA11y from 'eslint-plugin-jsx-a11y'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'scratch']),
+  globalIgnores(['dist', 'scratch', '.wrangler']),
   {
     settings: {
       react: { version: 'detect' },

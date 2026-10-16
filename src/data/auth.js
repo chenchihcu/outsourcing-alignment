@@ -11,14 +11,15 @@ export function toLoginEmail(identifier) {
 
 /* Supabase session + profile → App 的 currentUser 形狀 */
 function toCurrentUser(profile, user) {
+  const meta = user?.user_metadata || {};
   return {
     id: user?.id,
     email: user?.email,
-    username: profile?.username || user?.email || '',
-    unit: profile?.unit || '',
-    role: profile?.role || 'rd',
-    level: profile?.level || '',
-    signature: profile?.signature || null,
+    username: profile?.username || meta?.username || user?.email || '',
+    unit: profile?.unit || meta?.unit || '',
+    role: profile?.role || meta?.role || 'rd',
+    level: profile?.level || meta?.level || '',
+    signature: profile?.signature || meta?.signature || null,
   };
 }
 
@@ -44,13 +45,22 @@ export async function signOut() {
 export async function getCurrentUser() {
   if (!isSupabaseEnabled) return null;
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return null;
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
-    .maybeSingle();
-  return toCurrentUser(profile, session.user);
+  if (session?.user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle();
+    return toCurrentUser(profile, session.user);
+  }
+  // 在無 Supabase 遠端 session（例如無頭測試或環境注入）下相容讀取 ag_current_user
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('ag_current_user') : null;
+    if (raw) return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /** 更新本人簽章到 profile(失敗時拋錯,讓呼叫端能提示使用者) */

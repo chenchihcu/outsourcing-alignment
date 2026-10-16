@@ -34,8 +34,10 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   為兼顧防呆與發包方協作：
   1. 委外加工廠選擇欄位 (`basicInfo.factory`) 為全域公共資料，全體角色皆可填寫，不應受 `_owners` 鎖定限制。
   2. 發包方內部（研發單位與工程單位）共享編輯基本資料與治工具項目，彼此之間不互相鎖定（當 `_owners` 為研發單位或工程單位時，雙方皆可繼續共編），僅鎖定非發包方的加工廠角色編輯。
-- **Vite 專案多平台部署 base path**:
-  為了同時相容 GitHub Pages (需要 '/Product-outsourcing-alignment-platform/' 子路徑) 與 Cloudflare Workers (需要 '/' 根目錄) 部署，**嚴禁將 vite.config.js 的 base 參數寫死**。必須統一使用動態環境變數判定：`process.env.GITHUB_ACTIONS ? '/Product-outsourcing-alignment-platform/' : '/'`。
+- **Vite 根目錄部署 SSOT 與測試伺服器路徑韌性**:
+  專案全面託管於 Cloudflare Pages / Workers，統一以根目錄（`base: '/'`）為單一事實來源（SSOT），不使用動態子路徑；內建之自動化巡檢靜態伺服器（如 `scripts/buttonAudit.mjs`）必須具備子路徑前綴剝除容錯能力，防範資產路徑前綴導致 404 與 MIME 類型錯誤。
+- **雲端連線憑證解耦與離線測試防死鎖**:
+  前端客戶端（`src/data/supabaseClient.js`）嚴禁硬編碼預設連線金鑰，必須完全由環境變數（`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`）動態決定 `isSupabaseEnabled`。未提供環境變數時一律退回純離線優先模式，避免無頭自動化測試遭遇遠端網路限流或連線超時死鎖。
 
 ## 驗收 gate
 

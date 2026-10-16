@@ -38,6 +38,7 @@ test.describe('F2 & F3: 機種清單與建立/匯入流程', () => {
   });
 
   test('F2-8 & F3-8: QA 角色登入無法建立機種且清單不顯示新增/匯入按鈕', async ({ page }) => {
+    await page.waitForLoadState('networkidle');
     await page.evaluate(() => {
       localStorage.setItem('ag_current_user', JSON.stringify({
         username: 'qa_user',
@@ -46,9 +47,8 @@ test.describe('F2 & F3: 機種清單與建立/匯入流程', () => {
         level: 'Reviewer',
       }));
     });
-    await page.reload();
-
     await page.goto('/#/projects');
+    await page.reload();
     await page.waitForLoadState('networkidle');
 
     // 驗證 QA 看不到建立機種與匯入按鈕
