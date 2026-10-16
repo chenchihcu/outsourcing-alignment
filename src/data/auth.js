@@ -45,22 +45,13 @@ export async function signOut() {
 export async function getCurrentUser() {
   if (!isSupabaseEnabled) return null;
   const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .maybeSingle();
-    return toCurrentUser(profile, session.user);
-  }
-  // 在無 Supabase 遠端 session（例如無頭測試或環境注入）下相容讀取 ag_current_user
-  try {
-    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem('ag_current_user') : null;
-    if (raw) return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  return null;
+  if (!session) return null;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', session.user.id)
+    .maybeSingle();
+  return toCurrentUser(profile, session.user);
 }
 
 /** 更新本人簽章到 profile(失敗時拋錯,讓呼叫端能提示使用者) */
