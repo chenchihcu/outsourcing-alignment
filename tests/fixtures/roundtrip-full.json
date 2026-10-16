@@ -1,0 +1,320 @@
+{
+  "id": "roundtrip-full-test",
+  "dataVersion": 1,
+  "basicInfo": {
+    "title": "醫電鼎眾股份有限公司           新產品導入 — 製程管制與前置作業",
+    "date": "",
+    "version": "",
+    "factory": "TEST-加工廠A",
+    "factoryArea": "",
+    "productNo": "  PN-TEST-001  ",
+    "productDesc": "新機種全流程委外加工對齊測試機種",
+    "stage": {
+      "evt": false,
+      "dvt": false,
+      "pvt": false,
+      "politRun": true,
+      "mp": false,
+      "ecn": true
+    },
+    "category": {
+      "general": false,
+      "medical": false
+    },
+    "pcbaType": {
+      "single": false,
+      "double": false
+    },
+    "materialType": "",
+    "pcbBake": "",
+    "fpcaBake": "",
+    "ecnChange": {
+      "has": true,
+      "no": false,
+      "verificationItem": "ECN 驗證項目：尺寸與高頻訊號完整性測試"
+    },
+    "qualityLevel": {
+      "class2": true,
+      "class3": false
+    },
+    "ipcStandard": {
+      "ipcA610": true,
+      "jStd001": false
+    },
+    "processItems": {
+      "smt": true,
+      "dip": true,
+      "ict": true,
+      "assembly": true,
+      "coating": false,
+      "packing": true,
+      "fct": true,
+      "flyingProbe": false,
+      "finalTest": true,
+      "underfillGlue": true,
+      "semiFinishedTest": false,
+      "otherProcess": true,
+      "otherProcessText": "特殊雷雕打標"
+    },
+    "aoi": {
+      "top": true,
+      "bottom": true
+    },
+    "glue": true,
+    "qrCode": {
+      "need": true,
+      "noNeed": false
+    },
+    "snControl": {
+      "need": true,
+      "noNeed": false
+    },
+    "riskParts": [
+      {
+        "id": 1,
+        "name": "U12",
+        "packageType": "BGA-256",
+        "riskDesc": "高散熱大尺寸晶片，需特別注意迴焊溫度與錫球空洞率"
+      },
+      {
+        "id": 2,
+        "name": "Q5",
+        "packageType": "QFN-32",
+        "riskDesc": "引腳間距 0.4mm，需注意錫膏量與連錫風險"
+      }
+    ],
+    "documents": {
+      "bom": true,
+      "bomReason": "",
+      "gerber": true,
+      "gerberReason": "",
+      "coordinate": true,
+      "coordinateReason": "",
+      "placement": true,
+      "placementReason": "",
+      "materialSpec": true,
+      "materialSpecReason": "",
+      "reflowProfile": true,
+      "reflowProfileReason": "",
+      "assemblySop": true,
+      "assemblySopReason": "",
+      "packingSop": true,
+      "packingSopReason": "",
+      "testSop": true,
+      "testSopReason": "",
+      "assemblyPackingSop": true
+    },
+    "tooling": {
+      "stencil": {
+        "need": true,
+        "noNeed": false,
+        "thickness": "0.12",
+        "apertureRatio": "100",
+        "style": "step",
+        "nanoCoating": true
+      },
+      "routingFixture": {
+        "need": true,
+        "noNeed": false,
+        "qty": "2"
+      },
+      "glueFixture": {
+        "need": false,
+        "noNeed": true,
+        "qty": ""
+      },
+      "testFixture": {
+        "need": true,
+        "noNeed": false,
+        "qty": "1"
+      },
+      "assemblyFixture": {
+        "need": false,
+        "noNeed": true,
+        "qty": ""
+      },
+      "smtCarrier": {
+        "need": true,
+        "noNeed": false,
+        "upper": true,
+        "lower": false
+      },
+      "otherFixture": {
+        "need": true,
+        "noNeed": false,
+        "name": "翻轉載具",
+        "qty": "3"
+      }
+    },
+    "signOff": {
+      "rdSignature": "",
+      "engineeringReviewSignature": "",
+      "qaSignature": "",
+      "rdSignedAt": "",
+      "engineeringReviewSignedAt": "",
+      "qaSignedAt": ""
+    }
+  },
+  "processControl": {
+    "sampleProvided": {
+      "trialBoard": true,
+      "tempBoard": true,
+      "standardPart": false
+    },
+    "bakeRequired": {
+      "need": false,
+      "noNeed": true,
+      "pcbBakeCond": "",
+      "fpcaBakeCond": ""
+    },
+    "smtFirstPiece": {
+      "polarity": true,
+      "measureLcr": true,
+      "spi": true,
+      "steelTension": false,
+      "ledTest": "yes",
+      "pcbReflow": true,
+      "solderability": true,
+      "stencilApertureRatio": "100"
+    },
+    "dipFirstPiece": {
+      "cutLead": true,
+      "memo": "剪腳長度嚴格管制在 1.2mm 至 1.5mm 之間，禁止殘留錫珠毛邊"
+    },
+    "smtOrder": {
+      "bToT": true,
+      "tToB": false
+    },
+    "dipOrder": {
+      "bToT": true,
+      "tToB": false
+    },
+    "keyParts": {
+      "has": true,
+      "none": false
+    },
+    "tempPoints": [
+      {
+        "id": 1,
+        "pos": "U1",
+        "desc": "主控 MCU 核心位置",
+        "memo": "峰值溫不可超過 245 度"
+      },
+      {
+        "id": 2,
+        "pos": "U2",
+        "desc": "BGA 中心",
+        "memo": "冷點位置，需確認完全熔錫"
+      },
+      {
+        "id": 3,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 4,
+        "pos": "BGA1",
+        "desc": "電源管理晶片",
+        "memo": "高熱容量區域"
+      },
+      {
+        "id": 5,
+        "pos": "U12A",
+        "desc": "晶振電路旁",
+        "memo": "U12-A 旁，靠板邊"
+      },
+      {
+        "id": 6,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      }
+    ],
+    "underfill": {
+      "bakeTemp": "150",
+      "bakeTime": "60",
+      "glueModel": "LOCTITE-3548"
+    },
+    "reworkMark": {
+      "need": true,
+      "noNeed": false,
+      "sopMark": "點紅漆標記"
+    },
+    "specialProcessMemo": "",
+    "packagingType": "pcba",
+    "pcbaPackaging": {
+      "staticBag": true,
+      "honeycomb": false,
+      "tray": false
+    },
+    "fpcaPackaging": {
+      "staticBag": false,
+      "honeycomb": false,
+      "tray": false
+    }
+  },
+  "trialReport": {
+    "printRecords": [
+      {
+        "id": 1,
+        "name": "錫膏檢查紀錄表",
+        "checked": true
+      },
+      {
+        "id": 2,
+        "name": "迴焊爐溫記錄",
+        "checked": true
+      }
+    ],
+    "inspectRecords": [
+      {
+        "id": 1,
+        "name": "PCB 板彎/翹曲檢驗紀錄",
+        "checked": true
+      },
+      {
+        "id": 2,
+        "name": "首件檢查紀錄表",
+        "checked": true
+      },
+      {
+        "id": 3,
+        "name": "鋼板張力量測紀錄",
+        "checked": false
+      },
+      {
+        "id": 4,
+        "name": "鋼板清洗紀錄表",
+        "checked": true
+      },
+      {
+        "id": 5,
+        "name": "錫膏厚度測試紀錄",
+        "checked": false
+      }
+    ],
+    "photoRecords": [
+      {
+        "id": 1,
+        "name": "試錫板照片",
+        "checked": true
+      },
+      {
+        "id": 2,
+        "name": "X-Ray 照片",
+        "checked": true,
+        "isXray": true,
+        "parts": [
+          "U1",
+          "U2",
+          "",
+          "BGA1"
+        ]
+      }
+    ],
+    "yieldReport": {
+      "ready": true
+    }
+  }
+}

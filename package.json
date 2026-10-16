@@ -15,9 +15,10 @@
     "qa:security": "node scripts/securityContractTest.mjs",
     "qa:cloud-security": "node --env-file=.env scripts/cloudSecurityAudit.mjs",
     "qa:buttons": "node scripts/buttonAudit.mjs",
-    "qa:offline": "npm run qa:storage && npm run qa:concurrency && npm run qa:stress && npm run qa:workflow && npm run qa:security",
+    "qa:roundtrip": "node scripts/qaRoundtrip.mjs",
+    "qa:offline": "npm run qa:storage && npm run qa:concurrency && npm run qa:stress && npm run qa:workflow && npm run qa:security && npm run qa:roundtrip",
     "qa:gate": "npm run build && npm run qa:offline && npm run qa:buttons",
-    "deploy:cf": "npx wrangler deploy"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.0",
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

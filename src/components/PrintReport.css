@@ -39,7 +39,6 @@
   nav,
   button,
   footer,
-  .success-overlay,
   .status-banner {
     display: none !important;
   }
@@ -129,7 +128,7 @@
   }
 
   .print-table {
-    width: 100%;
+    width: calc(100% - 1px);
     border-collapse: collapse;
     margin-bottom: 12px;
     break-inside: avoid-page;

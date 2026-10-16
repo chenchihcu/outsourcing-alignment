@@ -44,6 +44,11 @@ export function getNextWorkflowStep(currentKey) {
   return index >= 0 ? WORKFLOW_STEP_KEYS[index + 1] || null : null;
 }
 
+export function getPrevWorkflowStep(currentKey) {
+  const index = WORKFLOW_STEP_KEYS.indexOf(currentKey);
+  return index > 0 ? WORKFLOW_STEP_KEYS[index - 1] || null : null;
+}
+
 export function getWorkflowStatuses(data) {
   const bi = data?.basicInfo || {};
   const pc = data?.processControl || {};
@@ -181,3 +186,18 @@ export function getWorkflowStatuses(data) {
     signOff: makeStatus(signStarted, signComplete),
   };
 }
+
+/**
+ * 檢查前置 9 個步驟是否全部完成（排除簽章步驟本身）(D-21, D-116)
+ * @param {Object} data 
+ * @returns {boolean}
+ */
+export function isWorkflowComplete(data) {
+  const statuses = getWorkflowStatuses(data);
+  const preSignSteps = WORKFLOW_STEP_KEYS.filter((key) => key !== 'signOff');
+  return preSignSteps.every((key) => {
+    const status = statuses[key];
+    return !status?.applicable || status?.state === 'done';
+  });
+}
+

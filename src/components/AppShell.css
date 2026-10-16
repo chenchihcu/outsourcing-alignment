@@ -184,13 +184,17 @@
 .user-role { font-size: var(--fs-xs); color: var(--c-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-logout {
   flex-shrink: 0;
-  width: 30px; height: 30px;
+  width: 36px; height: 36px;
+  min-width: 36px; min-height: 36px;
   border-radius: var(--r-md);
   border: 1px solid var(--c-border);
   background: var(--c-surface);
   color: var(--c-error);
   cursor: pointer;
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .user-logout:hover { background: var(--c-error-weak); border-color: var(--c-error); }
@@ -202,12 +206,27 @@
   border-top: 1px solid var(--c-border);
   background: var(--c-surface);
   color: var(--c-text-3);
-  height: 32px;
+  height: 36px;
+  min-height: 36px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .rail-collapse:hover { background: var(--c-surface-2); color: var(--c-text-1); }
+
+@media (pointer: coarse), (max-width: 1180px) {
+  .rail-collapse {
+    min-height: 44px !important;
+    height: 44px !important;
+  }
+  .shell-sidebar .user-logout,
+  .user-logout {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
 
 /* ---------------- 主區 ---------------- */
 .shell-body {
@@ -297,7 +316,7 @@
 }
 
 /* ---------------- 抽屜遮罩(預設隱藏) ---------------- */
-.shell-backdrop { display: none; }
+.drawer-scrim { display: none; }
 
 /* =========================================================================
    桌機/筆電 (≥1024px):側欄常駐,可收合成 rail
@@ -441,7 +460,7 @@
   .step-pill:not(.active) .pill-badge { background: var(--c-surface-2); color: var(--c-text-2); }
   .pill-badge.ok { color: var(--c-success); background: var(--c-success-weak); }
 
-  .shell-backdrop {
+  .drawer-scrim {
     display: block;
     position: fixed;
     inset: 0;
@@ -455,7 +474,7 @@
     transition: opacity var(--dur) var(--ease);
     cursor: pointer;
   }
-  .shell[data-drawer='true'] .shell-backdrop { opacity: 1; pointer-events: auto; }
+  .shell[data-drawer='true'] .drawer-scrim { opacity: 1; pointer-events: auto; }
 
   .shell-content {
     padding: var(--sp-5) max(var(--sp-4), env(safe-area-inset-right, 0px)) max(var(--sp-8), calc(env(safe-area-inset-bottom, 0px) + var(--sp-6))) max(var(--sp-4), env(safe-area-inset-left, 0px));

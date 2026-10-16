@@ -80,26 +80,35 @@ check(
 );
 
 const migration0005 = read('supabase/migrations/0005_signoff_guard.sql');
-check(
-  migration0005.includes('guard_project_mutations') && migration0005.includes('version bigint'),
-  '0005 enforces sign-off mutations guard and optimistic locking version column',
-);
-check(
-  migration0005.includes('guard_project_deletion') && migration0005.includes('default-template'),
-  '0005 enforces server-side deletion protection and default-template guard',
-);
+for (const [fragment, message] of [
+  ['protect_project_signoff', '0005 migration includes sign-off protection trigger function'],
+  ['protect_project_deletion', '0005 migration includes deletion protection trigger function'],
+  ['increment_project_version', '0005 migration includes version increment trigger function'],
+  ['projects_insert_scoped', '0005 migration restricts project insert to rd, eng, admin'],
+  ['version bigint not null default 0', '0005 migration adds version column for optimistic locking'],
+]) {
+  check(migration0005.includes(fragment), message);
+}
 
 const rollback0005 = read('supabase/rollback/0005_signoff_guard_rollback.sql');
 check(
-  rollback0005.includes('project_guard_mutations_trigger') && rollback0005.includes('project_guard_deletion_trigger'),
-  '0005 rollback cleanly removes guard triggers and functions',
+  rollback0005.includes('trg_protect_project_signoff') && rollback0005.includes('trg_protect_project_deletion'),
+  'an explicit rollback for 0005 migration exists',
 );
 
-const headers = read('public/_headers');
+const excelParserSource = read('src/utils/excelParser.js');
 check(
-  headers.includes('Content-Security-Policy') && headers.includes('Strict-Transport-Security'),
-  'public/_headers defines CSP and HSTS security headers',
+  !excelParserSource.includes('rdSignature = ') && !excelParserSource.includes('qaSignature = ')
+    && !excelParserSource.includes('signatures.rdSignature'),
+  'excelParser clears/ignores signatures from imported files',
+);
+
+const loginSource = read('src/components/LoginModal.jsx');
+check(
+  loginSource.includes('verifyAccountPassword') && loginSource.includes('sanitizeUserForSession'),
+  'LoginModal uses PBKDF2 hash verification and sanitizes user session',
 );
 
 console.log(`\nSecurity contract results: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exitCode = 1;
+

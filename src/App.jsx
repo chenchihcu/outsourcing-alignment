@@ -10,12 +10,14 @@ const PrintReport = lazy(() =>
   import('./components/PrintReport').catch(() => ({ default: () => null }))
 );
 import Settings from './components/Settings';
+import AccountSettings from './components/AccountSettings';
+import ProjectNew from './components/ProjectNew';
 
 import LoginModal from './components/LoginModal';
 import { validateAlignment } from './utils/validator';
-import { getNextWorkflowStep, getWorkflowStatuses } from './utils/workflow';
+import { getNextWorkflowStep, getPrevWorkflowStep, getWorkflowStatuses } from './utils/workflow';
 import { parseRequirementExcel } from './utils/excelParser';
-import { getJSON, setJSON, removeKey } from './utils/storage';
+import { getJSON, setJSON, removeKey, getStoredProjects, updateStoredProject, insertStoredProject, deleteStoredProject } from './utils/storage';
 import { isSupabaseEnabled } from './data/supabaseClient';
 import {
   pullProjects,
@@ -34,11 +36,14 @@ import { getCurrentUser, onAuthChange, signOut, updateMySignature } from './data
 import * as XLSX from 'xlsx';
 import { navigateTo, TAB_TO_STEP_KEY, parseHash } from './utils/hashRouter.js';
 import { WORKFLOW_STEPS } from './utils/workflow.js';
+import { migrateProjectData, CURRENT_DATA_VERSION } from './utils/dataVersion.js';
+import { sanitizeUserForSession } from './utils/cryptoAuth.js';
 import './App.css';
 
 function sanitizeProjectData(data) {
   if (!data) return data;
-  const clone = { ...data };
+  const migrated = migrateProjectData(data);
+  const clone = { ...migrated };
   
   // 產品階段：確保 mp 存在，遷移舊版 ecn 至新結構
   if (clone.basicInfo) {
@@ -203,7 +208,7 @@ function sanitizeProjects(list) {
   if (!Array.isArray(list)) return [];
   return list.map(p => {
     if (p && p.data) {
-      return { ...p, data: sanitizeProjectData(p.data) };
+      return { ...p, data: sanitizeProjectData(p.data), dataVersion: CURRENT_DATA_VERSION };
     }
     return p;
   });
@@ -219,35 +224,56 @@ const getProjectsKey = (user) => {
   return 'ag_projects';
 };
 
-const getStorageSuffix = (user) => {
-  if (!user) return '';
-  if (user.role === 'admin') return '_admin_test';
-  return '';
-};
+// D-126: 帳號清單與加工廠主檔全系統共用，啟動時合併舊有的 _admin_test key
+function migrateSharedKeys() {
+  try {
+    const legacyAdminAccounts = getJSON('accounts_admin_test', null);
+    if (Array.isArray(legacyAdminAccounts) && legacyAdminAccounts.length > 0) {
+      const mainAccounts = getJSON('accounts', []) || [];
+      const merged = [...mainAccounts];
+      legacyAdminAccounts.forEach((acc) => {
+        if (!merged.some((m) => String(m.username).toLowerCase() === String(acc.username).toLowerCase())) {
+          merged.push(acc);
+        }
+      });
+      setJSON('accounts', merged);
+      removeKey('accounts_admin_test');
+    }
+
+    const legacyAdminFactories = getJSON('factories_admin_test', null);
+    if (Array.isArray(legacyAdminFactories) && legacyAdminFactories.length > 0) {
+      const mainFactories = getJSON('factories', []) || [];
+      const merged = Array.from(new Set([...mainFactories, ...legacyAdminFactories]));
+      setJSON('factories', merged);
+      removeKey('factories_admin_test');
+    }
+  } catch {
+    /* 遷移例外忽略 */
+  }
+}
 
 const normalizeFactories = (list) => {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((fac) => String(fac || '').trim()).filter(Boolean)));
 };
 
-const getFactoriesCacheKey = (user) => {
+const getFactoriesCacheKey = () => {
   if (isSupabaseEnabled) return 'factories_cloud';
-  return 'factories' + getStorageSuffix(user);
+  return 'factories';
 };
 
-const getCachedFactories = (user) => {
-  const cached = getJSON(getFactoriesCacheKey(user), null);
+const getCachedFactories = () => {
+  migrateSharedKeys();
+  const cached = getJSON(getFactoriesCacheKey(), null);
   if (Array.isArray(cached)) return normalizeFactories(cached);
-  if (isSupabaseEnabled) {
-    const legacy = getJSON('factories' + getStorageSuffix(user), null);
-    if (Array.isArray(legacy)) return normalizeFactories(legacy);
-  }
   return DEFAULT_FACTORIES;
 };
 
 // 雲端工作區(對應 storage suffix):admin 測試庫與正式庫分離
 const getWorkspace = (user) => (user?.role === 'admin' ? 'admin_test' : 'default');
 
+// D-01: 正式建置不含任何預設帳密 (R-1)
+const DEFAULT_ACCOUNTS = [];
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -322,6 +348,15 @@ export default function App() {
     return getCachedFactories(currentUser);
   });
 
+  const [accounts, setAccounts] = useState(() => {
+    migrateSharedKeys();
+    const saved = getJSON('accounts', null);
+    // 沒有存檔，或存檔為空陣列（被前次 session 清空）→ 用預設值填回，確保至少一個入口
+    if (saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
+      return DEFAULT_ACCOUNTS;
+    }
+    return saved;
+  });
 
   const currentAlignmentRate = useMemo(
     () => data ? validateAlignment(data).alignmentRate : 0,
@@ -359,10 +394,12 @@ export default function App() {
             originalWbBase64: base64
           };
 
-          const newList = [defaultProj];
+          const latestList = getJSON(key.replace('ag_', ''), []);
+          const hasTemplate = latestList.some(p => p.id === 'default-template');
+          const newList = hasTemplate ? latestList : [defaultProj, ...latestList];
           setJSON(key.replace('ag_', ''), newList);
           projectsKeyRef.current = key;
-          setProjects(newList);
+          setProjects(sanitizeProjects(newList));
         } catch (err) {
           if (import.meta.env.DEV) console.error('載入預設範本失敗:', err);
           setSyncError('載入預設範本失敗，請重新整理頁面。若持續發生，請確認網路連線。');
@@ -506,39 +543,35 @@ export default function App() {
   const saveProjectData = useCallback((projId, name, projData) => {
     if (!projId || !projData) return;
     const report = validateAlignment(projData);
-    const updatedAt = new Date().toISOString();
     const user = currentUserRef.current;
     const storageKey = user ? getProjectsKey(user).replace('ag_', '') : null;
 
-    // D-153: 重新讀取儲存區最新資料，只更新當前機種，防止覆寫其他分頁的修改
-    const currentList = storageKey ? getJSON(storageKey, projectsRef.current) : projectsRef.current;
-    const exists = currentList.some(p => p.id === projId);
-    let next;
-    if (exists) {
-      next = currentList.map(p =>
-        p.id === projId
-          ? { ...p, name, data: projData, alignmentRate: report.alignmentRate, updatedAt, version: (p.version || 0) + 1 }
-          : p
-      );
-    } else {
-      next = [...currentList, { id: projId, name, data: projData, alignmentRate: report.alignmentRate, createdAt: updatedAt, updatedAt, version: 1 }];
-    }
-
-    projectsRef.current = next;
-    setProjects(next);
-    // 同步落盤:beforeunload / 登出等時機 setState 不會再 commit,persist effect 不會執行
     if (storageKey) {
-      setJSON(storageKey, sanitizeProjects(next));
-    }
-    // 雲端同步(關閉時 pushProject 為 no-op)
-    if (isSupabaseEnabled && user) {
-      const base = next.find(p => p.id === projId);
-      if (base) {
-        pushProject(getWorkspace(user), base, user?.id).catch(e => {
-          if (import.meta.env.DEV) console.warn('[cloud] 上推失敗', e);
-          // E2 — 上推失敗不能無聲:儲存指示仍顯示已儲存,需以橫幅告知僅存於本機
-          setSyncError('雲端同步失敗，此筆變更目前僅儲存於本機。請確認網路連線。');
-        });
+      const updateResult = updateStoredProject(storageKey, projId, (current) => {
+        return {
+          ...current,
+          name: name || current.name,
+          data: projData,
+          alignmentRate: report.alignmentRate,
+        };
+      });
+
+      if (updateResult.success && updateResult.project) {
+        const nextList = getStoredProjects(storageKey);
+        projectsRef.current = nextList;
+        setProjects(nextList);
+
+        // 雲端同步(關閉時 pushProject 為 no-op)
+        if (isSupabaseEnabled && user) {
+          pushProject(getWorkspace(user), updateResult.project, user?.id).catch(e => {
+            if (import.meta.env.DEV) console.warn('[cloud] 上推失敗', e);
+            setSyncError('雲端同步失敗，此筆變更目前僅儲存於本機。請確認網路連線。');
+          });
+        }
+      } else if (updateResult.deleted) {
+        setSyncError('此機種已被其他分頁或裝置刪除。');
+      } else if (updateResult.conflict) {
+        setSyncError('此機種已有較新的變更，請重新整理確認。');
       }
     }
   }, []);
@@ -626,26 +659,74 @@ export default function App() {
   const handleLogoutRef = useRef(handleLogout);
   useEffect(() => { handleLogoutRef.current = handleLogout; });
 
-  // I3 — 30 分鐘無操作自動登出(保護共用工作站)
+  // D-157: 跨分頁協調 30 分鐘無操作自動登出與 2 分鐘倒數提示
+  const [idleWarningSeconds, setIdleWarningSeconds] = useState(null);
+
+  const resetActivity = useCallback(() => {
+    const now = Date.now();
+    localStorage.setItem('ag_last_activity', String(now));
+    setIdleWarningSeconds(null);
+  }, []);
+
   useEffect(() => {
     if (!currentUser) return;
     const TIMEOUT_MS = 30 * 60 * 1000;
-    let timerId;
-    const reset = () => {
-      clearTimeout(timerId);
-      timerId = setTimeout(() => {
-        // 透過 ref 取最新版本,避免 30 分鐘前的 stale closure 漏存當前編輯
+    const WARNING_MS = 2 * 60 * 1000; // 倒數 2 分鐘
+
+    // 初始化最後活動時間
+    if (!localStorage.getItem('ag_last_activity')) {
+      localStorage.setItem('ag_last_activity', String(Date.now()));
+    }
+
+    let lastWrite = 0;
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastWrite > 15000) {
+        lastWrite = now;
+        localStorage.setItem('ag_last_activity', String(now));
+      }
+      setIdleWarningSeconds(null);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
+
+    // 定期檢查跨分頁最後活動時間
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const lastAct = Number(localStorage.getItem('ag_last_activity') || String(now));
+      const elapsed = now - lastAct;
+
+      if (elapsed >= TIMEOUT_MS) {
+        clearInterval(intervalId);
+        setIdleWarningSeconds(null);
         void handleLogoutRef.current().finally(() => {
           setSyncError('因長時間無操作，已自動登出，請重新登入。');
         });
-      }, TIMEOUT_MS);
+      } else if (elapsed >= TIMEOUT_MS - WARNING_MS) {
+        const remainingSec = Math.max(1, Math.ceil((TIMEOUT_MS - elapsed) / 1000));
+        setIdleWarningSeconds(remainingSec);
+      } else {
+        setIdleWarningSeconds(null);
+      }
+    }, 5000);
+
+    // 跨分頁 storage 監聽 (登出同步與活動重設)
+    const handleStorage = (e) => {
+      if (e.key === 'ag_current_user' && !e.newValue && currentUserRef.current) {
+        void handleLogoutRef.current().finally(() => {
+          setSyncError('已於其他分頁登出。');
+        });
+      } else if (e.key === 'ag_last_activity') {
+        setIdleWarningSeconds(null);
+      }
     };
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(ev => window.addEventListener(ev, reset, { passive: true }));
-    reset();
+    window.addEventListener('storage', handleStorage);
+
     return () => {
-      clearTimeout(timerId);
-      events.forEach(ev => window.removeEventListener(ev, reset));
+      clearInterval(intervalId);
+      events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
+      window.removeEventListener('storage', handleStorage);
     };
   }, [currentUser]);
 
@@ -659,7 +740,25 @@ export default function App() {
     }
     setJSON(key, normalizeFactories(factories));
   }, [factories, currentUser]);
-  // Supabase: 啟動時以既有 session 還原登入，並監聽登入/登出狀態
+
+  // D-126: 帳號清單全系統共用
+  useEffect(() => {
+    if (Array.isArray(accounts)) {
+      setJSON('accounts', accounts);
+    }
+  }, [accounts]);
+
+  useEffect(() => {
+    if (currentUser) {
+      // D-139: 存入 localStorage 前剔除明文密碼與雜湊敏感欄位
+      const safeUser = sanitizeUserForSession(currentUser);
+      setJSON('current_user', safeUser);
+    } else {
+      removeKey('current_user');
+    }
+  }, [currentUser]);
+
+  // Supabase:啟動時以既有 session 還原登入,並監聽登入/登出狀態
   useEffect(() => {
     if (!isSupabaseEnabled) return;
     let cancelled = false;
@@ -684,15 +783,6 @@ export default function App() {
     return () => { cancelled = true; unsub(); };
   }, []);
 
-  useEffect(() => {
-    if (!currentUser || projects.length === 0) return;
-    const key = getProjectsKey(currentUser);
-    // 身分切換期間,projects 仍是上一個命名空間的內容,寫入會汙染新身分的資料
-    if (projectsKeyRef.current !== key) return;
-    // U10 — 偵測 localStorage 容量滿
-    const ok = setJSON(key.replace('ag_', ''), sanitizeProjects(projects));
-    if (!ok) setSyncError('本機儲存空間不足，資料可能無法完整保存。請清理瀏覽器資料或改用雲端模式。'); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [projects, currentUser]);
 
   // 自動恢復上次編輯的機種
   const lastIdRef = useRef(null);
@@ -766,10 +856,21 @@ export default function App() {
 
 
   // 3. 選取機種並載入詳細資料
-  const handleSelectProject = (id, currentList = projects) => {
+  const handleSelectProject = (id, currentList = null, targetTab = null) => {
     // 上一個機種還有未儲存的編輯(debounce 未觸發)時,先強制存檔,避免切換造成資料遺失
     flushPendingSaveRef.current();
-    const project = currentList.find(p => p.id === id);
+    const list = currentList || projectsRef.current;
+    let project = list.find(p => p.id === id);
+    if (!project) {
+      // 若記憶體清單尚未同步，嘗試自 localStorage 即時讀取最新清單
+      const storageKey = getProjectsKey(currentUserRef.current).replace('ag_', '');
+      const stored = getStoredProjects(storageKey);
+      project = stored.find(p => p.id === id);
+      if (project) {
+        setProjects(stored);
+        projectsRef.current = stored;
+      }
+    }
     if (project) {
       editedSinceLoadRef.current = false;
       setRemoteUpdate(null);
@@ -795,9 +896,21 @@ export default function App() {
       }
       
       setCurrentProjectId(id);
-      setActiveTab('dashboard');
       setJSON('last_project_id', id);
-      navigateTo('/projects/' + id);
+
+      const current = parseHash();
+      if (targetTab) {
+        setActiveTab(targetTab);
+        const slug = TAB_TO_STEP_KEY[targetTab];
+        if (slug) navigateTo(`/projects/${id}/${slug}`);
+      } else if (current.route === 'project-step' && current.params.id === id) {
+        if (current.params.tabKey) setActiveTab(current.params.tabKey);
+      } else if (current.route === 'project-print' && current.params.id === id) {
+        setActiveTab('print');
+      } else {
+        setActiveTab('dashboard');
+        navigateTo('/projects/' + id);
+      }
     } else {
       setSyncError('找不到該機種資料。');
     }
@@ -844,11 +957,14 @@ export default function App() {
         updatedAt: new Date().toISOString(),
         alignmentRate: 0,
         data: sanitizeProjectData(parsedData),
-        originalWbBase64: base64
+        originalWbBase64: base64,
+        version: 1,
       };
 
-      const newList = [...projects, newProj];
-      setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+      const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+      insertStoredProject(storageKey, newProj);
+      const newList = getStoredProjects(storageKey);
+      projectsRef.current = newList;
       setProjects(newList);
       if (isSupabaseEnabled) pushProject(getWorkspace(currentUser), newProj, currentUser?.id).catch(e => { if (import.meta.env.DEV) console.warn('[cloud] 新增上推失敗', e); });
 
@@ -891,11 +1007,14 @@ export default function App() {
         updatedAt: new Date().toISOString(),
         alignmentRate: 0,
         data: parsedData,
-        originalWbBase64: fileBase64
+        originalWbBase64: fileBase64,
+        version: 1,
       };
 
-      const newList = [...projects, newProj];
-      setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+      const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+      insertStoredProject(storageKey, newProj);
+      const newList = getStoredProjects(storageKey);
+      projectsRef.current = newList;
       setProjects(newList);
       if (isSupabaseEnabled) pushProject(getWorkspace(currentUser), newProj, currentUser?.id).catch(e => { if (import.meta.env.DEV) console.warn('[cloud] 匯入上推失敗', e); });
 
@@ -911,9 +1030,11 @@ export default function App() {
     const proj = projects.find(p => p.id === id);
     if (!proj) return;
     // D2 — 刪除（已由清單操作端進行確認）
-    const snapshot = projects; // D2 — 保留快照供雲端失敗時還原
-    const newList = projects.filter(p => p.id !== id);
-    setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+    const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+    const snapshot = getStoredProjects(storageKey);
+    deleteStoredProject(storageKey, id);
+    const newList = getStoredProjects(storageKey);
+    projectsRef.current = newList;
     setProjects(newList);
 
     if (currentProjectId === id) {
@@ -926,8 +1047,9 @@ export default function App() {
       } catch (e) {
         if (import.meta.env.DEV) console.error('[cloud] 刪除失敗', e);
         // D2 — 雲端刪除失敗時還原本機清單
+        setJSON(storageKey, snapshot);
+        projectsRef.current = snapshot;
         setProjects(snapshot);
-        setJSON(getProjectsKey(currentUser).replace('ag_', ''), snapshot);
         setSyncError('雲端刪除失敗，機種已恢復。請確認網路連線後再試。');
       }
     }
@@ -982,6 +1104,121 @@ export default function App() {
     } else if (TAB_TO_STEP_KEY[tab]) {
       navigateTo('/projects/' + currentProjectIdRef.current + '/' + TAB_TO_STEP_KEY[tab]);
     }
+  };
+
+  const handleGoToSection = (tab, msg) => {
+    handleTabChange(tab);
+    if (msg) {
+      setHighlightField(msg);
+      setTimeout(() => {
+        setHighlightField('');
+      }, 3000);
+    }
+  };
+
+  // 路由同步 (響應瀏覽器上一頁/下一頁與手動切換 Hash)
+  const handleBackToListRef = useRef(handleBackToList);
+  const handleSelectProjectRef = useRef(handleSelectProject);
+  useEffect(() => {
+    handleBackToListRef.current = handleBackToList;
+    handleSelectProjectRef.current = handleSelectProject;
+  });
+
+  // 初次載入或重新整理時，若 URL 帶有專案 ID 且尚未載入該專案，自動選取該機種
+  const initialRouteCheckedRef = useRef(false);
+  useEffect(() => {
+    if (!initialRouteCheckedRef.current && projects.length > 0) {
+      initialRouteCheckedRef.current = true;
+      const r = parseHash();
+      if ((r.route === 'project-overview' || r.route === 'project-step' || r.route === 'project-print') && r.params.id) {
+        const found = projects.find(p => p.id === r.params.id);
+        if (found) {
+          const targetId = r.params.id;
+          setTimeout(() => {
+            handleSelectProjectRef.current(targetId, projects, r.params.tabKey);
+            if (r.route === 'project-print') setActiveTab('print');
+          }, 0);
+        }
+      }
+    }
+  }, [projects]);
+
+  useEffect(() => {
+    if (!currentUser && authReady) {
+      const current = parseHash();
+      if (current.route !== 'login') {
+        const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
+        navigateTo(`/login?from=${from}`, true);
+      }
+    }
+  }, [currentUser, authReady]);
+
+  useEffect(() => {
+    const handleHash = () => {
+      const current = parseHash();
+      if (!currentUserRef.current) {
+        if (current.route !== 'login') {
+          const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
+          navigateTo(`/login?from=${from}`, true);
+        }
+        return;
+      }
+
+      if (current.route === 'projects') {
+        if (currentProjectIdRef.current) {
+          handleBackToListRef.current();
+        }
+        setActiveTab('projects');
+      } else if (current.route === 'projects-new') {
+        if (currentProjectIdRef.current) {
+          handleBackToListRef.current();
+        }
+        setActiveTab('projects-new');
+      } else if (current.route === 'project-print') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId, null, 'print');
+        }
+        setActiveTab('print');
+      } else if (current.route === 'project-overview') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId, null, 'dashboard');
+        }
+        setActiveTab('dashboard');
+      } else if (current.route === 'project-step') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId, null, current.params.tabKey);
+        }
+        if (current.params.tabKey) {
+          setActiveTab(current.params.tabKey);
+        }
+      } else if (current.route === 'settings-factories' || current.route === 'settings-users') {
+        setActiveTab('settings');
+      }
+    };
+
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // 動態網頁標題同步 (規格 6.2 規則 5)
+  useEffect(() => {
+    if (!currentUser) {
+      document.title = '登入 ｜ 產品委外加工系統';
+    } else if (!currentProjectId) {
+      document.title = '機種管理中心 ｜ 產品委外加工系統';
+    } else {
+      const stepName = WORKFLOW_STEPS.find(s => s.key === activeTab)?.label || (activeTab === 'dashboard' ? '儀表板' : '設定');
+      document.title = `${fileName || '機種'} ｜ ${stepName} ｜ 產品委外加工系統`;
+    }
+  }, [currentUser, currentProjectId, activeTab, fileName]);
+
+  const handleUpdateAccountLevel = (uname, newLevel) => {
+    setAccounts(prev => prev.map(a =>
+      a.username === uname ? { ...a, level: newLevel } : a
+    ));
   };
 
   const handleGoToSection = (tab, msg) => {
@@ -1080,6 +1317,7 @@ export default function App() {
   const renderTabContent = () => {
     if (!data) return null;
     const nextWorkflowStep = getNextWorkflowStep(activeTab);
+    const prevWorkflowStep = getPrevWorkflowStep(activeTab);
     
     switch (activeTab) {
       case 'dashboard':
@@ -1098,7 +1336,8 @@ export default function App() {
             data={data} 
             activeSection={activeTab}
             onChange={setData} 
-            onNext={() => nextWorkflowStep && setActiveTab(nextWorkflowStep)}
+            onNext={() => nextWorkflowStep && handleTabChange(nextWorkflowStep)}
+            onPrev={() => prevWorkflowStep ? handleTabChange(prevWorkflowStep) : handleTabChange('dashboard')}
             currentUser={currentUser}
             factories={factories}
             highlightField={highlightField}
@@ -1116,6 +1355,7 @@ export default function App() {
             onUpdateAccountSignature={handleUpdateAccountSignature}
             onFinalExit={handleLogout}
             onFinalBackToList={handleBackToList}
+            onPrev={() => handleTabChange('documents')}
           />
         );
       case 'settings':
@@ -1127,6 +1367,52 @@ export default function App() {
             onUpdateAccountSignature={handleUpdateAccountSignature}
             currentUser={currentUser}
           />
+        );
+      case 'account':
+        return (
+          <AccountSettings
+            currentUser={currentUser}
+            onUpdateAccountSignature={handleUpdateAccountSignature}
+          />
+        );
+      case 'print':
+        return (
+          <div className="print-preview-wrapper" style={{ padding: '16px', maxWidth: '1024px', margin: '0 auto' }}>
+            <div className="print-preview-actions" style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => navigateTo(`/projects/${currentProjectId}/sign-off`)}
+              >
+                ← 返回簽核
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => window.print()}
+              >
+                🖨️ 列印 / 另存 PDF
+              </button>
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    navigator.share({
+                      title: `${fileName || '機種'}_列印報表`,
+                      text: `產品委外加工需求一覽表 - ${fileName || ''}`,
+                      url: window.location.href,
+                    }).catch(() => {});
+                  }}
+                >
+                  📤 分享
+                </button>
+              )}
+            </div>
+            <div className="print-preview-sheet" style={{ background: '#fff', color: '#000', padding: '24px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <PrintReport data={data} />
+            </div>
+          </div>
         );
       default:
         return null;
@@ -1145,9 +1431,20 @@ export default function App() {
     );
   }
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    const current = parseHash();
+    if (current.route === 'login' && current.query?.from) {
+      const fromPath = decodeURIComponent(current.query.from);
+      navigateTo(fromPath.startsWith('/') ? fromPath : '/' + fromPath, true);
+    } else {
+      navigateTo('/projects', true);
+    }
+  };
+
   if (!currentUser) {
     return (
-      <LoginModal onLogin={setCurrentUser} />
+      <LoginModal onLogin={handleLoginSuccess} accounts={accounts} />
     );
   }
 
@@ -1181,13 +1478,52 @@ export default function App() {
           </div>
         )}
 
-        {!currentProjectId ? (
+        {/* D-157: 閒置登出倒數 2 分鐘橫幅 */}
+        {idleWarningSeconds !== null && (
+          <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', padding: '10px 16px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ef4444', gap: '12px' }}>
+            <span>⏳ 由於長時間未操作，系統將於 <strong>{idleWarningSeconds}</strong> 秒後自動登出以保護資料安全。</span>
+            <button type="button" className="btn btn-primary btn-xs" onClick={resetActivity}>繼續使用</button>
+          </div>
+        )}
+
+        {activeTab === 'account' ? (
+          <div className="tab-content animate-fade-in">
+            <AccountSettings
+              currentUser={currentUser}
+              onUpdateAccountSignature={handleUpdateAccountSignature}
+            />
+          </div>
+        ) : activeTab === 'settings' ? (
+          <div className="tab-content animate-fade-in">
+            <Settings
+              factories={factories}
+              onAddFactory={handleAddFactory}
+              onRemoveFactory={handleRemoveFactory}
+              accounts={accounts}
+              onAddAccount={handleAddAccount}
+              onRemoveAccount={handleRemoveAccount}
+              onUpdateAccountLevel={handleUpdateAccountLevel}
+              onUpdateAccountSignature={handleUpdateAccountSignature}
+              currentUser={currentUser}
+            />
+          </div>
+        ) : activeTab === 'projects-new' || (!currentProjectId && parseHash().route === 'projects-new') ? (
+          <div className="tab-content animate-fade-in">
+            <ProjectNew
+              projects={projects}
+              onCreateProject={handleCreateProject}
+              onImportExcel={handleImportExcel}
+              currentUser={currentUser}
+            />
+          </div>
+        ) : !currentProjectId ? (
           <ProjectList
             projects={projects}
             onSelectProject={handleSelectProject}
             onCreateProject={handleCreateProject}
             onDeleteProject={handleDeleteProject}
             onImportExcel={handleImportExcel}
+            currentUser={currentUser}
           />
         ) : (
           <>

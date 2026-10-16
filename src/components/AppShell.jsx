@@ -148,9 +148,8 @@ export default function AppShell({
                 />
               ))}
 
-              {currentUser?.role === 'admin' && (
-                <div className="nav-group-label">系統</div>
-              )}
+              <div className="nav-group-label">個人與設定</div>
+              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
               {currentUser?.role === 'admin' && (
                 <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
               )}
@@ -158,10 +157,15 @@ export default function AppShell({
           ) : (
             <>
               <div className="nav-group-label">工作區</div>
-              <button type="button" className="nav-item active">
+              <button type="button" className={`nav-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`} onClick={onBackToList}>
                 <span className="nav-icon">🗂️</span>
                 <span className="nav-label">機種管理中心</span>
               </button>
+              <div className="nav-group-label">個人與設定</div>
+              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
+              {currentUser?.role === 'admin' && (
+                <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
+              )}
             </>
           )}
         </nav>
@@ -172,7 +176,7 @@ export default function AppShell({
             <span className="user-name">{currentUser?.username}</span>
             <span className="user-role">{currentUser?.unit} · {currentUser?.level}</span>
           </span>
-          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">⎋</button>
+          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">登出</button>
         </div>
 
         <button
@@ -268,7 +272,7 @@ export default function AppShell({
       {/* 手機抽屜遮罩 */}
       <button
         type="button"
-        className="shell-backdrop"
+        className="drawer-scrim"
         aria-label="關閉選單"
         onClick={() => setDrawerOpen(false)}
       />

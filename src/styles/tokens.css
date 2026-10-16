@@ -86,11 +86,15 @@
   --dur: 0.16s;
 }
 
-/* 觸控裝置 / 窄螢幕:互動元件放大到符合人因 ≥44px */
-@media (max-width: 1024px) {
+/* 觸控裝置 / 窄螢幕:互動元件放大到符合人因 ≥44px，主要按鈕 ≥48px (規格 9A & F11) */
+@media (pointer: coarse), (max-width: 1180px) {
   :root {
     --control-h: 44px;
     --touch-target: 44px;
+  }
+  .btn-primary,
+  [data-primary] {
+    min-height: 48px !important;
   }
 }
 

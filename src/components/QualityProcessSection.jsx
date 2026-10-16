@@ -1,11 +1,10 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
 import './FormSections.css';
 
-export default function QualityProcessSection({ data, onChange, currentUser, highlightField, onNext }) {
+export default function QualityProcessSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
   return (
@@ -14,8 +13,8 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
         <div className="card-header"><span className="card-icon-circle">{sectionSvg.shield}</span>品質與驗收標準</div>
         <div className="card-body">
           <div className="form-row-grid-2">
-            <div className="form-group">
-              <label className="form-label">品質水準要求</label>
+            <fieldset className="form-group" style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">品質水準要求</legend>
               <div className="checkbox-flex">
                 <label className="checkbox-label">
                   <input type="checkbox" checked={data.basicInfo.qualityLevel?.class2 || false}
@@ -30,9 +29,9 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   <span>Class 3</span>
                 </label>
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">IPC 驗收標準</label>
+            </fieldset>
+            <fieldset className="form-group" style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">IPC 驗收標準</legend>
               <div className="checkbox-flex">
                 <label className="checkbox-label">
                   <input type="checkbox" checked={data.basicInfo.ipcStandard?.ipcA610 || false}
@@ -47,7 +46,7 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   <span>J-STD-001</span>
                 </label>
               </div>
-            </div>
+            </fieldset>
           </div>
         </div>
       </div>
@@ -56,14 +55,14 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
         <div className="card-header"><span className="card-icon-circle">{sectionSvg.gear}</span>加工製程與管制需求</div>
         <div className="card-body">
           <div className="form-row-grid-3">
-            <div className="form-group">
-              <label className="form-label">點膠工藝</label>
+            <fieldset className="form-group" style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">點膠工藝</legend>
               <div className="checkbox-flex"><label className="checkbox-label">
                 <input type="checkbox" checked={data.basicInfo.glue || false} onChange={(e) => setField('basicInfo.glue', e.target.checked)}
                   disabled={isFieldDisabled(data, currentUser, 'basicInfo.glue')} /><span>需要點膠</span></label></div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">QR Code 掃描需求</label>
+            </fieldset>
+            <fieldset className="form-group" style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">QR Code 掃描需求</legend>
               <div className="radio-group radio-group-compact">
                 <label className="radio-label"><input type="radio" name="qrCodeScan" checked={data.basicInfo.qrCode?.need || false}
                   onChange={() => setField('basicInfo.qrCode', { need: true, noNeed: false })}
@@ -72,9 +71,9 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   onChange={() => setField('basicInfo.qrCode', { need: false, noNeed: true })}
                   disabled={isFieldDisabled(data, currentUser, 'basicInfo.qrCode.noNeed')} /><span>不需要</span></label>
               </div>
-            </div>
-            <div className="form-group">
-              <label className="form-label">序號管控需求</label>
+            </fieldset>
+            <fieldset className="form-group" style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">序號管控需求</legend>
               <div className="radio-group radio-group-compact">
                 <label className="radio-label"><input type="radio" name="snControlReq" checked={data.basicInfo.snControl?.need || false}
                   onChange={() => setField('basicInfo.snControl', { need: true, noNeed: false })}
@@ -83,9 +82,9 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   onChange={() => setField('basicInfo.snControl', { need: false, noNeed: true })}
                   disabled={isFieldDisabled(data, currentUser, 'basicInfo.snControl.noNeed')} /><span>不需要</span></label>
               </div>
-            </div>
-            <div className={`form-group ${getFieldHighlightClass(highlightField, 'aoi')}`}>
-              <label className="form-label">AOI 檢驗面</label>
+            </fieldset>
+            <fieldset className={`form-group ${getFieldHighlightClass(highlightField, 'aoi')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">AOI 檢驗面</legend>
               <div className="checkbox-flex">
                 <label className="checkbox-label"><input type="checkbox" checked={data.basicInfo.aoi?.top || false}
                   onChange={(e) => setField('basicInfo.aoi', { ...(data.basicInfo.aoi || {}), top: e.target.checked })}
@@ -94,10 +93,10 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   onChange={(e) => setField('basicInfo.aoi', { ...(data.basicInfo.aoi || {}), bottom: e.target.checked })}
                   disabled={isFieldDisabled(data, currentUser, 'basicInfo.aoi.bottom')} /><span>Bottom (底面)</span></label>
               </div>
-            </div>
+            </fieldset>
           </div>
-          <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'processItems')}`}>
-            <label className="form-label">主要加工項目 <span className="req">*</span></label>
+          <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'processItems')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+            <legend className="form-label">主要加工項目 <span className="req">*</span></legend>
             <div className="checkbox-flex" style={{ flexWrap: 'wrap', gap: '12px 18px', alignItems: 'center' }}>
               {[
                 ['smt', 'SMT'], ['dip', 'DIP'], ['ict', 'In-Circuit Test'], ['assembly', '組裝'],
@@ -129,11 +128,12 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   style={{ width: '160px', maxWidth: '100%', padding: '4px 8px', fontSize: '0.82rem' }} />
               </div>
             </div>
-          </div>
+          </fieldset>
         </div>
       </div>
 
       <div className="action-row">
+        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
         <button type="button" className="btn btn-primary" onClick={onNext}>下一步：鋼板與治工具</button>
       </div>
     </div>
@@ -146,4 +146,5 @@ QualityProcessSection.propTypes = {
   currentUser: PropTypes.object,
   highlightField: PropTypes.string,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };

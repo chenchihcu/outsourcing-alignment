@@ -1,12 +1,26 @@
--- Emergency rollback for 0005_signoff_guard.sql.
--- WARNING: this removes server-side signature checks, deletion guards, and automatic version incrementing.
+-- Rollback Migration 0005: Reverts sign-off protection, deletion checks, and restores 0004 insert policy.
+-- WARNING: Reverting this weakens server-side signature validation and optimistic locking.
 
-drop trigger if exists project_guard_deletion_trigger on public.projects;
-drop function if exists public.guard_project_deletion();
+-- 1. Restore projects_insert_scoped from 0004
+drop policy if exists projects_insert_scoped on public.projects;
+create policy projects_insert_scoped on public.projects
+  for insert to authenticated
+  with check (
+    (workspace = 'default' or (workspace = 'admin_test' and public.is_admin()))
+    and updated_by = auth.uid()
+  );
 
-drop trigger if exists project_guard_mutations_trigger on public.projects;
-drop function if exists public.guard_project_mutations();
+-- 2. Drop deletion protection trigger and function
+drop trigger if exists trg_protect_project_deletion on public.projects;
+drop function if exists public.protect_project_deletion();
 
-drop function if exists public.current_user_role();
+-- 3. Drop sign-off protection trigger and function
+drop trigger if exists trg_protect_project_signoff on public.projects;
+drop function if exists public.protect_project_signoff();
 
--- Note: we do not drop the version column to prevent data loss, but rollback triggers and guards
+-- 4. Drop version increment trigger and function
+drop trigger if exists trg_increment_project_version on public.projects;
+drop function if exists public.increment_project_version();
+
+-- 5. Drop version column (Optional: keep column or drop)
+alter table public.projects drop column if exists version;

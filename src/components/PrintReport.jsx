@@ -24,6 +24,23 @@ function formatSignDate(value) {
   return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function formatWithUnit(val, unit) {
+  if (val === null || val === undefined || String(val).trim() === '' || String(val).trim() === '—') {
+    return '(未填寫)';
+  }
+  return `${String(val).trim()} ${unit}`;
+}
+
+function renderFixtureQty(fixture) {
+  if (fixture?.need) {
+    return fixture.qty ? String(fixture.qty).trim() : '(未填寫)';
+  }
+  if (fixture?.noNeed) {
+    return '不需要';
+  }
+  return '(未填寫)';
+}
+
 function formatPhotoRecordName(rec) {
   if (!rec?.isXray || !Array.isArray(rec.parts)) return rec?.name || '';
 
@@ -233,8 +250,8 @@ export default function PrintReport({ data }) {
                 {renderCheck(pc.bakeRequired?.noNeed, '不需要')}
                 {pc.bakeRequired?.need && (
                   <div className="print-field-note">
-                    PCB 烘烤條件: {pc.bakeRequired?.pcbBakeCond || '—'}<br />
-                    FPCA 烘烤條件: {pc.bakeRequired?.fpcaBakeCond || '—'}
+                    PCB 烘烤條件: {pc.bakeRequired?.pcbBakeCond || '(未填寫)'}<br />
+                    FPCA 烘烤條件: {pc.bakeRequired?.fpcaBakeCond || '(未填寫)'}
                   </div>
                 )}
               </td>
@@ -260,7 +277,7 @@ export default function PrintReport({ data }) {
                 <td>
                   {renderCheck(true, '鋼板規格 (100% 需要)')}
                   <div className="print-field-note">
-                    厚度: <strong>{tooling.stencil?.thickness || '—'}</strong> mm |
+                    厚度: <strong>{formatWithUnit(tooling.stencil?.thickness, 'mm')}</strong> |
                     樣式: <strong>{tooling.stencil?.style === 'step' ? '階梯鋼板' : '一般鋼板'}</strong>
                     {tooling.stencil?.nanoCoating && <span className="nano-coating-badge">表面奈米塗層</span>}
                   </div>
@@ -271,22 +288,22 @@ export default function PrintReport({ data }) {
             <tr>
               <td className="cell-bold">Routing 治具</td>
               <td>{renderCheck(tooling.routingFixture?.need, '需要')}{renderCheck(tooling.routingFixture?.noNeed, '不需要')}</td>
-              <td>{tooling.routingFixture?.need ? (tooling.routingFixture?.qty || '—') : '—'}</td>
+              <td>{renderFixtureQty(tooling.routingFixture)}</td>
             </tr>
             <tr>
               <td className="cell-bold">塗膠治具</td>
               <td>{renderCheck(tooling.glueFixture?.need, '需要')}{renderCheck(tooling.glueFixture?.noNeed, '不需要')}</td>
-              <td>{tooling.glueFixture?.need ? (tooling.glueFixture?.qty || '—') : '—'}</td>
+              <td>{renderFixtureQty(tooling.glueFixture)}</td>
             </tr>
             <tr>
               <td className="cell-bold">測試治具</td>
               <td>{renderCheck(tooling.testFixture?.need, '需要')}{renderCheck(tooling.testFixture?.noNeed, '不需要')}</td>
-              <td>{tooling.testFixture?.need ? (tooling.testFixture?.qty || '—') : '—'}</td>
+              <td>{renderFixtureQty(tooling.testFixture)}</td>
             </tr>
             <tr>
               <td className="cell-bold">組裝治具</td>
               <td>{renderCheck(tooling.assemblyFixture?.need, '需要')}{renderCheck(tooling.assemblyFixture?.noNeed, '不需要')}</td>
-              <td>{tooling.assemblyFixture?.need ? (tooling.assemblyFixture?.qty || '—') : '—'}</td>
+              <td>{renderFixtureQty(tooling.assemblyFixture)}</td>
             </tr>
             <tr>
               <td className="cell-bold">SMT刷錫載具</td>
@@ -299,7 +316,7 @@ export default function PrintReport({ data }) {
                   </div>
                 )}
               </td>
-              <td>—</td>
+              <td>{tooling.smtCarrier?.need ? '需要' : (tooling.smtCarrier?.noNeed ? '不需要' : '(未填寫)')}</td>
             </tr>
             <tr>
               <td className="cell-bold">其他治具</td>
@@ -307,10 +324,10 @@ export default function PrintReport({ data }) {
                 {renderCheck(tooling.otherFixture?.need, '需要')}
                 {renderCheck(tooling.otherFixture?.noNeed, '不需要')}
                 {tooling.otherFixture?.need && (
-                  <div className="print-field-note">名稱: <strong>{tooling.otherFixture?.name || '—'}</strong></div>
+                  <div className="print-field-note">名稱: <strong>{tooling.otherFixture?.name || '(未填寫)'}</strong></div>
                 )}
               </td>
-              <td>{tooling.otherFixture?.need ? (tooling.otherFixture?.qty || '—') : '—'}</td>
+              <td>{renderFixtureQty(tooling.otherFixture)}</td>
             </tr>
           </tbody>
         </table>
@@ -335,7 +352,7 @@ export default function PrintReport({ data }) {
                 </div>
               </td>
               <td className="cell-label">鋼板開孔比例</td>
-              <td className="cell-value">{stencilApertureRatio || '—'} %</td>
+              <td className="cell-value">{stencilApertureRatio ? `${stencilApertureRatio}%` : '(未填寫)'}</td>
             </tr>
             <tr>
               <td className="cell-label">SMT 首件檢查項目</td>
@@ -416,10 +433,12 @@ export default function PrintReport({ data }) {
               <td className="cell-value" style={{ width: '30%' }}>
                 {(pc.underfill?.bakeTemp && pc.underfill?.bakeTime)
                   ? `${pc.underfill?.bakeTemp} °C x ${pc.underfill?.bakeTime} min`
-                  : '—'}
+                  : (bi.processItems?.underfillGlue ? '(未填寫)' : '不適用')}
               </td>
               <td className="cell-label" style={{ width: '20%' }}>膠材型號</td>
-              <td className="cell-value" style={{ width: '30%' }}>{pc.underfill?.glueModel || '—'}</td>
+              <td className="cell-value" style={{ width: '30%' }}>
+                {pc.underfill?.glueModel || (bi.processItems?.underfillGlue ? '(未填寫)' : '不適用')}
+              </td>
             </tr>
           </tbody>
         </table>

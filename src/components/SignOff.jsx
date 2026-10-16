@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { validateAlignment } from '../utils/validator';
 import { exportRequirementExcel } from '../utils/excelExporter';
 import { compressImage } from '../utils/imageCompressor';
+import { isSignOffComplete, getSignOffMissingItems } from '../utils/signOffStatus';
 import './SignOff.css';
 
 const SIGNED_AT_FIELDS = {
@@ -21,6 +22,7 @@ export default function SignOff({
   onUpdateAccountSignature,
   onFinalExit,
   onFinalBackToList,
+  onPrev,
 }) {
   const report = useMemo(() => validateAlignment(data), [data]);
   const { alignmentRate, warnings } = report;
@@ -28,6 +30,9 @@ export default function SignOff({
   const [printLoading, setPrintLoading] = useState(false);
   const exportTimerRef = useRef(null);
   const printTimerRef = useRef(null);
+  const rdUploadRef = useRef(null);
+  const peUploadRef = useRef(null);
+  const qaUploadRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -50,8 +55,9 @@ export default function SignOff({
   const signOff = data.basicInfo?.signOff || {};
   const rejection = signOff.rejection || null;
   const isRejected = !!rejection;
-  // D-116: 必須三方簽核全部完成且無退件才算最終簽核完成
-  const finalApprovalComplete = !!signOff.rdSignature && !!signOff.engineeringReviewSignature && !!signOff.qaSignature && !isRejected;
+  // D-116: 必須所有適用步驟完成且 RD、PE、QA 三方均已簽章且無退件才算最終簽核完成
+  const finalApprovalComplete = isSignOffComplete(data);
+  const missingItems = useMemo(() => getSignOffMissingItems(data), [data]);
   const isQA = currentUser.role === 'qa' || currentUser.role === 'admin';
   const canResubmit = currentUser.role === 'rd' || currentUser.role === 'eng' || currentUser.role === 'admin';
   const [rejectReason, setRejectReason] = useState('');
@@ -247,7 +253,7 @@ export default function SignOff({
 
       {/* D-25: 阻擋未完成項目簽核與匯出提示橫幅 */}
       {hasBlockingErrors && (
-        <div className="blocking-warning-banner" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
+        <div className="blocking-warning-banner pokayoke-summary pokayoke-bar" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
           <strong>⚠️ 尚有 {blockingErrorsCount} 項必填檢查未完成</strong>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>必須先至前面步驟完成所有防呆必填項目，方可套用簽章或匯出正式需求表。</p>
         </div>
@@ -255,7 +261,7 @@ export default function SignOff({
 
       {/* 品保退件提示(硬性鎖定:簽章與匯出皆已封鎖) */}
       {isRejected && (
-        <div className="reject-banner">
+        <div className="reject-banner rejected-banner" role="alert">
           <div className="reject-banner-main">
             <span className="reject-icon">⛔</span>
             <div className="reject-text">
@@ -356,18 +362,23 @@ export default function SignOff({
                   )}
                   <input 
                     type="file" 
-                    accept="image/*" 
+                    accept="image/png,image/jpeg" 
+                    ref={rdUploadRef}
                     id="rd-sig-upload" 
                     style={{ display: 'none' }}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      e.target.value = ''; // 重設 input,讓同一張簽章圖可再次選取
+                      e.target.value = '';
                       if (file) {
                         const reader = new FileReader();
                         reader.onload = async (event) => {
-                          const compressed = await compressImage(event.target.result);
-                          handleSignChange('rdSignature', compressed);
-                          onUpdateAccountSignature(currentUser.username, compressed);
+                          try {
+                            const compressed = await compressImage(event.target.result);
+                            handleSignChange('rdSignature', compressed);
+                            onUpdateAccountSignature(currentUser.username, compressed);
+                          } catch (err) {
+                            setExportError(err.message);
+                          }
                         };
                         reader.readAsDataURL(file);
                       }
@@ -376,7 +387,7 @@ export default function SignOff({
                   <button 
                     type="button" 
                     className="btn btn-primary btn-xs"
-                    onClick={() => document.getElementById('rd-sig-upload').click()}
+                    onClick={() => rdUploadRef.current?.click()}
                   >
                     📤 上傳簽章
                   </button>
@@ -418,43 +429,54 @@ export default function SignOff({
               
               {(currentUser.role === 'eng' || currentUser.role === 'admin') && !isRejected && (
                 <div className="signature-btn-row">
-                  {currentUser.signature && (
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary btn-xs"
-                      onClick={() => {
-                        handleSignChange('engineeringReviewSignature', currentUser.signature);
-                      }}
-                    >
-                      🖋️ 套用我的簽章
-                    </button>
+                  {!data.basicInfo.signOff?.rdSignature && currentUser.role !== 'admin' ? (
+                    <span style={{ fontSize: '0.8rem', color: '#b45309' }}>⚠️ 需研發 (RD) 先行完成簽章後方可審核</span>
+                  ) : (
+                    <>
+                      {currentUser.signature && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => {
+                            handleSignChange('engineeringReviewSignature', currentUser.signature);
+                          }}
+                        >
+                          🖋️ 套用我的簽章
+                        </button>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/png,image/jpeg" 
+                        ref={peUploadRef}
+                        id="pe-sig-upload" 
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = async (event) => {
+                              try {
+                                const compressed = await compressImage(event.target.result);
+                                handleSignChange('engineeringReviewSignature', compressed);
+                                onUpdateAccountSignature(currentUser.username, compressed);
+                              } catch (err) {
+                                setExportError(err.message);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn-primary btn-xs"
+                        onClick={() => peUploadRef.current?.click()}
+                      >
+                        📤 上傳簽章
+                      </button>
+                    </>
                   )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    id="pe-sig-upload" 
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = ''; // 重設 input,讓同一張簽章圖可再次選取
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = async (event) => {
-                          const compressed = await compressImage(event.target.result);
-                          handleSignChange('engineeringReviewSignature', compressed);
-                          onUpdateAccountSignature(currentUser.username, compressed);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <button 
-                    type="button" 
-                    className="btn btn-primary btn-xs"
-                    onClick={() => document.getElementById('pe-sig-upload').click()}
-                  >
-                    📤 上傳簽章
-                  </button>
                   {data.basicInfo.signOff?.engineeringReviewSignature && (
                     <button 
                       type="button" 
@@ -475,7 +497,7 @@ export default function SignOff({
 
         {/* 品保處審核 */}
         <div className="sign-box">
-          <div className="sign-header bg-vendor" style={{ background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)' }}>
+          <div className="sign-header bg-vendor">
             <span>品保處最後審核</span>
             <span className="badge-role">品保處 (QA)</span>
           </div>
@@ -493,43 +515,54 @@ export default function SignOff({
               
               {(currentUser.role === 'qa' || currentUser.role === 'admin') && !isRejected && (
                 <div className="signature-btn-row">
-                  {currentUser.signature && (
-                    <button 
-                      type="button" 
-                      className="btn btn-secondary btn-xs"
-                      onClick={() => {
-                        handleSignChange('qaSignature', currentUser.signature);
-                      }}
-                    >
-                      🖋️ 套用我的簽章
-                    </button>
+                  {!data.basicInfo.signOff?.engineeringReviewSignature && currentUser.role !== 'admin' ? (
+                    <span style={{ fontSize: '0.8rem', color: '#b45309' }}>⚠️ 需工程 (PE) 先行完成簽章後方可簽核</span>
+                  ) : (
+                    <>
+                      {currentUser.signature && (
+                        <button 
+                          type="button" 
+                          className="btn btn-secondary btn-xs"
+                          onClick={() => {
+                            handleSignChange('qaSignature', currentUser.signature);
+                          }}
+                        >
+                          🖋️ 套用我的簽章
+                        </button>
+                      )}
+                      <input 
+                        type="file" 
+                        accept="image/png,image/jpeg" 
+                        ref={qaUploadRef}
+                        id="qa-sig-upload" 
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          e.target.value = '';
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = async (event) => {
+                              try {
+                                const compressed = await compressImage(event.target.result);
+                                handleSignChange('qaSignature', compressed);
+                                onUpdateAccountSignature(currentUser.username, compressed);
+                              } catch (err) {
+                                setExportError(err.message);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        className="btn btn-primary btn-xs"
+                        onClick={() => qaUploadRef.current?.click()}
+                      >
+                        📤 上傳簽章
+                      </button>
+                    </>
                   )}
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    id="qa-sig-upload" 
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      e.target.value = ''; // 重設 input,讓同一張簽章圖可再次選取
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = async (event) => {
-                          const compressed = await compressImage(event.target.result);
-                          handleSignChange('qaSignature', compressed);
-                          onUpdateAccountSignature(currentUser.username, compressed);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <button 
-                    type="button" 
-                    className="btn btn-primary btn-xs"
-                    onClick={() => document.getElementById('qa-sig-upload').click()}
-                  >
-                    📤 上傳簽章
-                  </button>
                   {data.basicInfo.signOff?.qaSignature && (
                     <button 
                       type="button" 
@@ -607,7 +640,7 @@ export default function SignOff({
         </div>
       )}
 
-      {finalApprovalComplete && (
+      {finalApprovalComplete ? (
         <div className="final-approval-next" aria-live="polite">
           <div className="final-approval-copy">
             <span className="final-approval-kicker">最終簽核已完成</span>
@@ -630,41 +663,63 @@ export default function SignOff({
             </button>
           </div>
         </div>
+      ) : (
+        <div className="signoff-pending-banner" style={{ margin: '16px 0', padding: '14px 18px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid #f59e0b', borderRadius: '8px' }}>
+          <div style={{ fontWeight: 600, color: '#b45309', marginBottom: '6px' }}>
+            ⏳ 尚未完成最終簽核：
+          </div>
+          <ul style={{ margin: 0, paddingLeft: '20px', color: '#92400e', fontSize: '0.88rem' }}>
+            {missingItems.map((item, idx) => (
+              <li key={idx}>{item}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {/* 匯出動作按鈕 */}
-      <div className="export-action-row" style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '24px' }}>
-        <button type="button"
-          className="btn btn-primary btn-large"
-          onClick={handlePrintReport}
-          disabled={isRejected || exportLoading || printLoading}
-          style={{ background: 'linear-gradient(135deg, #2563eb 0%, #3b82f6 100%)', boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)' }}
-        >
-          <svg className="download-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '20px', height: '20px', marginRight: '8px' }} aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          <span>{printLoading ? '準備列印報表...' : '列印 / 儲存 PDF (A4直式)'}</span>
-        </button>
-
-        <button type="button"
-          className="btn btn-secondary btn-large"
-          onClick={handleExport}
-          disabled={exportLoading || isRejected}
-        >
-          {exportLoading ? (
-            <>
-              <span className="spinner"></span>
-              <span>正在回寫資料並重建活頁簿...</span>
-            </>
-          ) : (
-            <>
-              <svg className="download-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '20px', height: '20px', marginRight: '8px' }} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span>匯出並下載 Excel 文件</span>
-            </>
+      <div className="export-action-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '24px' }}>
+        <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {onPrev && (
+            <button type="button" className="btn btn-secondary btn-large" onClick={onPrev}>
+              上一步：工程文件確認
+            </button>
           )}
-        </button>
+          <button type="button"
+            className="btn btn-primary btn-large"
+            onClick={handlePrintReport}
+            disabled={isRejected || exportLoading || printLoading || hasBlockingErrors}
+          >
+            <svg className="download-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '20px', height: '20px', marginRight: '8px' }} aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>{printLoading ? '準備列印報表...' : '列印 / 儲存 PDF (A4直式)'}</span>
+          </button>
+
+          <button type="button"
+            className="btn btn-secondary btn-large"
+            onClick={handleExport}
+            disabled={exportLoading || isRejected || hasBlockingErrors}
+          >
+            {exportLoading ? (
+              <>
+                <span className="spinner"></span>
+                <span>正在回寫資料並重建活頁簿...</span>
+              </>
+            ) : (
+              <>
+                <svg className="download-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '20px', height: '20px', marginRight: '8px' }} aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>匯出並下載 Excel 文件</span>
+              </>
+            )}
+          </button>
+        </div>
+        {hasBlockingErrors && (
+          <div style={{ color: '#ef4444', fontSize: '0.88rem', textAlign: 'center' }}>
+            ⚠️ 尚有 {blockingErrorsCount} 項必填防呆未完成，完成後方可匯出 Excel 與列印報表。
+          </div>
+        )}
       </div>
 
       {exportError && (
@@ -733,6 +788,7 @@ SignOff.propTypes = {
   onUpdateAccountSignature: PropTypes.func.isRequired,
   onFinalExit: PropTypes.func.isRequired,
   onFinalBackToList: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };
 
 

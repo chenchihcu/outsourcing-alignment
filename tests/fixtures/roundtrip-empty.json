@@ -1,0 +1,291 @@
+{
+  "dataVersion": 1,
+  "basicInfo": {
+    "title": "醫電鼎眾股份有限公司           新產品導入 — 製程管制與前置作業",
+    "date": "",
+    "version": "",
+    "factory": "",
+    "factoryArea": "",
+    "stage": {
+      "evt": false,
+      "dvt": false,
+      "pvt": false,
+      "politRun": false,
+      "mp": false,
+      "ecn": false
+    },
+    "ecnChange": null,
+    "pcbBake": "",
+    "fpcaBake": "",
+    "category": {
+      "general": false,
+      "medical": false
+    },
+    "productNo": "",
+    "productDesc": "",
+    "qualityLevel": {
+      "class2": false,
+      "class3": false
+    },
+    "ipcStandard": {
+      "ipcA610": false,
+      "jStd001": false
+    },
+    "pcbaType": {
+      "single": false,
+      "double": false
+    },
+    "materialType": "",
+    "processItems": {
+      "smt": false,
+      "dip": false,
+      "ict": false,
+      "assembly": false,
+      "coating": false,
+      "packing": false,
+      "fct": false,
+      "flyingProbe": false,
+      "finalTest": false,
+      "underfillGlue": false,
+      "semiFinishedTest": false,
+      "otherProcess": false,
+      "otherProcessText": ""
+    },
+    "aoi": null,
+    "glue": null,
+    "qrCode": {
+      "need": null,
+      "noNeed": null
+    },
+    "snControl": {
+      "need": null,
+      "noNeed": null
+    },
+    "riskParts": [],
+    "documents": {
+      "bom": false,
+      "bomReason": "",
+      "gerber": false,
+      "gerberReason": "",
+      "coordinate": false,
+      "coordinateReason": "",
+      "placement": false,
+      "placementReason": "",
+      "materialSpec": false,
+      "materialSpecReason": "",
+      "reflowProfile": false,
+      "reflowProfileReason": "",
+      "assemblySop": false,
+      "assemblySopReason": "",
+      "packingSop": false,
+      "packingSopReason": "",
+      "testSop": false,
+      "testSopReason": "",
+      "assemblyPackingSop": false
+    },
+    "tooling": {
+      "stencil": {
+        "need": false,
+        "noNeed": true,
+        "thickness": "",
+        "apertureRatio": "____",
+        "style": "general",
+        "nanoCoating": null
+      },
+      "routingFixture": {
+        "need": null,
+        "noNeed": null,
+        "qty": ""
+      },
+      "glueFixture": {
+        "need": null,
+        "noNeed": null,
+        "qty": ""
+      },
+      "testFixture": {
+        "need": null,
+        "noNeed": null,
+        "qty": ""
+      },
+      "assemblyFixture": {
+        "need": null,
+        "noNeed": null,
+        "qty": ""
+      },
+      "smtCarrier": {
+        "need": false,
+        "noNeed": false,
+        "upper": false,
+        "lower": false
+      },
+      "otherFixture": {
+        "need": false,
+        "noNeed": false,
+        "name": "",
+        "qty": ""
+      }
+    },
+    "signOff": {
+      "rdSignature": "",
+      "engineeringReviewSignature": "",
+      "qaSignature": "",
+      "rdSignedAt": "",
+      "engineeringReviewSignedAt": "",
+      "qaSignedAt": ""
+    }
+  },
+  "processControl": {
+    "sampleProvided": null,
+    "bakeRequired": {
+      "need": null,
+      "noNeed": null,
+      "pcbBakeCond": "",
+      "fpcaBakeCond": ""
+    },
+    "smtFirstPiece": {
+      "polarity": false,
+      "measureLcr": false,
+      "spi": false,
+      "steelTension": false,
+      "ledTest": "",
+      "pcbReflow": false,
+      "solderability": false,
+      "stencilApertureRatio": "____"
+    },
+    "dipFirstPiece": {
+      "cutLead": false,
+      "memo": ""
+    },
+    "smtOrder": {
+      "bToT": false,
+      "tToB": false
+    },
+    "dipOrder": {
+      "bToT": false,
+      "tToB": false
+    },
+    "keyParts": {
+      "has": null,
+      "none": null
+    },
+    "tempPoints": [
+      {
+        "id": 1,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 2,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 3,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 4,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 5,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      },
+      {
+        "id": 6,
+        "pos": "",
+        "desc": "",
+        "memo": ""
+      }
+    ],
+    "underfill": {
+      "bakeTemp": "",
+      "bakeTime": "",
+      "glueModel": ""
+    },
+    "reworkMark": {
+      "need": false,
+      "noNeed": false,
+      "sopMark": ""
+    },
+    "specialProcessMemo": "",
+    "packagingType": "",
+    "pcbaPackaging": {
+      "staticBag": false,
+      "honeycomb": false,
+      "tray": false
+    },
+    "fpcaPackaging": {
+      "staticBag": false,
+      "honeycomb": false,
+      "tray": false
+    }
+  },
+  "trialReport": {
+    "printRecords": [
+      {
+        "id": 1,
+        "name": "錫膏檢查紀錄表",
+        "checked": false
+      },
+      {
+        "id": 2,
+        "name": "迴焊爐溫記錄",
+        "checked": false
+      }
+    ],
+    "inspectRecords": [
+      {
+        "id": 1,
+        "name": "PCB 板彎/翹曲檢驗紀錄",
+        "checked": false
+      },
+      {
+        "id": 2,
+        "name": "首件檢查紀錄表",
+        "checked": false
+      },
+      {
+        "id": 3,
+        "name": "鋼板張力量測紀錄",
+        "checked": false
+      },
+      {
+        "id": 4,
+        "name": "鋼板清洗紀錄表",
+        "checked": false
+      },
+      {
+        "id": 5,
+        "name": "錫膏厚度測試紀錄",
+        "checked": false
+      }
+    ],
+    "photoRecords": [
+      {
+        "id": 1,
+        "name": "試錫板照片",
+        "checked": false
+      },
+      {
+        "id": 2,
+        "name": "X-Ray 照片",
+        "checked": false,
+        "isXray": true,
+        "parts": []
+      }
+    ],
+    "yieldReport": {
+      "ready": false
+    }
+  },
+  "_owners": {}
+}

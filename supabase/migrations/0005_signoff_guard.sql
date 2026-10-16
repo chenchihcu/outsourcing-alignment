@@ -1,105 +1,117 @@
--- Migration 0005: Sign-off authorization, optimistic locking versioning, and project deletion protection.
--- Fixes D-05 (server-side sign-off guard), D-07 (deletion guard), D-27 (version increment), and D-154 (QA insert guard).
+-- Migration 0005: Sign-off, Approval, Deletion guardrails, and optimistic locking version
+-- Backward compatible; safeguards data integrity on Supabase for projects table.
+-- DO NOT APPLY TO PRODUCTION WITHOUT PRIOR AUTHORIZATION (Dry-run / Specification only).
 
 -- 1. Add version column for optimistic locking (D-27)
 alter table public.projects
   add column if not exists version bigint not null default 0;
 
--- 2. Helper function to get current user's profile role
-create or replace function public.current_user_role()
-returns text
-language sql
-stable
+-- 2. Trigger function to auto-increment version on every update
+create or replace function public.increment_project_version()
+returns trigger
+language plpgsql
 security definer
 set search_path = ''
 as $$
-  select role
-  from public.profiles
-  where id = auth.uid()
-  limit 1;
+begin
+  new.version = coalesce(old.version, 0) + 1;
+  return new;
+end;
 $$;
 
-revoke all on function public.current_user_role() from public;
-grant execute on function public.current_user_role() to authenticated, service_role;
+revoke all on function public.increment_project_version() from public;
 
--- 3. Trigger function to enforce sign-off authorization, optimistic lock, and QA restrictions
-create or replace function public.guard_project_mutations()
+drop trigger if exists trg_increment_project_version on public.projects;
+create trigger trg_increment_project_version
+  before update on public.projects
+  for each row execute function public.increment_project_version();
+
+-- 3. Trigger function to enforce sign-off, approval, and form modification rules (D-05, OD-10, OD-12, OD-13)
+create or replace function public.protect_project_signoff()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  user_role text;
-  old_signoff jsonb;
-  new_signoff jsonb;
-  old_rd text;
-  new_rd text;
-  old_pe text;
-  new_pe text;
-  old_qa text;
-  new_qa text;
-  old_rej jsonb;
-  new_rej jsonb;
+  v_role text;
+  v_old_rd text;
+  v_new_rd text;
+  v_old_pe text;
+  v_new_pe text;
+  v_old_qa text;
+  v_new_qa text;
+  v_old_qa_app text;
+  v_new_qa_app text;
+  v_old_reject text;
+  v_new_reject text;
 begin
-  -- Bypass for background jobs or admin service role
   if auth.role() = 'service_role' then
     return new;
   end if;
 
-  user_role := public.current_user_role();
+  -- Fetch current user's profile role
+  select role into v_role
+  from public.profiles
+  where id = auth.uid();
 
-  -- D-154: QA role cannot create new projects (QA is audit-only)
-  if TG_OP = 'INSERT' then
-    if user_role = 'qa' then
-      raise exception 'QA role is not permitted to create new projects';
+  if v_role is null then
+    raise exception 'user profile not found or inactive';
+  end if;
+
+  -- Extract sign-off signatures
+  v_old_rd := old.data->'basicInfo'->'signOff'->>'rdSignature';
+  v_new_rd := new.data->'basicInfo'->'signOff'->>'rdSignature';
+  v_old_pe := old.data->'basicInfo'->'signOff'->>'engineeringReviewSignature';
+  v_new_pe := new.data->'basicInfo'->'signOff'->>'engineeringReviewSignature';
+  v_old_qa := old.data->'basicInfo'->'signOff'->>'qaSignature';
+  v_new_qa := new.data->'basicInfo'->'signOff'->>'qaSignature';
+
+  v_old_qa_app := old.data->'basicInfo'->'qaApproval'->>'status';
+  v_new_qa_app := new.data->'basicInfo'->'qaApproval'->>'status';
+  v_old_reject := old.data->'basicInfo'->'signOff'->'rejection'->>'reason';
+  v_new_reject := new.data->'basicInfo'->'signOff'->'rejection'->>'reason';
+
+  -- RD signature check
+  if v_new_rd is distinct from v_old_rd then
+    if v_role <> 'rd' then
+      raise exception 'only RD role may update RD signature';
     end if;
-    new.version := 1;
-    return new;
   end if;
 
-  -- TG_OP = 'UPDATE'
-  -- D-27: Increment version on every change
-  new.version := coalesce(old.version, 0) + 1;
-
-  -- Admin can modify anything
-  if public.is_admin() then
-    return new;
+  -- PE signature check (Must be PE/eng, and RD must already be signed - OD-13)
+  if v_new_pe is distinct from v_old_pe then
+    if v_role <> 'eng' then
+      raise exception 'only engineering role may update PE signature';
+    end if;
+    if v_new_pe is not null and v_new_pe <> '' and (v_new_rd is null or v_new_rd = '') then
+      raise exception 'cannot sign PE before RD signature is completed';
+    end if;
   end if;
 
-  -- Extract signoff objects
-  old_signoff := coalesce(old.data->'basicInfo'->'signOff', '{}'::jsonb);
-  new_signoff := coalesce(new.data->'basicInfo'->'signOff', '{}'::jsonb);
-
-  old_rd := coalesce(old_signoff->>'rdSignature', '');
-  new_rd := coalesce(new_signoff->>'rdSignature', '');
-  old_pe := coalesce(old_signoff->>'engineeringReviewSignature', '');
-  new_pe := coalesce(new_signoff->>'engineeringReviewSignature', '');
-  old_qa := coalesce(old_signoff->>'qaSignature', '');
-  new_qa := coalesce(new_signoff->>'qaSignature', '');
-
-  old_rej := old_signoff->'rejection';
-  new_rej := new_signoff->'rejection';
-
-  -- D-05: Enforce that only RD can sign RD signature
-  if new_rd <> old_rd and user_role <> 'rd' then
-    raise exception 'only RD role can sign or update RD signature';
+  -- QA signature check (Must be QA, and PE must already be signed - OD-13)
+  if v_new_qa is distinct from v_old_qa then
+    if v_role <> 'qa' then
+      raise exception 'only QA role may update QA signature';
+    end if;
+    if v_new_qa is not null and v_new_qa <> '' and (v_new_pe is null or v_new_pe = '') then
+      raise exception 'cannot sign QA before PE signature is completed';
+    end if;
   end if;
 
-  -- D-05: Enforce that only ENG can sign Engineering Review signature
-  if new_pe <> old_pe and user_role <> 'eng' then
-    raise exception 'only ENG role can sign or update engineering review signature';
+  -- QA approval check
+  if v_new_qa_app is distinct from v_old_qa_app or v_new_reject is distinct from v_old_reject then
+    if v_role <> 'qa' and v_role <> 'admin' then
+      raise exception 'only QA or Admin role may change QA approval/rejection state';
+    end if;
   end if;
 
-  -- D-05: Enforce that only QA can sign QA signature or reject
-  if new_qa <> old_qa and user_role <> 'qa' then
-    raise exception 'only QA role can sign or update QA signature';
-  end if;
-
-  if (new_rej is distinct from old_rej) and user_role <> 'qa' and user_role <> 'admin' then
-    -- Allow RD or ENG to submit resubmit (which removes rejection)
-    if new_rej is not null and old_rej is null then
-      raise exception 'only QA role can reject a project';
+  -- OD-12: If already signed and modifying other fields without revoking signatures, block modification
+  if (v_old_rd is not null and v_old_rd <> '') or (v_old_pe is not null and v_old_pe <> '') or (v_old_qa is not null and v_old_qa <> '') then
+    -- If signatures are not being revoked (i.e. Still present in new), check if other critical sections are tampered
+    if (v_new_rd is not null and v_new_rd <> '') and (new.data - 'basicInfo' is distinct from old.data - 'basicInfo') then
+      -- Modifying form while signature exists is forbidden; signatures must be revoked first
+      raise exception 'cannot modify project form while signatures are active; revoke signatures first';
     end if;
   end if;
 
@@ -107,56 +119,74 @@ begin
 end;
 $$;
 
-revoke all on function public.guard_project_mutations() from public;
+revoke all on function public.protect_project_signoff() from public;
 
-drop trigger if exists project_guard_mutations_trigger on public.projects;
-create trigger project_guard_mutations_trigger
-  before insert or update on public.projects
-  for each row execute function public.guard_project_mutations();
+drop trigger if exists trg_protect_project_signoff on public.projects;
+create trigger trg_protect_project_signoff
+  before update on public.projects
+  for each row execute function public.protect_project_signoff();
 
--- 4. D-07: Deletion guard (template cannot be deleted; signed projects cannot be deleted without revocation; only creator or admin can delete)
-create or replace function public.guard_project_deletion()
+-- 4. Trigger function to enforce deletion constraints (D-07, OD-06)
+create or replace function public.protect_project_deletion()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  signoff jsonb;
+  v_role text;
+  v_rd text;
+  v_pe text;
+  v_qa text;
 begin
-  if auth.role() = 'service_role' or public.is_admin() then
-    -- Template protection still applies to everyone
-    if old.id = 'default-template' then
-      raise exception 'default-template cannot be deleted';
-    end if;
+  if auth.role() = 'service_role' then
     return old;
   end if;
 
-  -- Template protection
+  -- Protect default template
   if old.id = 'default-template' then
-    raise exception 'default-template cannot be deleted';
+    raise exception 'cannot delete system default template';
   end if;
 
-  -- Signed projects cannot be deleted directly
-  signoff := coalesce(old.data->'basicInfo'->'signOff', '{}'::jsonb);
-  if coalesce(signoff->>'rdSignature', '') <> ''
-     or coalesce(signoff->>'engineeringReviewSignature', '') <> ''
-     or coalesce(signoff->>'qaSignature', '') <> '' then
+  -- Check user role
+  select role into v_role
+  from public.profiles
+  where id = auth.uid();
+
+  -- OD-06: Only creator or admin can delete
+  if v_role <> 'admin' and old.updated_by <> auth.uid() then
+    raise exception 'only the creator or an administrator may delete a project';
+  end if;
+
+  -- OD-06: Projects with any active signature cannot be deleted without revoking first
+  v_rd := old.data->'basicInfo'->'signOff'->>'rdSignature';
+  v_pe := old.data->'basicInfo'->'signOff'->>'engineeringReviewSignature';
+  v_qa := old.data->'basicInfo'->'signOff'->>'qaSignature';
+
+  if (v_rd is not null and v_rd <> '') or (v_pe is not null and v_pe <> '') or (v_qa is not null and v_qa <> '') then
     raise exception 'cannot delete project with active signatures; signatures must be revoked first';
-  end if;
-
-  -- Only creator or admin can delete
-  if old.updated_by is distinct from auth.uid() then
-    raise exception 'only the creator or an administrator can delete this project';
   end if;
 
   return old;
 end;
 $$;
 
-revoke all on function public.guard_project_deletion() from public;
+revoke all on function public.protect_project_deletion() from public;
 
-drop trigger if exists project_guard_deletion_trigger on public.projects;
-create trigger project_guard_deletion_trigger
+drop trigger if exists trg_protect_project_deletion on public.projects;
+create trigger trg_protect_project_deletion
   before delete on public.projects
-  for each row execute function public.guard_project_deletion();
+  for each row execute function public.protect_project_deletion();
+
+-- 5. QA cannot insert projects (D-154, OD-05)
+drop policy if exists projects_insert_scoped on public.projects;
+create policy projects_insert_scoped on public.projects
+  for insert to authenticated
+  with check (
+    (workspace = 'default' or (workspace = 'admin_test' and public.is_admin()))
+    and updated_by = auth.uid()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role in ('rd', 'eng', 'admin')
+    )
+  );

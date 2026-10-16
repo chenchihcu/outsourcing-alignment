@@ -4,7 +4,7 @@ import { isFieldDisabled } from '../utils/fieldUtils';
 import { getDocumentIcon } from '../utils/svgIcons';
 import './FormSections.css';
 
-export default function DocumentsSection({ data, onChange, currentUser, onNext }) {
+export default function DocumentsSection({ data, onChange, currentUser, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
   return (
@@ -45,6 +45,7 @@ export default function DocumentsSection({ data, onChange, currentUser, onNext }
       </div>
 
       <div className="action-row" style={{ marginTop: '24px' }}>
+        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
         <button type="button" className="btn btn-primary" onClick={onNext}>下一步：簽章與匯出</button>
       </div>
     </div>
@@ -56,5 +57,6 @@ DocumentsSection.propTypes = {
   onChange: PropTypes.func.isRequired,
   currentUser: PropTypes.object,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };
 
