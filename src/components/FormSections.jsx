@@ -10,35 +10,35 @@ import TrialReportSection from './TrialReportSection';
 import DocumentsSection from './DocumentsSection';
 import './FormSections.css';
 
-export default function FormSections({ data, activeSection, onChange, onNext, currentUser, factories, highlightField }) {
+export default function FormSections({ data, activeSection, onChange, onNext, onPrev, currentUser, factories, highlightField }) {
   return (
     <div className="sections-container">
       {activeSection === 'basicInfo' && (
-        <BasicInfoSection {...{ data, onChange, currentUser, factories, highlightField, onNext }} />
+        <BasicInfoSection {...{ data, onChange, currentUser, factories, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'qualityProcess' && (
-        <QualityProcessSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <QualityProcessSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'tooling' && (
-        <ToolingSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <ToolingSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'preparation' && (
-        <PreWorkSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <PreWorkSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'thermalProfile' && (
-        <ThermalProfileSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <ThermalProfileSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'smtControl' && (
-        <SmtControlSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <SmtControlSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'dipSpecialProcess' && (
-        <DipSpecialProcessSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <DipSpecialProcessSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'trialReport' && (
-        <TrialReportSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <TrialReportSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
       {activeSection === 'documents' && (
-        <DocumentsSection {...{ data, onChange, currentUser, highlightField, onNext }} />
+        <DocumentsSection {...{ data, onChange, currentUser, highlightField, onNext, onPrev }} />
       )}
     </div>
   );
@@ -49,6 +49,7 @@ FormSections.propTypes = {
   activeSection: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
   currentUser: PropTypes.object,
   factories: PropTypes.arrayOf(PropTypes.string),
   highlightField: PropTypes.string,

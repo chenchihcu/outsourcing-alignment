@@ -1,8 +1,9 @@
 import PropTypes from 'prop-types';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { compressImage } from '../utils/imageCompressor';
 
 export default function AccountSettings({ currentUser, onUpdateAccountSignature }) {
+  const fileInputRef = useRef(null);
   const [sigError, setSigError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -72,7 +73,7 @@ export default function AccountSettings({ currentUser, onUpdateAccountSignature 
             <input 
               type="file" 
               accept="image/png,image/jpeg" 
-              id="account-signature-upload" 
+              ref={fileInputRef} 
               style={{ display: 'none' }} 
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -99,7 +100,7 @@ export default function AccountSettings({ currentUser, onUpdateAccountSignature 
               <button 
                 type="button" 
                 className="btn btn-primary"
-                onClick={() => document.getElementById('account-signature-upload').click()}
+                onClick={() => fileInputRef.current?.click()}
               >
                 📤 上傳簽章圖檔
               </button>

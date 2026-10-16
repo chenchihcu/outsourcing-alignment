@@ -1,11 +1,10 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass, updateFieldWithOwner } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
 import './FormSections.css';
 
-export default function PreWorkSection({ data, onChange, currentUser, highlightField, onNext }) {
+export default function PreWorkSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
   const handleBakeChange = (field, val) => {
@@ -72,8 +71,8 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
       <h2 className="section-title">生產前置作業</h2>
 
       <div className="form-row-grid" data-accent="indigo">
-        <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'sampleProvided')}`}>
-          <label className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.clipboard}</span> 樣品提供確認 <span className="req">*</span></label>
+        <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'sampleProvided')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+          <legend className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.clipboard}</span> 樣品提供確認 <span className="req">*</span></legend>
           <div className="checkbox-flex">
             {['trialBoard', 'tempBoard', 'standardPart'].map(k => (
               <label key={k} className="checkbox-label">
@@ -84,9 +83,9 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
               </label>
             ))}
           </div>
-        </div>
-        <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`}>
-          <label className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.thermometer}</span> PCB / FPCA 烘烤需求 <span className="req">*</span></label>
+        </fieldset>
+        <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+          <legend className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.thermometer}</span> PCB / FPCA 烘烤需求 <span className="req">*</span></legend>
           <div className="radio-group">
             <label className="radio-label">
               <input type="radio" name="bakeRequired" checked={data.processControl?.bakeRequired?.need || false}
@@ -101,14 +100,14 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
               <span>不需要</span>
             </label>
           </div>
-        </div>
+        </fieldset>
       </div>
 
       {data.processControl?.bakeRequired?.need && (
         <div className="bake-cond-box animate-fade-in">
           <div className="form-row-grid" style={{ gridTemplateColumns: '1fr' }}>
-            <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`}>
-              <label className="form-label">PCB 烘烤條件 <span className="req">*</span></label>
+            <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">PCB 烘烤條件 <span className="req">*</span></legend>
               <div className="inline-bake-inputs edit-active">
                 <span>PCB 烘烤: </span>
                 <input type="text" className="inline-num-input" placeholder="120" name="processControl.bakeRequired.pcbBakeTemp" value={data.processControl?.bakeRequired?.pcbBakeTemp || ''}
@@ -125,9 +124,9 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
                 (data.processControl?.bakeRequired?.pcbBakeHr && (Number(data.processControl.bakeRequired.pcbBakeHr) < 1 || Number(data.processControl.bakeRequired.pcbBakeHr) > 12))) && (
                 <div className="inline-input-warning animate-fade-in">⚠️ 警告：PCB 烘烤建議溫度為 100°C~140°C，時間為 2~6 hr。請確認填寫數值是否正確。</div>
               )}
-            </div>
-            <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`}>
-              <label className="form-label">FPCA 烘烤條件 <span className="req">*</span></label>
+            </fieldset>
+            <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'bakeRequired')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
+              <legend className="form-label">FPCA 烘烤條件 <span className="req">*</span></legend>
               <div className="inline-bake-inputs edit-active">
                 <span>FPCA 烘烤: 依原物料規格書，若無規格則 </span>
                 <input type="text" className="inline-num-input" placeholder="80" name="processControl.bakeRequired.fpcaBakeTemp" value={data.processControl?.bakeRequired?.fpcaBakeTemp || ''}
@@ -141,15 +140,15 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
                 (data.processControl?.bakeRequired?.fpcaBakeHr && (Number(data.processControl.bakeRequired.fpcaBakeHr) < 1 || Number(data.processControl.bakeRequired.fpcaBakeHr) > 12))) && (
                 <div className="inline-input-warning animate-fade-in">⚠️ 警告：FPCA 烘烤建議溫度為 60°C~100°C，時間為 2~8 hr。請確認填寫數值是否正確。</div>
               )}
-            </div>
+            </fieldset>
           </div>
         </div>
       )}
 
       <div className="divider"></div>
 
-      <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'pcbaPackaging')}`} data-accent="violet">
-        <label className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.box}</span> 包材種類選擇 <span className="req">*</span></label>
+      <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'pcbaPackaging')}`} data-accent="violet" style={{ border: 'none', padding: 0, margin: 0 }}>
+        <legend className="form-label"><span className="card-icon-circle card-icon-xs">{sectionSvg.box}</span> 包材種類選擇 <span className="req">*</span></legend>
         <div className="radio-group" style={{ marginBottom: '12px' }}>
           <label className="radio-label">
             <input type="radio" name="packagingType" checked={packagingType === 'pcba'}
@@ -179,9 +178,10 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
             ))}
           </div>
         )}
-      </div>
+      </fieldset>
 
       <div className="action-row">
+        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
         <button type="button" className="btn btn-primary" onClick={onNext}>下一步：測溫點配置</button>
       </div>
     </div>
@@ -194,4 +194,5 @@ PreWorkSection.propTypes = {
   currentUser: PropTypes.object,
   highlightField: PropTypes.string,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };

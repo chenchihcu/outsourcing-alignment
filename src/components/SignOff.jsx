@@ -22,6 +22,7 @@ export default function SignOff({
   onUpdateAccountSignature,
   onFinalExit,
   onFinalBackToList,
+  onPrev,
 }) {
   const report = useMemo(() => validateAlignment(data), [data]);
   const { alignmentRate, warnings } = report;
@@ -29,6 +30,9 @@ export default function SignOff({
   const [printLoading, setPrintLoading] = useState(false);
   const exportTimerRef = useRef(null);
   const printTimerRef = useRef(null);
+  const rdUploadRef = useRef(null);
+  const peUploadRef = useRef(null);
+  const qaUploadRef = useRef(null);
 
   useEffect(() => {
     return () => {
@@ -249,7 +253,7 @@ export default function SignOff({
 
       {/* D-25: 阻擋未完成項目簽核與匯出提示橫幅 */}
       {hasBlockingErrors && (
-        <div className="blocking-warning-banner" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
+        <div className="blocking-warning-banner pokayoke-summary pokayoke-bar" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
           <strong>⚠️ 尚有 {blockingErrorsCount} 項必填檢查未完成</strong>
           <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>必須先至前面步驟完成所有防呆必填項目，方可套用簽章或匯出正式需求表。</p>
         </div>
@@ -257,7 +261,7 @@ export default function SignOff({
 
       {/* 品保退件提示(硬性鎖定:簽章與匯出皆已封鎖) */}
       {isRejected && (
-        <div className="reject-banner">
+        <div className="reject-banner rejected-banner" role="alert">
           <div className="reject-banner-main">
             <span className="reject-icon">⛔</span>
             <div className="reject-text">
@@ -359,6 +363,7 @@ export default function SignOff({
                   <input 
                     type="file" 
                     accept="image/png,image/jpeg" 
+                    ref={rdUploadRef}
                     id="rd-sig-upload" 
                     style={{ display: 'none' }}
                     onChange={(e) => {
@@ -382,7 +387,7 @@ export default function SignOff({
                   <button 
                     type="button" 
                     className="btn btn-primary btn-xs"
-                    onClick={() => document.getElementById('rd-sig-upload').click()}
+                    onClick={() => rdUploadRef.current?.click()}
                   >
                     📤 上傳簽章
                   </button>
@@ -442,6 +447,7 @@ export default function SignOff({
                       <input 
                         type="file" 
                         accept="image/png,image/jpeg" 
+                        ref={peUploadRef}
                         id="pe-sig-upload" 
                         style={{ display: 'none' }}
                         onChange={(e) => {
@@ -465,7 +471,7 @@ export default function SignOff({
                       <button 
                         type="button" 
                         className="btn btn-primary btn-xs"
-                        onClick={() => document.getElementById('pe-sig-upload').click()}
+                        onClick={() => peUploadRef.current?.click()}
                       >
                         📤 上傳簽章
                       </button>
@@ -527,6 +533,7 @@ export default function SignOff({
                       <input 
                         type="file" 
                         accept="image/png,image/jpeg" 
+                        ref={qaUploadRef}
                         id="qa-sig-upload" 
                         style={{ display: 'none' }}
                         onChange={(e) => {
@@ -550,7 +557,7 @@ export default function SignOff({
                       <button 
                         type="button" 
                         className="btn btn-primary btn-xs"
-                        onClick={() => document.getElementById('qa-sig-upload').click()}
+                        onClick={() => qaUploadRef.current?.click()}
                       >
                         📤 上傳簽章
                       </button>
@@ -672,6 +679,11 @@ export default function SignOff({
       {/* 匯出動作按鈕 */}
       <div className="export-action-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', marginTop: '24px' }}>
         <div style={{ display: 'flex', gap: '16px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          {onPrev && (
+            <button type="button" className="btn btn-secondary btn-large" onClick={onPrev}>
+              上一步：工程文件確認
+            </button>
+          )}
           <button type="button"
             className="btn btn-primary btn-large"
             onClick={handlePrintReport}
@@ -776,6 +788,7 @@ SignOff.propTypes = {
   onUpdateAccountSignature: PropTypes.func.isRequired,
   onFinalExit: PropTypes.func.isRequired,
   onFinalBackToList: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };
 
 

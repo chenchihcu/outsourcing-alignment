@@ -32,11 +32,21 @@ export default function LoginModal({ onLogin, accounts = [] }) {
     e.preventDefault();
     setError('');
 
+    const trimmedUser = username.trim();
+    if (!trimmedUser) {
+      setError('請輸入帳號');
+      return;
+    }
+    if (!password) {
+      setError('請輸入密碼');
+      return;
+    }
+
     // 雲端模式：僅允許經由 Supabase Auth 驗證，絕不比對本機快取帳號 (D-01)
     if (isSupabaseEnabled) {
       setBusy(true);
       try {
-        const user = await signIn(username, password);
+        const user = await signIn(trimmedUser, password);
         if (user) onLogin(sanitizeUserForSession(user));
         else setError('登入失敗，請確認帳號與密碼。');
       } catch (err) {
@@ -50,7 +60,7 @@ export default function LoginModal({ onLogin, accounts = [] }) {
     // 離線模式：比對本機已建立之帳號 (D-02, D-135)
     setBusy(true);
     try {
-      const ok = await tryLocalLogin(username, password);
+      const ok = await tryLocalLogin(trimmedUser, password);
       if (!ok) setError('帳號或密碼錯誤！');
     } finally {
       setBusy(false);
@@ -69,8 +79,8 @@ export default function LoginModal({ onLogin, accounts = [] }) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          {error && <div className="login-error-msg">{error}</div>}
+        <form onSubmit={handleSubmit} noValidate className="login-form">
+          {error && <div className="login-error-banner login-error-msg" role="alert">{error}</div>}
 
           <div className="form-group">
             <label className="form-label" htmlFor="username-input">帳號</label>

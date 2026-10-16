@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './Settings.css';
 import { compressImage } from '../utils/imageCompressor';
 import { isSupabaseEnabled } from '../data/supabaseClient';
@@ -178,6 +178,7 @@ export default function Settings({
   onUpdateAccountSignature,
   currentUser
 }) {
+  const sigInputRef = useRef(null);
   const [newFactory, setNewFactory] = useState('');
   const [sigError, setSigError] = useState('');
 
@@ -286,7 +287,8 @@ export default function Settings({
               <input 
                 type="file" 
                 accept="image/png,image/jpeg" 
-                id="signature-upload-input" 
+                ref={sigInputRef} 
+                id="signature-upload-input"
                 style={{ display: 'none' }} 
                 onChange={(e) => {
                   const file = e.target.files?.[0];
@@ -310,7 +312,7 @@ export default function Settings({
                 <button 
                   type="button" 
                   className="btn btn-primary"
-                  onClick={() => document.getElementById('signature-upload-input').click()}
+                  onClick={() => sigInputRef.current?.click()}
                 >
                   📤 上傳簽章圖檔
                 </button>

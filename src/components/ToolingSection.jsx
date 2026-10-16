@@ -1,11 +1,10 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
 import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
 import './FormSections.css';
 
-export default function ToolingSection({ data, onChange, currentUser, highlightField, onNext }) {
+export default function ToolingSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
   return (
@@ -18,13 +17,13 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
               <span className="tooling-badge">SMT 鋼板</span>
               <div className="form-row-grid-2 animate-fade-in" style={{ marginTop: '8px' }}>
                 <div className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'stencil')}`}>
-                  <label className="form-label">鋼板厚度 (mm) <span className="req">*</span></label>
-                  <input type="text" className="form-input edit-active" placeholder="例如: 0.12" name="basicInfo.tooling.stencil.thickness" value={data.basicInfo.tooling?.stencil?.thickness || ''}
+                  <label htmlFor="tooling-stencil-thickness" className="form-label">鋼板厚度 (mm) <span className="req">*</span></label>
+                  <input id="tooling-stencil-thickness" type="text" className="form-input edit-active" placeholder="例如: 0.12" name="basicInfo.tooling.stencil.thickness" value={data.basicInfo.tooling?.stencil?.thickness || ''}
                     onChange={(e) => setField('basicInfo.tooling.stencil.thickness', e.target.value)}
                     disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.stencil.thickness')} />
                 </div>
-                <div className="form-group required-highlight">
-                  <label className="form-label">鋼板樣式選擇 <span className="req">*</span></label>
+                <fieldset className="form-group required-highlight" style={{ border: 'none', padding: 0, margin: 0 }}>
+                  <legend className="form-label">鋼板樣式選擇 <span className="req">*</span></legend>
                   <div className="checkbox-flex" style={{ padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <label className="radio-label" style={{ padding: 0 }}>
@@ -49,7 +48,7 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
                       </label>
                     </div>
                   </div>
-                </div>
+                </fieldset>
               </div>
             </div>
           )}
@@ -140,6 +139,7 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
       </div>
 
       <div className="action-row">
+        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
         <button type="button" className="btn btn-primary" onClick={onNext}>下一步：生產前置作業</button>
       </div>
     </div>
@@ -152,4 +152,5 @@ ToolingSection.propTypes = {
   currentUser: PropTypes.object,
   highlightField: PropTypes.string,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };

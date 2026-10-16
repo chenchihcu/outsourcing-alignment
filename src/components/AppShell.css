@@ -184,13 +184,17 @@
 .user-role { font-size: var(--fs-xs); color: var(--c-text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-logout {
   flex-shrink: 0;
-  width: 30px; height: 30px;
+  width: 36px; height: 36px;
+  min-width: 36px; min-height: 36px;
   border-radius: var(--r-md);
   border: 1px solid var(--c-border);
   background: var(--c-surface);
   color: var(--c-error);
   cursor: pointer;
   font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .user-logout:hover { background: var(--c-error-weak); border-color: var(--c-error); }
@@ -202,12 +206,27 @@
   border-top: 1px solid var(--c-border);
   background: var(--c-surface);
   color: var(--c-text-3);
-  height: 32px;
+  height: 36px;
+  min-height: 36px;
   cursor: pointer;
   font-size: 0.9rem;
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .rail-collapse:hover { background: var(--c-surface-2); color: var(--c-text-1); }
+
+@media (pointer: coarse), (max-width: 1180px) {
+  .rail-collapse {
+    min-height: 44px !important;
+    height: 44px !important;
+  }
+  .shell-sidebar .user-logout,
+  .user-logout {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+}
 
 /* ---------------- 主區 ---------------- */
 .shell-body {

@@ -11,10 +11,11 @@ const PrintReport = lazy(() =>
 );
 import Settings from './components/Settings';
 import AccountSettings from './components/AccountSettings';
+import ProjectNew from './components/ProjectNew';
 
 import LoginModal from './components/LoginModal';
 import { validateAlignment } from './utils/validator';
-import { getNextWorkflowStep, getWorkflowStatuses } from './utils/workflow';
+import { getNextWorkflowStep, getPrevWorkflowStep, getWorkflowStatuses } from './utils/workflow';
 import { parseRequirementExcel } from './utils/excelParser';
 import { getJSON, setJSON, removeKey, getStoredProjects, updateStoredProject, insertStoredProject, deleteStoredProject } from './utils/storage';
 import { isSupabaseEnabled } from './data/supabaseClient';
@@ -393,10 +394,12 @@ export default function App() {
             originalWbBase64: base64
           };
 
-          const newList = [defaultProj];
+          const latestList = getJSON(key.replace('ag_', ''), []);
+          const hasTemplate = latestList.some(p => p.id === 'default-template');
+          const newList = hasTemplate ? latestList : [defaultProj, ...latestList];
           setJSON(key.replace('ag_', ''), newList);
           projectsKeyRef.current = key;
-          setProjects(newList);
+          setProjects(sanitizeProjects(newList));
         } catch (err) {
           if (import.meta.env.DEV) console.error('載入預設範本失敗:', err);
           setSyncError('載入預設範本失敗，請重新整理頁面。若持續發生，請確認網路連線。');
@@ -860,10 +863,21 @@ export default function App() {
   };
 
   // 3. 選取機種並載入詳細資料
-  const handleSelectProject = (id, currentList = projects) => {
+  const handleSelectProject = (id, currentList = null, targetTab = null) => {
     // 上一個機種還有未儲存的編輯(debounce 未觸發)時,先強制存檔,避免切換造成資料遺失
     flushPendingSaveRef.current();
-    const project = currentList.find(p => p.id === id);
+    const list = currentList || projectsRef.current;
+    let project = list.find(p => p.id === id);
+    if (!project) {
+      // 若記憶體清單尚未同步，嘗試自 localStorage 即時讀取最新清單
+      const storageKey = getProjectsKey(currentUserRef.current).replace('ag_', '');
+      const stored = getStoredProjects(storageKey);
+      project = stored.find(p => p.id === id);
+      if (project) {
+        setProjects(stored);
+        projectsRef.current = stored;
+      }
+    }
     if (project) {
       editedSinceLoadRef.current = false;
       setRemoteUpdate(null);
@@ -889,9 +903,21 @@ export default function App() {
       }
       
       setCurrentProjectId(id);
-      setActiveTab('dashboard');
       setJSON('last_project_id', id);
-      navigateTo('/projects/' + id);
+
+      const current = parseHash();
+      if (targetTab) {
+        setActiveTab(targetTab);
+        const slug = TAB_TO_STEP_KEY[targetTab];
+        if (slug) navigateTo(`/projects/${id}/${slug}`);
+      } else if (current.route === 'project-step' && current.params.id === id) {
+        if (current.params.tabKey) setActiveTab(current.params.tabKey);
+      } else if (current.route === 'project-print' && current.params.id === id) {
+        setActiveTab('print');
+      } else {
+        setActiveTab('dashboard');
+        navigateTo('/projects/' + id);
+      }
     } else {
       setSyncError('找不到該機種資料。');
     }
@@ -1116,7 +1142,7 @@ export default function App() {
         if (found) {
           const targetId = r.params.id;
           setTimeout(() => {
-            handleSelectProjectRef.current(targetId, projects);
+            handleSelectProjectRef.current(targetId, projects, r.params.tabKey);
             if (r.route === 'project-print') setActiveTab('print');
           }, 0);
         }
@@ -1125,30 +1151,52 @@ export default function App() {
   }, [projects]);
 
   useEffect(() => {
+    if (!currentUser && authReady) {
+      const current = parseHash();
+      if (current.route !== 'login') {
+        const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
+        navigateTo(`/login?from=${from}`, true);
+      }
+    }
+  }, [currentUser, authReady]);
+
+  useEffect(() => {
     const handleHash = () => {
       const current = parseHash();
-      if (!currentUserRef.current) return;
+      if (!currentUserRef.current) {
+        if (current.route !== 'login') {
+          const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
+          navigateTo(`/login?from=${from}`, true);
+        }
+        return;
+      }
 
       if (current.route === 'projects') {
         if (currentProjectIdRef.current) {
           handleBackToListRef.current();
         }
+        setActiveTab('projects');
+      } else if (current.route === 'projects-new') {
+        if (currentProjectIdRef.current) {
+          handleBackToListRef.current();
+        }
+        setActiveTab('projects-new');
       } else if (current.route === 'project-print') {
         const projId = current.params.id;
         if (projId && projId !== currentProjectIdRef.current) {
-          handleSelectProjectRef.current(projId);
+          handleSelectProjectRef.current(projId, null, 'print');
         }
         setActiveTab('print');
       } else if (current.route === 'project-overview') {
         const projId = current.params.id;
         if (projId && projId !== currentProjectIdRef.current) {
-          handleSelectProjectRef.current(projId);
+          handleSelectProjectRef.current(projId, null, 'dashboard');
         }
         setActiveTab('dashboard');
       } else if (current.route === 'project-step') {
         const projId = current.params.id;
         if (projId && projId !== currentProjectIdRef.current) {
-          handleSelectProjectRef.current(projId);
+          handleSelectProjectRef.current(projId, null, current.params.tabKey);
         }
         if (current.params.tabKey) {
           setActiveTab(current.params.tabKey);
@@ -1200,6 +1248,7 @@ export default function App() {
   const renderTabContent = () => {
     if (!data) return null;
     const nextWorkflowStep = getNextWorkflowStep(activeTab);
+    const prevWorkflowStep = getPrevWorkflowStep(activeTab);
     
     switch (activeTab) {
       case 'dashboard':
@@ -1218,7 +1267,8 @@ export default function App() {
             data={data} 
             activeSection={activeTab}
             onChange={setData} 
-            onNext={() => nextWorkflowStep && setActiveTab(nextWorkflowStep)}
+            onNext={() => nextWorkflowStep && handleTabChange(nextWorkflowStep)}
+            onPrev={() => prevWorkflowStep ? handleTabChange(prevWorkflowStep) : handleTabChange('dashboard')}
             currentUser={currentUser}
             factories={factories}
             highlightField={highlightField}
@@ -1236,6 +1286,7 @@ export default function App() {
             onUpdateAccountSignature={handleUpdateAccountSignature}
             onFinalExit={handleLogout}
             onFinalBackToList={handleBackToList}
+            onPrev={() => handleTabChange('documents')}
           />
         );
       case 'settings':
@@ -1315,9 +1366,20 @@ export default function App() {
     );
   }
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    const current = parseHash();
+    if (current.route === 'login' && current.query?.from) {
+      const fromPath = decodeURIComponent(current.query.from);
+      navigateTo(fromPath.startsWith('/') ? fromPath : '/' + fromPath, true);
+    } else {
+      navigateTo('/projects', true);
+    }
+  };
+
   if (!currentUser) {
     return (
-      <LoginModal onLogin={setCurrentUser} accounts={accounts} />
+      <LoginModal onLogin={handleLoginSuccess} accounts={accounts} />
     );
   }
 
@@ -1380,6 +1442,15 @@ export default function App() {
               currentUser={currentUser}
             />
           </div>
+        ) : activeTab === 'projects-new' || (!currentProjectId && parseHash().route === 'projects-new') ? (
+          <div className="tab-content animate-fade-in">
+            <ProjectNew
+              projects={projects}
+              onCreateProject={handleCreateProject}
+              onImportExcel={handleImportExcel}
+              currentUser={currentUser}
+            />
+          </div>
         ) : !currentProjectId ? (
           <ProjectList
             projects={projects}
@@ -1387,6 +1458,7 @@ export default function App() {
             onCreateProject={handleCreateProject}
             onDeleteProject={handleDeleteProject}
             onImportExcel={handleImportExcel}
+            currentUser={currentUser}
           />
         ) : (
           <>

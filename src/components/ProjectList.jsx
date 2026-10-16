@@ -1,17 +1,16 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { getJSON, setJSON } from '../utils/storage';
 import { isSignOffComplete } from '../utils/signOffStatus';
 import { validateAlignment } from '../utils/validator';
+import { navigateTo } from '../utils/hashRouter.js';
 import './ProjectList.css';
 
-export default function ProjectList({ projects, onSelectProject, onCreateProject, onDeleteProject, onImportExcel }) {
+export default function ProjectList({ projects, onSelectProject, onCreateProject, onDeleteProject, currentUser }) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const fileInputRef = useRef(null);
 
   // 一覽表排版與過濾狀態（偏好持久化至 localStorage）
   const savedPrefs = getJSON('projectListPrefs', {});
@@ -59,65 +58,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     }
   };
 
-  const [importError, setImportError] = useState('');
   const [confirmDeleteProjectId, setConfirmDeleteProjectId] = useState(null);
-
-  const MAX_IMPORT_SIZE = 10 * 1024 * 1024; // 10 MB
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0];
-    // 立即清空 input value:否則再次選同一個檔案(如格式修正後重傳)不會觸發 onChange
-    e.target.value = '';
-    if (!file) return;
-    setImportError('');
-
-    if (!file.name.toLowerCase().endsWith('.xlsx')) {
-      setImportError('請選擇有效的 .xlsx 格式檔案！');
-      return;
-    }
-    // D3 — 檔案大小限制
-    if (file.size > MAX_IMPORT_SIZE) {
-      setImportError(`檔案過大（${(file.size / 1024 / 1024).toFixed(1)} MB），上限為 10 MB。`);
-      return;
-    }
-
-    setIsImporting(true);
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const arrayBuffer = event.target.result;
-          // D3 — 驗證 XLSX 魔術字節 (PK 0x50 0x4B)
-          const header = new Uint8Array(arrayBuffer).slice(0, 4);
-          if (header[0] !== 0x50 || header[1] !== 0x4B) {
-            setImportError('檔案格式無效，請確認上傳的是真正的 .xlsx 格式 Excel 檔案。');
-            setIsImporting(false);
-            return;
-          }
-          const base64 = btoa(
-            new Uint8Array(arrayBuffer)
-              .reduce((data, byte) => data + String.fromCharCode(byte), '')
-          );
-          await onImportExcel(file.name, base64);
-        } catch (err) {
-          if (import.meta.env.DEV) console.error(err);
-          setImportError(`解析或傳送 Excel 檔案失敗：${err?.message || '請確認檔案格式是否正確。'}`);
-        } finally {
-          setIsImporting(false);
-        }
-      };
-      // D3 — FileReader 錯誤處理
-      reader.onerror = () => {
-        setImportError('讀取檔案失敗，請重試。');
-        setIsImporting(false);
-      };
-      reader.readAsArrayBuffer(file);
-    } catch (err) {
-      if (import.meta.env.DEV) console.error(err);
-      setImportError('讀取檔案時出錯！');
-      setIsImporting(false);
-    }
-  };
 
   // 1. 根據關鍵字搜尋
   const searchedProjects = projects.filter(proj => 
@@ -181,28 +122,17 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
         <div className="header-info">
           <h2>機種管理中心</h2>
         </div>
-        <div className="header-actions">
-          <button type="button" className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
-            ➕ 新增機種
-          </button>
-          <button type="button" 
-            className={`btn btn-secondary ${isImporting ? 'loading' : ''}`} 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting}
-          >
-            📥 匯入 Excel 機種
-          </button>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            style={{ display: 'none' }} 
-            accept=".xlsx" 
-            onChange={handleFileChange}
-          />
-        </div>
-        {importError && (
-          <div role="alert" className="import-error-banner" style={{ color: '#ef4444', fontSize: '0.85rem', width: '100%', marginTop: '8px' }}>
-            ⚠️ {importError}
+        {currentUser?.role !== 'qa' && (
+          <div className="header-actions">
+            <button type="button" className="btn btn-primary" onClick={() => navigateTo('/projects/new?mode=template')}>
+              ➕ 新增機種
+            </button>
+            <button type="button" 
+              className="btn btn-secondary" 
+              onClick={() => navigateTo('/projects/new?mode=import')}
+            >
+              📥 匯入 Excel 機種
+            </button>
           </div>
         )}
       </div>
@@ -507,7 +437,9 @@ ProjectList.propTypes = {
   onSelectProject: PropTypes.func.isRequired,
   onCreateProject: PropTypes.func.isRequired,
   onDeleteProject: PropTypes.func.isRequired,
-  onImportExcel: PropTypes.func.isRequired,
+  currentUser: PropTypes.shape({
+    role: PropTypes.string,
+  }),
 };
 
 

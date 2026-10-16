@@ -176,7 +176,7 @@ export default function AppShell({
             <span className="user-name">{currentUser?.username}</span>
             <span className="user-role">{currentUser?.unit} · {currentUser?.level}</span>
           </span>
-          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">⎋</button>
+          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">登出</button>
         </div>
 
         <button

@@ -9,7 +9,7 @@ function cleanXrayPart(part) {
   return /_{2,}/.test(value) ? '' : value;
 }
 
-export default function TrialReportSection({ data, onChange, currentUser, highlightField, onNext }) {
+export default function TrialReportSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
   const handleRecordChange = (category, index, field, val) => {
@@ -108,6 +108,7 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
       </div>
 
       <div className="action-row">
+        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
         <button type="button" className="btn btn-primary" onClick={onNext}>下一步：工程文件確認</button>
       </div>
     </div>
@@ -120,6 +121,7 @@ TrialReportSection.propTypes = {
   currentUser: PropTypes.object,
   highlightField: PropTypes.string,
   onNext: PropTypes.func.isRequired,
+  onPrev: PropTypes.func,
 };
 
 

@@ -44,6 +44,11 @@ export function getNextWorkflowStep(currentKey) {
   return index >= 0 ? WORKFLOW_STEP_KEYS[index + 1] || null : null;
 }
 
+export function getPrevWorkflowStep(currentKey) {
+  const index = WORKFLOW_STEP_KEYS.indexOf(currentKey);
+  return index > 0 ? WORKFLOW_STEP_KEYS[index - 1] || null : null;
+}
+
 export function getWorkflowStatuses(data) {
   const bi = data?.basicInfo || {};
   const pc = data?.processControl || {};
