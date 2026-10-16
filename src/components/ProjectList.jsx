@@ -4,6 +4,7 @@ import { getJSON, setJSON } from '../utils/storage';
 import { isSignOffComplete } from '../utils/signOffStatus';
 import { validateAlignment } from '../utils/validator';
 import { navigateTo } from '../utils/hashRouter.js';
+import { uiIcons } from '../utils/svgIcons';
 import './ProjectList.css';
 
 export default function ProjectList({ projects, onSelectProject, onCreateProject, onDeleteProject, currentUser }) {
@@ -12,27 +13,44 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
   const [isCreating, setIsCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // 一覽表排版與過濾狀態（偏好持久化至 localStorage）
+  // 一覽表排版偏好（桌機於工具列切換；手機版於 AccountSettings 顯示設定區管理，共用同一 localStorage key）
   const savedPrefs = getJSON('projectListPrefs', {});
   const [filterMode, setFilterMode] = useState('in-progress');
   const [fontSize, setFontSize] = useState(savedPrefs.fontSize || 'medium');
   const [rowSpacing, setRowSpacing] = useState(savedPrefs.rowSpacing || 'normal');
-  const [currentPage, setCurrentPage] = useState(1);
 
-  // ESC 鍵關閉「建立新機種」Modal
-  useEffect(() => {
-    if (!showCreateModal) return;
-    const onKeyDown = (e) => {
-      if (e.key === 'Escape') setShowCreateModal(false);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [showCreateModal]);
-
-  // 持久化排版偏好設定
   useEffect(() => {
     setJSON('projectListPrefs', { fontSize, rowSpacing });
   }, [fontSize, rowSpacing]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // 手機版新增選單與卡片操作選單狀態
+  const [showMobileAddMenu, setShowMobileAddMenu] = useState(false);
+  const [activeActionMenuId, setActiveActionMenuId] = useState(null);
+
+  // ESC 鍵關閉 Modal 與選單
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setShowCreateModal(false);
+        setShowMobileAddMenu(false);
+        setActiveActionMenuId(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
+  // 點擊空白處關閉選單
+  useEffect(() => {
+    if (!showMobileAddMenu && !activeActionMenuId) return;
+    const onClickOutside = () => {
+      setShowMobileAddMenu(false);
+      setActiveActionMenuId(null);
+    };
+    window.addEventListener('click', onClickOutside);
+    return () => window.removeEventListener('click', onClickOutside);
+  }, [showMobileAddMenu, activeActionMenuId]);
 
   // Modal 開啟時鎖定背景捲動
   useEffect(() => {
@@ -88,6 +106,24 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
   const isProjectRejected = (p) => getProjectStatus(p).key === 'rejected';
   const isProjectCompleted = (p) => getProjectStatus(p).key === 'approved';
 
+  const countInProgress = searchedProjects.filter(p => !isProjectRejected(p) && !isProjectCompleted(p)).length;
+  const countCompleted = searchedProjects.filter(isProjectCompleted).length;
+  const countRejected = searchedProjects.filter(isProjectRejected).length;
+  const countAll = searchedProjects.length;
+
+  const formatUpdatedAt = (updatedAt) => {
+    if (!updatedAt) return '尚未儲存';
+    const d = new Date(updatedAt);
+    if (isNaN(d.getTime())) return '尚未儲存';
+    return d.toLocaleString('zh-TW', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
   const filteredProjects = searchedProjects.filter(proj => {
     const status = getProjectStatus(proj);
     if (filterMode === 'in-progress') {
@@ -118,7 +154,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
 
   return (
     <div className="project-list-container animate-fade-in">
-      <div className="project-list-header glass-card">
+      {/* 桌機版 Header */}
+      <div className="project-list-header glass-card hide-on-mobile">
         <div className="header-info">
           <h2>機種管理中心</h2>
         </div>
@@ -137,10 +174,52 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
         )}
       </div>
 
+      {/* 手機版大標「機種」＋右上「+」按鈕與選單 */}
+      <div className="mobile-project-header show-on-mobile">
+        <h1 className="mobile-page-title">機種</h1>
+        {currentUser?.role !== 'qa' && (
+          <div className="mobile-header-menu-anchor">
+            <button
+              type="button"
+              className="mobile-header-add-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMobileAddMenu(v => !v);
+              }}
+              aria-label="新增機種"
+              aria-expanded={showMobileAddMenu}
+            >
+              <uiIcons.plus size={22} />
+              <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', border: 0 }}>新增機種</span>
+            </button>
+            {showMobileAddMenu && (
+              <div className="mobile-header-dropdown glass-card">
+                <button
+                  type="button"
+                  className="mobile-dropdown-item"
+                  onClick={() => { setShowMobileAddMenu(false); navigateTo('/projects/new?mode=template'); }}
+                >
+                  <uiIcons.plus size={18} />
+                  <span>新增機種</span>
+                </button>
+                <button
+                  type="button"
+                  className="mobile-dropdown-item"
+                  onClick={() => { setShowMobileAddMenu(false); navigateTo('/projects/new?mode=import'); }}
+                >
+                  <uiIcons.importExcel size={18} />
+                  <span>匯入 Excel 機種</span>
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* 搜尋篩選器 */}
       {projects.length > 0 && (
         <div className="project-search-container glass-card">
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><uiIcons.search size={18} /></span>
           <input 
             type="text" 
             className="search-input" 
@@ -153,100 +232,102 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
               className="search-clear-btn" 
               onClick={() => { setSearchTerm(''); setCurrentPage(1); }} 
               title="清除搜尋內容"
+              aria-label="清除搜尋內容"
             >
-              ✕
+              <uiIcons.close size={14} />
             </button>
           )}
         </div>
       )}
 
-      {/* 工具列與檢視模式設定 */}
-      <div className="project-list-toolbar glass-card">
-        {/* 左側過濾頁籤 */}
+      {/* 桌機版工具列 */}
+      <div className="project-list-toolbar glass-card hide-on-mobile">
         <div className="toolbar-tabs">
           <button type="button" 
             className={`tab-filter-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
             onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
           >
-            ⏳ 進行中 ({searchedProjects.filter(p => !isProjectRejected(p) && !isProjectCompleted(p)).length})
+            ⏳ 進行中 ({countInProgress})
+          </button>
+          <button type="button" 
+            className={`tab-filter-btn ${filterMode === 'completed' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
+          >
+            ✅ 已完成 ({countCompleted})
           </button>
           <button type="button" 
             className={`tab-filter-btn ${filterMode === 'rejected' ? 'active' : ''}`}
             onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
             style={{ color: filterMode === 'rejected' ? '#e11d48' : undefined }}
           >
-            ⛔ 已退件 ({searchedProjects.filter(isProjectRejected).length})
-          </button>
-          <button type="button" 
-            className={`tab-filter-btn ${filterMode === 'completed' ? 'active' : ''}`}
-            onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
-          >
-            ✅ 已完成 ({searchedProjects.filter(isProjectCompleted).length})
+            ⛔ 已退件 ({countRejected})
           </button>
           <button type="button" 
             className={`tab-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
             onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
           >
-            📁 全部 ({searchedProjects.length})
+            📁 全部 ({countAll})
           </button>
         </div>
 
-        {/* 右側版面設定 */}
         <div className="toolbar-settings">
           <div className="control-group">
             <span className="control-label">字體大小:</span>
             <div className="btn-toggle-group">
-              <button type="button" 
-                className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`}
-                onClick={() => setFontSize('small')}
-                title="12px"
-              >
-                小
-              </button>
-              <button type="button" 
-                className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`}
-                onClick={() => setFontSize('medium')}
-                title="14px"
-              >
-                中
-              </button>
-              <button type="button" 
-                className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`}
-                onClick={() => setFontSize('large')}
-                title="16px"
-              >
-                大
-              </button>
+              <button type="button" className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`} onClick={() => setFontSize('small')} title="12px">小</button>
+              <button type="button" className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`} onClick={() => setFontSize('medium')} title="14px">中</button>
+              <button type="button" className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`} onClick={() => setFontSize('large')} title="16px">大</button>
             </div>
           </div>
-
           <div className="control-group">
             <span className="control-label">表格間距:</span>
             <div className="btn-toggle-group">
-              <button type="button" 
-                className={`toggle-btn ${rowSpacing === 'compact' ? 'active' : ''}`}
-                onClick={() => setRowSpacing('compact')}
-                title="緊湊間距"
-              >
-                緊湊
-              </button>
-              <button type="button" 
-                className={`toggle-btn ${rowSpacing === 'normal' ? 'active' : ''}`}
-                onClick={() => setRowSpacing('normal')}
-                title="標準間距"
-              >
-                標準
-              </button>
-              <button type="button" 
-                className={`toggle-btn ${rowSpacing === 'relaxed' ? 'active' : ''}`}
-                onClick={() => setRowSpacing('relaxed')}
-                title="寬鬆間距"
-              >
-                寬鬆
-              </button>
+              <button type="button" className={`toggle-btn ${rowSpacing === 'compact' ? 'active' : ''}`} onClick={() => setRowSpacing('compact')} title="緊湊間距">緊湊</button>
+              <button type="button" className={`toggle-btn ${rowSpacing === 'normal' ? 'active' : ''}`} onClick={() => setRowSpacing('normal')} title="標準間距">標準</button>
+              <button type="button" className={`toggle-btn ${rowSpacing === 'relaxed' ? 'active' : ''}`} onClick={() => setRowSpacing('relaxed')} title="寬鬆間距">寬鬆</button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* 手機版單列 Segmented Control（進行中／已完成／退件／全部，每段 ≥44 高） */}
+      <div className="mobile-segmented-control show-on-mobile" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterMode === 'in-progress'}
+          className={`mobile-segment-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
+          onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
+        >
+          進行中 ({countInProgress})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterMode === 'completed'}
+          className={`mobile-segment-btn ${filterMode === 'completed' ? 'active' : ''}`}
+          onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
+        >
+          已完成 ({countCompleted})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterMode === 'rejected'}
+          className={`mobile-segment-btn ${filterMode === 'rejected' ? 'active' : ''}`}
+          onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
+        >
+          退件 ({countRejected})
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={filterMode === 'all'}
+          className={`mobile-segment-btn ${filterMode === 'all' ? 'active' : ''}`}
+          onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
+        >
+          全部 ({countAll})
+        </button>
       </div>
 
       {/* 機種一覽表 (表格視圖) */}
@@ -258,7 +339,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
               <th>📊 完成率</th>
               <th className="hide-on-mobile">🏷️ 狀態</th>
               <th className="hide-on-mobile">🕒 更新時間</th>
-              <th className="text-center">⚙️ 動作</th>
+              <th className="text-center hide-on-mobile">⚙️ 動作</th>
             </tr>
           </thead>
           <tbody>
@@ -271,22 +352,82 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
               </tr>
             ) : (
               paginatedProjects.map((proj) => {
-                const dateStr = new Date(proj.updatedAt).toLocaleString('zh-TW', {
-                  year: 'numeric',
-                  month: '2-digit',
-                  day: '2-digit',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-
+                const dateDisplay = formatUpdatedAt(proj.updatedAt);
                 const projRate = proj.data ? validateAlignment(proj.data).alignmentRate : (proj.alignmentRate || 0);
                 const projStatus = getProjectStatus(proj);
 
                 return (
-                  <tr key={proj.id}>
+                  <tr 
+                    key={proj.id} 
+                    className="project-row-item"
+                    onClick={() => onSelectProject(proj.id)}
+                  >
                     <td className="proj-name-cell">
-                      <span className="proj-folder-icon">📂</span>
-                      <span className="proj-name-text" title={proj.name}>{proj.name}</span>
+                      <div className="proj-name-header">
+                        <span className="proj-folder-icon"><uiIcons.folder size={18} /></span>
+                        <span className="proj-name-text" title={proj.name}>{proj.name}</span>
+                      </div>
+                      {/* 手機端專屬更多選項按鈕與選單 */}
+                      <div className="mobile-row-more-anchor show-on-mobile">
+                        <button
+                          type="button"
+                          className="mobile-more-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveActionMenuId(activeActionMenuId === proj.id ? null : proj.id);
+                          }}
+                          aria-label="更多選項"
+                          aria-expanded={activeActionMenuId === proj.id}
+                        >
+                          <uiIcons.dots size={20} />
+                        </button>
+                        {activeActionMenuId === proj.id && (
+                          <div className="mobile-row-popover glass-card">
+                            {confirmDeleteProjectId === proj.id ? (
+                              <div className="mobile-delete-confirm-box">
+                                <span style={{ fontSize: '13px', color: 'var(--c-error)', fontWeight: 600 }}>確定刪除此機種？</span>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn-danger compact-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfirmDeleteProjectId(null);
+                                      setActiveActionMenuId(null);
+                                      onDeleteProject(proj.id);
+                                    }}
+                                  >
+                                    確定刪除
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-secondary compact-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setConfirmDeleteProjectId(null);
+                                      setActiveActionMenuId(null);
+                                    }}
+                                  >
+                                    取消
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="mobile-popover-item text-danger"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setConfirmDeleteProjectId(proj.id);
+                                }}
+                              >
+                                <uiIcons.trash size={16} />
+                                <span>刪除機種</span>
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <div className="table-progress-wrapper">
@@ -301,19 +442,22 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                         </span>
                       </div>
                     </td>
-                    <td className="hide-on-mobile">
+                    <td className="status-cell">
                       <span className={`status-badge ${projStatus.className}`} style={projStatus.key === 'rejected' ? { background: '#ffe4e6', color: '#e11d48', border: '1px solid #fecdd3' } : undefined}>
                         {projStatus.label}
                       </span>
                     </td>
-                    <td className="table-date-cell hide-on-mobile">{dateStr}</td>
-                    <td>
+                    <td className="table-date-cell">
+                      <span className="mobile-date-label show-on-mobile">🕒 更新時間：</span>
+                      {dateDisplay}
+                    </td>
+                    <td className="hide-on-mobile" onClick={(e) => e.stopPropagation()}>
                       <div className="table-actions-cell">
                         <button type="button" 
                           className="btn btn-primary compact-btn table-action-btn btn-edit"
                           onClick={() => onSelectProject(proj.id)}
                         >
-                          ✏️ 進入編輯
+                          進入編輯
                         </button>
                         {confirmDeleteProjectId === proj.id ? (
                           <span style={{ display: 'inline-flex', gap: '4px', alignItems: 'center' }}>
@@ -340,7 +484,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                             className="btn btn-danger compact-btn table-action-btn btn-delete"
                             onClick={() => setConfirmDeleteProjectId(proj.id)}
                           >
-                            🗑️ 刪除
+                            <uiIcons.trash size={14} />
+                            <span>刪除</span>
                           </button>
                         )}
                       </div>

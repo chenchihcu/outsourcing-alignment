@@ -4,8 +4,18 @@
    舊變數名(--bg-secondary 等)在 index.css 內橋接到這些 token。
    ========================================================================= */
 
+html {
+  font: -apple-system-body;
+}
+@supports not (font: -apple-system-body) {
+  html {
+    font-size: 100%;
+  }
+}
+
 :root {
   /* ---- 中性色階(canvas / surface / 文字 / 邊框) ---- */
+  --c-bg: #f6f7f9;
   --c-app: #f6f7f9;          /* 整體底色 */
   --c-surface: #ffffff;      /* 卡片 / 面板 */
   --c-surface-2: #f1f3f5;    /* 次級面板 / hover 底 */
@@ -13,8 +23,9 @@
 
   --c-text-1: #1a1d21;       /* 主要文字 */
   --c-text-2: #565d68;       /* 次要文字 */
-  --c-text-3: #889099;       /* 輔助 / 提示 */
+  --c-text-3: #6b7280;       /* 輔助 / 提示 (對比度 ≥ 4.5:1 合格) */
   --c-text-on-accent: #ffffff;
+  --c-on-accent: #ffffff;
 
   --c-border: #e6e8ec;       /* 標準邊框 */
   --c-border-strong: #d2d7de;/* 強調邊框 / hover */
@@ -36,11 +47,15 @@
   --sh-2: 0 2px 8px rgba(16, 24, 40, 0.06);
   --sh-pop: 0 10px 28px rgba(16, 24, 40, 0.12);
 
-  /* ---- 圓角(企業級偏小) ---- */
+  /* ---- 圓角 ---- */
   --r-sm: 6px;
   --r-md: 8px;
   --r-lg: 12px;
   --r-full: 999px;
+  --r-card: 16px;
+  --r-btn: 12px;
+  --r-input: 10px;
+  --r-sheet: 20px;
 
   /* ---- 間距尺度 ---- */
   --sp-1: 4px;
@@ -50,18 +65,45 @@
   --sp-5: 20px;
   --sp-6: 24px;
   --sp-8: 32px;
+  --sp-10: 40px;
 
-  /* ---- 字級(高密度:base 14px) ---- */
-  --fs-xs: 0.75rem;    /* 12 */
-  --fs-sm: 0.8125rem;  /* 13 */
-  --fs-base: 0.875rem; /* 14 */
-  --fs-md: 0.9375rem;  /* 15 */
-  --fs-lg: 1.125rem;   /* 18 */
-  --fs-xl: 1.375rem;   /* 22 */
+  /* ---- 字級 (高密度桌機基準與語意 Token) ---- */
+  --fs-xs: 0.75rem;    /* 12px */
+  --fs-sm: 0.8125rem;  /* 13px */
+  --fs-base: 0.875rem; /* 14px */
+  --fs-md: 0.9375rem;  /* 15px */
+  --fs-lg: 1.125rem;   /* 18px */
+  --fs-xl: 1.375rem;   /* 22px */
 
-  /* ---- 控制元件高度(桌機緊湊) ---- */
+  --fs-large-title: 2.125rem; /* 34px / 41 */
+  --fs-title-1: 1.75rem;     /* 28px / 34 */
+  --fs-title-2: 1.375rem;    /* 22px / 28 */
+  --fs-title-3: 1.25rem;     /* 20px / 25 */
+  --fs-headline: 1.0625rem;  /* 17px / 22 semibold */
+  --fs-body: 1.0625rem;      /* 17px / 24 */
+  --fs-callout: 1rem;        /* 16px / 21 */
+  --fs-subhead: 0.9375rem;   /* 15px / 20 */
+  --fs-footnote: 0.8125rem;  /* 13px / 18 */
+  --fs-caption: 0.75rem;     /* 12px / 16 (全站最小字級) */
+  --fs-tab: 0.6875rem;       /* 11px / 13 (僅限底部分頁列標籤) */
+
+  /* ---- 控制元件高度與觸控尺度 ---- */
   --control-h: 38px;
   --touch-target: 38px;
+  --tap-min: 44px;
+  --tap-primary: 50px;
+  --tabbar-h: 49px;
+  --navbar-h: 44px;
+  --actionbar-h: 66px;
+  --row-h: 52px;
+
+  /* ---- Safe Area 與頁面邊距 ---- */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --page-x-l: max(var(--sp-4), var(--safe-l));
+  --page-x-r: max(var(--sp-4), var(--safe-r));
 
   /* ---- 版面尺寸(自適應外殼) ---- */
   --shell-sidebar-w: 248px;
@@ -71,7 +113,9 @@
   --shell-content-max: 1120px;
 
   /* ---- Apple HIG 毛玻璃材質與視網膜細線 ---- */
-  --c-blur-surface: rgba(255, 255, 255, 0.82);
+  --c-bar: rgba(255, 255, 255, 0.85);
+  --c-hairline: rgba(0, 0, 0, 0.08);
+  --c-blur-surface: rgba(255, 255, 255, 0.85);
   --c-blur-surface-subtle: rgba(255, 255, 255, 0.65);
   --c-blur-bg: blur(20px) saturate(180%);
   --c-border-hairline: rgba(0, 0, 0, 0.08);
@@ -84,6 +128,70 @@
   /* ---- 動效(收斂) ---- */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --dur: 0.16s;
+}
+
+/* 手機版 (≤767px) iOS Dynamic Type (預設 Large) 覆寫 */
+@media (max-width: 767px) {
+  :root {
+    --fs-large-title: 2.125rem; /* 34px */
+    --fs-title-1: 1.75rem;     /* 28px */
+    --fs-title-2: 1.375rem;    /* 22px */
+    --fs-title-3: 1.25rem;     /* 20px */
+    --fs-headline: 1.0625rem;  /* 17px semibold */
+    --fs-body: 1.0625rem;      /* 17px */
+    --fs-callout: 1rem;        /* 16px */
+    --fs-subhead: 0.9375rem;   /* 15px */
+    --fs-footnote: 0.8125rem;  /* 13px */
+    --fs-caption: 0.75rem;     /* 12px (全站最小字級) */
+    --fs-tab: 0.6875rem;       /* 11px (僅底欄標籤) */
+
+    --control-h: 44px;
+    --touch-target: 44px;
+  }
+}
+
+/* 深色模式色票 (prefers-color-scheme: dark) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --c-bg: #0b0d12;
+    --c-app: #0b0d12;
+    --c-surface: #16181f;
+    --c-surface-2: #1f222b;
+    --c-surface-3: #2a2e38;
+
+    --c-text-1: #ecedef;
+    --c-text-2: #a9afb8;
+    --c-text-3: #8b929c;
+    --c-text-on-accent: #0b0d12;
+    --c-on-accent: #0b0d12;
+
+    --c-border: #2a2e38;
+    --c-border-strong: #3f4452;
+
+    --c-accent: #8b85ff;
+    --c-accent-hover: #a5a0ff;
+    --c-accent-weak: #1f2238;
+    --c-accent-border: #4c4880;
+
+    --c-success: #4ade80;
+    --c-success-weak: #12301e;
+    --c-warning: #fbbf24;
+    --c-warning-weak: #3a2a0e;
+    --c-error: #f87171;
+    --c-error-weak: #3b1515;
+    --c-info: #60a5fa;
+    --c-info-weak: #1e293b;
+
+    --c-bar: rgba(22, 24, 31, 0.85);
+    --c-hairline: rgba(255, 255, 255, 0.10);
+    --c-blur-surface: rgba(22, 24, 31, 0.85);
+    --c-blur-surface-subtle: rgba(22, 24, 31, 0.65);
+    --c-border-hairline: rgba(255, 255, 255, 0.10);
+
+    --sh-1: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --sh-2: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --sh-pop: 0 10px 28px rgba(0, 0, 0, 0.5);
+  }
 }
 
 /* 觸控裝置 / 窄螢幕:互動元件放大到符合人因 ≥44px，主要按鈕 ≥48px (規格 9A & F11) */

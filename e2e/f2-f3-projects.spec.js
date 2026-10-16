@@ -64,7 +64,13 @@ test.describe('F2 & F3: 機種清單與建立/匯入流程', () => {
 
   test('F3-1: 點擊建立機種進入獨立全頁，非置中覆蓋層彈窗 (M3 去彈窗化)', async ({ page }) => {
     await page.goto('/#/projects');
-    await page.click('button:has-text("新增機種"), button:has-text("建立機種")');
+    const isMobile = (page.viewportSize()?.width || 0) <= 767;
+    if (isMobile) {
+      await page.click('.mobile-header-add-btn');
+      await page.click('.mobile-dropdown-item:has-text("新增機種")');
+    } else {
+      await page.click('button:has-text("新增機種"), button:has-text("建立機種")');
+    }
     await expect(page).toHaveURL(/.*#\/projects\/new.*/);
     await expect(page.locator('.create-project-page, .project-new-container')).toBeVisible();
     expect(await page.locator('.modal-backdrop').count()).toBe(0);

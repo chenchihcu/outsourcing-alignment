@@ -147,6 +147,7 @@ async function startBrowser() {
 
   edge = spawn(edgePath, [
     '--headless=new',
+    '--window-size=1440,900', // 預設 800x600 會落入手機版型(≤767px 以外仍為桌機巡檢基準),固定桌機視窗
     '--disable-gpu',
     '--no-sandbox',
     '--no-first-run',

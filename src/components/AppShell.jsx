@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { WORKFLOW_STEPS } from '../utils/workflow';
+import { uiIcons } from '../utils/svgIcons';
+import BottomSheet from './BottomSheet';
 import './AppShell.css';
 
 /* 側欄導覽項目(獨立元件,避免於 render 內建立元件) */
@@ -19,7 +21,7 @@ function NavItem({ tab, icon, label, badge, status, applicable, index, activeTab
       <span className="nav-icon">
         {typeof index === 'number' ? (
           <span className={`nav-step-num ${isDone ? 'done' : ''} ${status === 'inProgress' ? 'in-progress' : ''} ${isNotApplicable ? 'not-applicable' : ''}`}>
-            {isNotApplicable ? '—' : isDone ? '✓' : index}
+            {isNotApplicable ? '—' : isDone ? <uiIcons.check size={14} /> : index}
           </span>
         ) : (
           icon
@@ -41,7 +43,7 @@ function NavItem({ tab, icon, label, badge, status, applicable, index, activeTab
 
 NavItem.propTypes = {
   tab: PropTypes.string.isRequired,
-  icon: PropTypes.string,
+  icon: PropTypes.node,
   label: PropTypes.string.isRequired,
   badge: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   status: PropTypes.string,
@@ -56,9 +58,8 @@ NavItem.propTypes = {
 /**
  * 自適應導覽外殼。
  * - 桌機/筆電 (≥1024px):固定側欄,可收合成 icon rail。
- * - 平板/手機 (<1024px):側欄收為抽屜(漢堡開啟),並在頂部顯示可橫向捲動的步驟列,
- *   讓「我在流程哪一步 / 完成度 / 下一步」隨時可見。
- * 本元件只負責導覽外殼,不改變任何資料或分頁行為。
+ * - 平板 (768–1023px):側欄收為抽屜(漢堡開啟),並在頂部顯示橫向捲動步驟列。
+ * - 手機 (≤767px):底部分頁列 (MobileTabBar) + 頂欄精簡 + BottomSheet 步驟抽屜。
  */
 export default function AppShell({
   currentUser,
@@ -80,23 +81,26 @@ export default function AppShell({
     const d = new Date(ts);
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
+  const saveTimeStr = fmtTime(savedAt);
   const saveLabel =
     saveState === 'saving' ? '儲存中…'
-    : saveState === 'saved' ? `已儲存 ${fmtTime(savedAt)}`.trimEnd()
+    : saveState === 'saved' ? (saveTimeStr ? `已儲存 ${saveTimeStr}` : '已儲存')
     : '自動儲存';
+
   const [collapsed, setCollapsed] = useState(false); // 桌機:側欄收合成 rail
-  const [drawerOpen, setDrawerOpen] = useState(false); // 手機:抽屜開啟
+  const [drawerOpen, setDrawerOpen] = useState(false); // 平板:抽屜開啟
+  const [stepSheetOpen, setStepSheetOpen] = useState(false); // 手機:全部步驟 BottomSheet
   const railRef = useRef(null);
   const activePillRef = useRef(null);
 
-  // 切換分頁時把作用中的步驟 pill 捲到可視中央(抽屜的關閉由 go() 處理)
+  // 切換分頁時把作用中的步驟 pill 捲到可視中央
   useEffect(() => {
     if (activePillRef.current) {
       activePillRef.current.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
   }, [activeTab]);
 
-  // ESC 鍵關閉手機抽屜
+  // ESC 鍵關閉抽屜
   useEffect(() => {
     if (!drawerOpen) return;
     const handleKeyDown = (e) => {
@@ -109,14 +113,30 @@ export default function AppShell({
   const go = (tab) => {
     onTabChange(tab);
     setDrawerOpen(false);
+    setStepSheetOpen(false);
   };
 
   const completedSteps = WORKFLOW_STEPS.filter((step) => sectionStatus[step.key]?.state === 'done').length;
+  const isStepTab = WORKFLOW_STEPS.some((step) => step.key === activeTab);
+  const currentStepIndex = WORKFLOW_STEPS.findIndex((step) => step.key === activeTab);
+  const currentStep = currentStepIndex >= 0 ? WORKFLOW_STEPS[currentStepIndex] : null;
+
+  // 尋找最近一個未完成步驟供底欄快捷跳轉
+  const firstIncompleteStep = WORKFLOW_STEPS.find((s) => sectionStatus[s.key]?.state !== 'done');
+  const workflowTargetTab = currentStep ? currentStep.key : (firstIncompleteStep ? firstIncompleteStep.key : 'basicInfo');
+
   const navShared = { activeTab, collapsed, alignmentRate, onGo: go };
+
+  const bottomSheetSteps = WORKFLOW_STEPS.map((step) => ({
+    key: step.key,
+    label: step.label,
+    state: sectionStatus[step.key]?.state || 'pending',
+    applicable: sectionStatus[step.key]?.applicable !== false,
+  }));
 
   return (
     <div className="shell" data-collapsed={collapsed} data-drawer={drawerOpen}>
-      {/* ===== 側欄 / 抽屜 ===== */}
+      {/* ===== 側欄 / 抽屜 (桌機固定, 平板抽屜) ===== */}
       <aside className="shell-sidebar">
         <div className="shell-brand">
           <span className="brand-mark" aria-hidden="true">M</span>
@@ -130,7 +150,7 @@ export default function AppShell({
           {inProject ? (
             <>
               <div className="nav-group-label">總覽</div>
-              <NavItem {...navShared} tab="dashboard" icon="📈" label="儀表板" badge={`${alignmentRate}%`} />
+              <NavItem {...navShared} tab="dashboard" icon={<uiIcons.dashboard size={18} />} label="儀表板" badge={`${alignmentRate}%`} />
 
               <div className="nav-group-label">
                 確認流程
@@ -149,34 +169,36 @@ export default function AppShell({
               ))}
 
               <div className="nav-group-label">個人與設定</div>
-              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
+              <NavItem {...navShared} tab="account" icon={<uiIcons.account size={18} />} label="我的帳號" />
               {currentUser?.role === 'admin' && (
-                <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
+                <NavItem {...navShared} tab="settings" icon={<uiIcons.settings size={18} />} label="系統設定" />
               )}
             </>
           ) : (
             <>
               <div className="nav-group-label">工作區</div>
               <button type="button" className={`nav-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`} onClick={onBackToList}>
-                <span className="nav-icon">🗂️</span>
+                <span className="nav-icon"><uiIcons.folder size={18} /></span>
                 <span className="nav-label">機種管理中心</span>
               </button>
               <div className="nav-group-label">個人與設定</div>
-              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
+              <NavItem {...navShared} tab="account" icon={<uiIcons.account size={18} />} label="我的帳號" />
               {currentUser?.role === 'admin' && (
-                <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
+                <NavItem {...navShared} tab="settings" icon={<uiIcons.settings size={18} />} label="系統設定" />
               )}
             </>
           )}
         </nav>
 
         <div className="shell-user">
-          <span className="user-avatar" aria-hidden="true">👤</span>
+          <span className="user-avatar" aria-hidden="true"><uiIcons.account size={22} /></span>
           <span className="user-meta">
             <span className="user-name">{currentUser?.username}</span>
             <span className="user-role">{currentUser?.unit} · {currentUser?.level}</span>
           </span>
-          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">登出</button>
+          <button type="button" className="user-logout" onClick={onLogout} title="登出系統" aria-label="登出系統">
+            <uiIcons.logout size={18} />
+          </button>
         </div>
 
         <button
@@ -193,6 +215,7 @@ export default function AppShell({
       {/* ===== 主區 ===== */}
       <div className="shell-body">
         <header className="shell-topbar">
+          {/* 平板漢堡選單 (手機端由 CSS 隱藏) */}
           <button
             type="button"
             className="topbar-burger"
@@ -201,37 +224,111 @@ export default function AppShell({
           >
             ☰
           </button>
+
+          {/* 手機專屬返回機種按鈕 (≤767px，進入機種時顯示) */}
+          {inProject && (
+            <button
+              type="button"
+              className="topbar-mobile-back"
+              onClick={onBackToList}
+              aria-label="返回機種列表"
+            >
+              <uiIcons.chevronLeft size={20} />
+              <span className="mobile-back-text">機種</span>
+            </button>
+          )}
+
           <div className="topbar-title" title={inProject ? projectName : '機種管理中心'}>
             {inProject ? projectName : '機種管理中心'}
           </div>
+
           <div className="topbar-right">
             {inProject && onlineCount > 1 && (
               <span className="presence-pill" title={`${onlineCount} 人正在檢視此機種`}>
-                👥 {onlineCount}
+                <uiIcons.account size={14} /> {onlineCount}
               </span>
             )}
+
+            {/* 存檔狀態提示 (手機精簡 icon + 無障礙宣告，桌機完整文字) */}
             {inProject && (
-              <span className={`save-hint save-${saveState}`} title="變更會自動儲存至本機">
-                <span className="save-dot" aria-hidden="true" />{saveLabel}
-              </span>
+              <div
+                className={`save-hint save-${saveState}`}
+                role="status"
+                aria-live="polite"
+                aria-label={saveLabel}
+                title="變更會自動儲存至本機"
+              >
+                {saveState === 'saving' ? (
+                  <span className="save-icon save-spinning" aria-hidden="true">
+                    <uiIcons.spinner size={16} />
+                  </span>
+                ) : saveState === 'saved' ? (
+                  <span className="save-icon save-check" aria-hidden="true">
+                    <uiIcons.check size={16} />
+                  </span>
+                ) : (
+                  <span className="save-dot" aria-hidden="true" />
+                )}
+                <span className="save-text-desktop">{saveLabel}</span>
+                <span className="save-text-mobile">{saveTimeStr ? `已存 ${saveTimeStr}` : '已存'}</span>
+              </div>
             )}
+
             {inProject && (
               <button type="button" className="btn btn-secondary topbar-back" onClick={onBackToList}>
-                ↩ 回列表
+                <uiIcons.chevronLeft size={16} /> 回列表
               </button>
             )}
           </div>
         </header>
 
-        {/* 手機/平板:橫向步驟列,隨時看得到全流程 */}
+        {/* 手機精簡情境列 (≤767px，進入機種時顯示) */}
+        {inProject && (
+          <div className="shell-context-rail">
+            <div className="context-rail-info">
+              <span className="context-rail-title">
+                {currentStep ? (
+                  <>步驟 {currentStepIndex + 1} / 10 · {currentStep.label}</>
+                ) : activeTab === 'dashboard' ? (
+                  <>總覽 · 儀表板</>
+                ) : activeTab === 'settings' ? (
+                  <>系統設定</>
+                ) : activeTab === 'account' ? (
+                  <>個人帳號</>
+                ) : (
+                  <>{projectName || '機種需求'}</>
+                )}
+              </span>
+              <div className="context-progress-bar-bg" aria-hidden="true">
+                <div
+                  className="context-progress-bar-fg"
+                  style={{ width: `${alignmentRate}%` }}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              className="context-rail-btn"
+              onClick={() => setStepSheetOpen(true)}
+              aria-label="查看全部步驟清單"
+            >
+              <span>全部步驟</span>
+              <uiIcons.chevronDown size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* 平板/桌機橫向步驟列 (≥768px 顯示) */}
         {inProject && (
           <div className="shell-steprail" ref={railRef}>
-            <button type="button"
+            <button
+              type="button"
               ref={activeTab === 'dashboard' ? activePillRef : null}
               className={`step-pill ${activeTab === 'dashboard' ? 'active' : ''}`}
               onClick={() => go('dashboard')}
             >
-              <span className="pill-icon">📈</span>儀表板
+              <span className="pill-icon"><uiIcons.dashboard size={16} /></span>
+              儀表板
               <span className={`pill-badge ${alignmentRate === 100 ? 'ok' : ''}`}>{alignmentRate}%</span>
             </button>
 
@@ -240,36 +337,145 @@ export default function AppShell({
               const isDone = stepStatus.state === 'done';
               const isNotApplicable = isDone && stepStatus.applicable === false;
               return (
-              <button type="button"
-                key={step.key}
-                ref={activeTab === step.key ? activePillRef : null}
-                className={`step-pill ${activeTab === step.key ? 'active' : ''} status-${stepStatus.state} ${isNotApplicable ? 'not-applicable' : ''}`}
-                onClick={() => go(step.key)}
-              >
-                <span className={`pill-num ${isDone ? 'done' : ''}`}>
-                  {isNotApplicable ? '—' : isDone ? '✓' : index + 1}
-                </span>
-                {step.label}
-                {isNotApplicable && <span className="pill-state">不適用</span>}
-              </button>
+                <button
+                  type="button"
+                  key={step.key}
+                  ref={activeTab === step.key ? activePillRef : null}
+                  className={`step-pill ${activeTab === step.key ? 'active' : ''} status-${stepStatus.state} ${isNotApplicable ? 'not-applicable' : ''}`}
+                  onClick={() => go(step.key)}
+                >
+                  <span className={`pill-num ${isDone ? 'done' : ''}`}>
+                    {isNotApplicable ? '—' : isDone ? <uiIcons.check size={12} /> : index + 1}
+                  </span>
+                  {step.label}
+                  {isNotApplicable && <span className="pill-state">不適用</span>}
+                </button>
               );
             })}
             {currentUser?.role === 'admin' && (
-              <button type="button"
+              <button
+                type="button"
                 ref={activeTab === 'settings' ? activePillRef : null}
                 className={`step-pill ${activeTab === 'settings' ? 'active' : ''}`}
                 onClick={() => go('settings')}
               >
-                <span className="pill-icon">⚙️</span>設定
+                <span className="pill-icon"><uiIcons.settings size={16} /></span>
+                設定
               </button>
             )}
           </div>
         )}
 
-        <main className="shell-content">{children}</main>
+        <main className={`shell-content ${isStepTab ? 'with-action-bar' : ''}`}>
+          {children}
+        </main>
+
+        {/* 手機底部分頁列 (≤767px，在非表單步驟頁常駐，表單步驟頁則讓位給 StepActionBar) */}
+        {!isStepTab && (
+          <nav className="mobile-tab-bar" role="navigation" aria-label="底部分頁導覽列">
+            {inProject ? (
+              <>
+                <button
+                  type="button"
+                  className="mobile-tab-item"
+                  onClick={onBackToList}
+                  aria-label="回機種列表"
+                >
+                  <uiIcons.folder size={24} />
+                  <span className="mobile-tab-label">機種</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-tab-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                  onClick={() => go('dashboard')}
+                  aria-current={activeTab === 'dashboard' ? 'page' : undefined}
+                >
+                  <uiIcons.dashboard size={24} />
+                  <span className="mobile-tab-label">儀表板</span>
+                </button>
+                <button
+                  type="button"
+                  className="mobile-tab-item"
+                  onClick={() => go(workflowTargetTab)}
+                  aria-label="進行中流程步驟"
+                >
+                  <uiIcons.workflow size={24} />
+                  <span className="mobile-tab-label">流程</span>
+                </button>
+                <button
+                  type="button"
+                  className="mobile-tab-item"
+                  onClick={() => {
+                    go('dashboard');
+                    setTimeout(() => {
+                      const todoElem = document.querySelector('.dashboard-pending-card, .dashboard-todos, .dashboard-summary-grid');
+                      if (todoElem) todoElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  }}
+                  aria-label="待辦事項"
+                >
+                  <uiIcons.todo size={24} />
+                  <span className="mobile-tab-label">待辦</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
+                  onClick={() => go('account')}
+                  aria-current={activeTab === 'account' ? 'page' : undefined}
+                >
+                  <uiIcons.account size={24} />
+                  <span className="mobile-tab-label">帳號</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`mobile-tab-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`}
+                  onClick={onBackToList}
+                  aria-current={activeTab !== 'account' && activeTab !== 'settings' ? 'page' : undefined}
+                >
+                  <uiIcons.folder size={24} />
+                  <span className="mobile-tab-label">機種</span>
+                </button>
+                <button
+                  type="button"
+                  className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
+                  onClick={() => go('account')}
+                  aria-current={activeTab === 'account' ? 'page' : undefined}
+                >
+                  <uiIcons.account size={24} />
+                  <span className="mobile-tab-label">帳號</span>
+                </button>
+                {currentUser?.role === 'admin' && (
+                  <button
+                    type="button"
+                    className={`mobile-tab-item ${activeTab === 'settings' ? 'active' : ''}`}
+                    onClick={() => go('settings')}
+                    aria-current={activeTab === 'settings' ? 'page' : undefined}
+                  >
+                    <uiIcons.settings size={24} />
+                    <span className="mobile-tab-label">設定</span>
+                  </button>
+                )}
+              </>
+            )}
+          </nav>
+        )}
       </div>
 
-      {/* 手機抽屜遮罩 */}
+      {/* 手機端全部步驟 BottomSheet */}
+      <BottomSheet
+        isOpen={stepSheetOpen}
+        onClose={() => setStepSheetOpen(false)}
+        title="全部步驟"
+        steps={bottomSheetSteps}
+        activeTab={activeTab}
+        onSelectStep={go}
+        alignmentRate={alignmentRate}
+      />
+
+      {/* 平板抽屜遮罩 */}
       <button
         type="button"
         className="drawer-scrim"
@@ -300,4 +506,3 @@ AppShell.propTypes = {
   onlineCount: PropTypes.number,
   children: PropTypes.node,
 };
-

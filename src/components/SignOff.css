@@ -179,6 +179,23 @@
   height: 22px;
 }
 
+@media (max-width: 767px) {
+  .export-action-row > div {
+    flex-direction: column !important;
+    width: 100%;
+    gap: 12px !important;
+  }
+  .export-action-row .btn-large {
+    width: 100%;
+    min-height: var(--tap-primary, 50px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+}
+
 /* Spinner Animation */
 .spinner {
   width: 20px;

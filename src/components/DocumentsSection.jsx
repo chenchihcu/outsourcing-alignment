@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled } from '../utils/fieldUtils';
 import { getDocumentIcon } from '../utils/svgIcons';
+import StepActionBar from './StepActionBar';
 import './FormSections.css';
 
 export default function DocumentsSection({ data, onChange, currentUser, onNext, onPrev }) {
@@ -44,10 +45,11 @@ export default function DocumentsSection({ data, onChange, currentUser, onNext, 
         })}
       </div>
 
-      <div className="action-row" style={{ marginTop: '24px' }}>
-        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
-        <button type="button" className="btn btn-primary" onClick={onNext}>下一步：簽章與匯出</button>
-      </div>
+      <StepActionBar
+        onPrev={onPrev}
+        onNext={onNext}
+        nextLabel="下一步：簽章與匯出"
+      />
     </div>
   );
 }

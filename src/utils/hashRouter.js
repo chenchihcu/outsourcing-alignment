@@ -4,22 +4,40 @@
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
+export const CANONICAL_STEP_SLUGS = {
+  basicInfo: 'basic-info',
+  qualityProcess: 'quality-process',
+  tooling: 'tooling',
+  preparation: 'preparation',
+  thermalProfile: 'thermal-profile',
+  smtControl: 'smt-control',
+  dipSpecialProcess: 'dip-special-process',
+  trialReport: 'trial-report',
+  documents: 'documents',
+  signOff: 'sign-off',
+};
+
 export const STEP_KEY_MAP = {
   'basic-info': 'basicInfo',
+  'basicInfo': 'basicInfo',
   'quality-process': 'qualityProcess',
+  'qualityProcess': 'qualityProcess',
   'tooling': 'tooling',
   'preparation': 'preparation',
   'thermal-profile': 'thermalProfile',
+  'thermalProfile': 'thermalProfile',
   'smt-control': 'smtControl',
+  'smtControl': 'smtControl',
   'dip-special-process': 'dipSpecialProcess',
+  'dipSpecialProcess': 'dipSpecialProcess',
   'trial-report': 'trialReport',
+  'trialReport': 'trialReport',
   'documents': 'documents',
   'sign-off': 'signOff',
+  'signOff': 'signOff',
 };
 
-export const TAB_TO_STEP_KEY = Object.fromEntries(
-  Object.entries(STEP_KEY_MAP).map(([stepSlug, tabKey]) => [tabKey, stepSlug])
-);
+export const TAB_TO_STEP_KEY = { ...CANONICAL_STEP_SLUGS };
 
 export function parseHash(hashString = window.location.hash) {
   const raw = hashString.replace(/^#\/?/, '');
@@ -49,6 +67,9 @@ export function parseHash(hashString = window.location.hash) {
   const stepMatch = path.match(/^\/projects\/([^/]+)\/([^/]+)$/);
   if (stepMatch) {
     const [, id, stepSlug] = stepMatch;
+    if (stepSlug === 'dashboard') {
+      return { route: 'project-overview', path, query, params: { id } };
+    }
     if (STEP_KEY_MAP[stepSlug]) {
       return {
         route: 'project-step',
