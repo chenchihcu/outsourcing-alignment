@@ -258,7 +258,7 @@ export default function AppShell({
       {/* 手機抽屜遮罩 */}
       <button
         type="button"
-        className="shell-backdrop"
+        className="drawer-scrim"
         aria-label="關閉選單"
         onClick={() => setDrawerOpen(false)}
       />

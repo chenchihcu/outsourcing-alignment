@@ -216,21 +216,6 @@
   border-color: rgba(5, 150, 105, 0.2);
 }
 
-/* Success Overlay */
-.success-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .success-card {
   max-width: 450px;
   width: 90%;

@@ -42,7 +42,7 @@ export default function LoginModal({ onLogin, accounts = [] }) {
   };
 
   return (
-    <div className="login-overlay">
+    <div className="login-page-container">
       <div className="login-card glass-card animate-fade-in">
         <div className="login-header">
           <span className="login-logo-icon">🔐</span>
