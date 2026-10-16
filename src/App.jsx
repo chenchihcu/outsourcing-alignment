@@ -767,11 +767,15 @@ export default function App() {
       try {
         const user = await getCurrentUser();
         if (cancelled) return;
+        if (!user) {
+          removeKey('current_user');
+        }
         currentUserRef.current = user;
         setCurrentUser(user);
       } catch (err) {
         if (import.meta.env.DEV) console.error('[auth] 工作階段還原失敗', err);
         if (!cancelled) {
+          removeKey('current_user');
           currentUserRef.current = null;
           setCurrentUser(null);
         }
@@ -1156,6 +1160,9 @@ export default function App() {
 
   useEffect(() => {
     if (!currentUser && authReady) {
+      if (isSupabaseEnabled) {
+        removeKey('current_user');
+      }
       const current = parseHash();
       if (current.route !== 'login') {
         const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
@@ -1169,11 +1176,14 @@ export default function App() {
       const current = parseHash();
       if (!authReadyRef.current) return;
       if (!currentUserRef.current) {
-        const cached = getJSON('current_user', null);
+        const cached = isSupabaseEnabled ? null : getJSON('current_user', null);
         if (cached) {
           currentUserRef.current = cached;
           setCurrentUser(cached);
         } else {
+          if (isSupabaseEnabled) {
+            removeKey('current_user');
+          }
           if (current.route !== 'login') {
             const from = encodeURIComponent(window.location.hash.replace(/^#\/?/, '') || 'projects');
             navigateTo(`/login?from=${from}`, true);
