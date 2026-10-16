@@ -124,20 +124,40 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
           您可以從標準空白範本建立全新機種，或是匯入現有的 Excel 需求表進行對齊與簽核。
         </p>
 
-        {/* 分段控制 (9A.6.3) */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: 'var(--c-surface-2, #f1f5f9)', padding: '4px', borderRadius: '8px' }}>
+        {/* 分段控制 (Apple HIG Segmented Control) */}
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', background: 'var(--c-surface-2, #f1f5f9)', padding: '4px', borderRadius: '10px', border: '1px solid var(--c-border, #e2e8f0)' }}>
           <button
             type="button"
-            className={`btn btn-sm ${mode === 'template' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ flex: 1, height: '40px' }}
+            className="btn btn-sm"
+            style={{
+              flex: 1,
+              height: '40px',
+              borderRadius: '8px',
+              border: mode === 'template' ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              background: mode === 'template' ? '#ffffff' : 'transparent',
+              color: mode === 'template' ? 'var(--c-text-1, #0f172a)' : 'var(--c-text-2, #64748b)',
+              fontWeight: mode === 'template' ? 650 : 500,
+              boxShadow: mode === 'template' ? '0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)' : 'none',
+              transition: 'all 0.18s ease',
+            }}
             onClick={() => { setMode('template'); setError(''); }}
           >
             📋 從空白範本建立
           </button>
           <button
             type="button"
-            className={`btn btn-sm ${mode === 'import' ? 'btn-primary' : 'btn-ghost'}`}
-            style={{ flex: 1, height: '40px' }}
+            className="btn btn-sm"
+            style={{
+              flex: 1,
+              height: '40px',
+              borderRadius: '8px',
+              border: mode === 'import' ? '1px solid rgba(0,0,0,0.05)' : 'none',
+              background: mode === 'import' ? '#ffffff' : 'transparent',
+              color: mode === 'import' ? 'var(--c-text-1, #0f172a)' : 'var(--c-text-2, #64748b)',
+              fontWeight: mode === 'import' ? 650 : 500,
+              boxShadow: mode === 'import' ? '0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)' : 'none',
+              transition: 'all 0.18s ease',
+            }}
             onClick={() => { setMode('import'); setError(''); }}
           >
             📥 匯入 Excel 機種
@@ -145,7 +165,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         </div>
 
         {error && (
-          <div role="alert" className="field-error banner-error" style={{ color: '#ef4444', background: 'rgba(239,68,68,0.1)', padding: '12px 16px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem' }}>
+          <div role="alert" className="field-error banner-error" style={{ color: '#dc2626', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem' }}>
             ⚠️ {error}
           </div>
         )}
@@ -153,8 +173,8 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         {mode === 'template' ? (
           <form onSubmit={handleCreateSubmit}>
             <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label htmlFor="projectName" className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px' }}>
-                機種名稱 <span style={{ color: '#ef4444' }}>*</span>
+              <label htmlFor="projectName" className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px', color: 'var(--c-text-1, #1e293b)' }}>
+                機種名稱 <span style={{ color: '#dc2626' }}>*</span>
               </label>
               <input
                 id="projectName"
@@ -163,15 +183,48 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                 value={name}
                 onChange={(e) => { setName(e.target.value); setError(''); }}
                 placeholder="例如：PROJECT_ALTAIR_2026"
-                style={{ width: '100%', height: '44px', padding: '0 12px', fontSize: '1rem' }}
+                style={{
+                  width: '100%',
+                  height: '44px',
+                  padding: '0 14px',
+                  fontSize: '1rem',
+                  borderRadius: '10px',
+                  border: '1.5px solid var(--c-border, #e2e8f0)',
+                  background: 'var(--c-surface, #ffffff)',
+                  color: 'var(--c-text-1, #1e293b)',
+                  boxSizing: 'border-box',
+                }}
               />
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '32px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => navigateTo('/projects')}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  background: 'var(--c-surface, #ffffff)',
+                  border: '1px solid var(--c-border, #cbd5e1)',
+                  color: 'var(--c-text-2, #475569)',
+                  borderRadius: '10px',
+                  height: '42px',
+                  padding: '0 18px',
+                }}
+                onClick={() => navigateTo('/projects')}
+              >
                 取消
               </button>
-              <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{
+                  borderRadius: '10px',
+                  height: '42px',
+                  padding: '0 20px',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                }}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? '建立中…' : '建立機種'}
               </button>
             </div>
@@ -219,12 +272,31 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
             )}
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '32px' }}>
-              <button type="button" className="btn btn-secondary" onClick={() => navigateTo('/projects')}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  background: 'var(--c-surface, #ffffff)',
+                  border: '1px solid var(--c-border, #cbd5e1)',
+                  color: 'var(--c-text-2, #475569)',
+                  borderRadius: '10px',
+                  height: '42px',
+                  padding: '0 18px',
+                }}
+                onClick={() => navigateTo('/projects')}
+              >
                 取消
               </button>
               <button
                 type="button"
                 className="btn btn-primary"
+                style={{
+                  borderRadius: '10px',
+                  height: '42px',
+                  padding: '0 20px',
+                  fontWeight: 600,
+                  boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                }}
                 disabled={!importPreview || isSubmitting}
                 onClick={handleConfirmImport}
               >

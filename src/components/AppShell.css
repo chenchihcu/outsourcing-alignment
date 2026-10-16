@@ -660,6 +660,7 @@
     backdrop-filter: var(--c-blur-bg);
     -webkit-backdrop-filter: var(--c-blur-bg);
     border-top: 0.5px solid var(--c-hairline);
+    box-shadow: 0 -1px 8px rgba(15, 23, 42, 0.03);
     align-items: stretch;
     justify-content: space-around;
     box-sizing: border-box;
@@ -676,7 +677,7 @@
     align-items: center;
     justify-content: center;
     gap: 2px;
-    color: var(--c-text-2);
+    color: #64748b;
     cursor: pointer;
     padding: 4px 0;
     -webkit-tap-highlight-color: transparent;

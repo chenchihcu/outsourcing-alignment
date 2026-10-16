@@ -36,22 +36,26 @@
 
 .settings-section-card {
   padding: 24px;
-  border-radius: 12px;
+  border-radius: var(--r-ios-card, 16px);
   display: flex;
   flex-direction: column;
   min-width: 0;
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
 .settings-section-card h3 {
   font-size: 1.25rem;
-  color: #1f2937;
+  font-weight: 700;
+  color: var(--c-text-1, #0f172a);
   margin-bottom: 8px;
 }
 
 .card-desc {
-  font-size: 0.85rem;
-  color: #4b5563;
-  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: var(--c-text-2, #64748b);
+  margin-bottom: 20px;
   line-height: 1.5;
 }
 
@@ -150,8 +154,8 @@
   max-height: 380px;
   overflow-y: auto;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--c-surface-2, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
   min-width: 0;
 }
 
@@ -166,8 +170,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: #374151;
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
+  color: var(--c-text-1, #1e293b);
 }
 
 .settings-list-item:last-child {
@@ -205,19 +209,19 @@
 .add-account-form {
   padding: 16px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--c-surface-2, #f8fafc);
+  border: 1px solid var(--c-border, #e2e8f0);
 }
 
 .add-account-form h4 {
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--c-text-1, #1f2937);
   margin-bottom: 12px;
 }
 
 .accounts-list-wrapper h4 {
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--c-text-1, #1f2937);
   margin-bottom: 10px;
 }
 
@@ -227,7 +231,8 @@
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--c-border, #e2e8f0);
+  background: var(--c-surface, #ffffff);
 }
 
 .settings-table {
@@ -240,25 +245,25 @@
 .settings-table th,
 .settings-table td {
   padding: 10px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-bottom: 1px solid var(--c-border, #e2e8f0);
 }
 
 .settings-table th {
-  background: rgba(0, 0, 0, 0.02);
-  color: #4b5563;
+  background: var(--c-surface-2, #f8fafc);
+  color: var(--c-text-2, #4b5563);
   font-weight: 600;
 }
 
 .settings-table td {
-  color: #374151;
+  color: var(--c-text-1, #1e293b);
 }
 
 .current-user-row {
-  background: rgba(79, 70, 229, 0.05);
+  background: rgba(79, 70, 229, 0.06);
 }
 
 .current-user-row td {
-  color: #4f46e5;
+  color: var(--c-accent, #4f46e5);
   font-weight: bold;
 }
 
