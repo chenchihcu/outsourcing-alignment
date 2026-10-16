@@ -326,6 +326,59 @@ async function setupPage(appUrl) {
         level: 'Administrator',
         signature: '${signature}'
       }));
+      localStorage.setItem('ag_sb_auth', JSON.stringify({
+        access_token: 'mock-audit-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        refresh_token: 'mock-audit-refresh',
+        user: {
+          id: '11111111-1111-1111-1111-111111111111',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: '${auditUser}@mitcorp.local',
+          user_metadata: {
+            username: ${JSON.stringify(auditUser)},
+            role: 'admin',
+            unit: '管理處',
+            level: 'Administrator'
+          }
+        }
+      }));
+      const origFetch = window.fetch;
+      window.fetch = async function(...args) {
+        const url = String(args[0] || '');
+        if (url.includes('/rest/v1/profiles')) {
+          return new Response(JSON.stringify([{
+            id: '11111111-1111-1111-1111-111111111111',
+            username: ${JSON.stringify(auditUser)},
+            role: 'admin',
+            unit: '管理處',
+            level: 'Administrator',
+            signature: '${signature}'
+          }]), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        if (url.includes('/auth/v1/user') || url.includes('/auth/v1/token')) {
+          return new Response(JSON.stringify({
+            id: '11111111-1111-1111-1111-111111111111',
+            aud: 'authenticated',
+            role: 'authenticated',
+            user_metadata: {
+              username: ${JSON.stringify(auditUser)},
+              role: 'admin',
+              unit: '管理處',
+              level: 'Administrator'
+            }
+          }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        return origFetch.apply(window, args);
+      };
     `,
   });
   await send('Page.navigate', { url: appUrl });

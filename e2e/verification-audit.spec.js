@@ -26,6 +26,25 @@ async function mockSuccessfulCloudLogin(page) {
     });
   });
 
+  await page.route('**/auth/v1/user', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: '11111111-1111-1111-1111-111111111111',
+        aud: 'authenticated',
+        role: 'authenticated',
+        email: 'testadmin@mitcorp.local',
+        user_metadata: {
+          username: 'testadmin',
+          role: 'admin',
+          unit: '管理處',
+          level: 'Administrator',
+        },
+      }),
+    });
+  });
+
   await page.route('**/rest/v1/profiles*', async (route) => {
     await route.fulfill({
       status: 200,
@@ -170,4 +189,68 @@ test.describe('審查與驗證：閒置登出修復與安全退回前後對照',
     // 正確行為：無有效 session 時應停在 /#/login，絕不信任快取的 ag_current_user
     await expect(page).toHaveURL(/.*#\/login.*/);
   });
+
+  test('測試 6: 雲端模式、沒有 session，寫入 ag_current_user（角色 admin），再切換到 #/settings/factories：停在登入頁，ag_current_user 被清除，且沒有送出任何 POST／PATCH／DELETE 請求', async ({ page }) => {
+    const mutations = [];
+    page.on('request', (req) => {
+      const method = req.method();
+      if (['POST', 'PATCH', 'DELETE'].includes(method)) {
+        mutations.push({ url: req.url(), method });
+      }
+    });
+
+    await page.goto('/#/login');
+    await expect(page.locator('.login-card')).toBeVisible();
+
+    // 寫入偽造的 admin 快取
+    await page.evaluate(() => {
+      localStorage.setItem('ag_current_user', JSON.stringify({
+        id: 'fake-admin-id',
+        username: 'fakeadmin',
+        role: 'admin',
+        unit: '管理處',
+        level: 'Administrator',
+      }));
+    });
+
+    // 切換 hash 到 #/settings/factories
+    await page.evaluate(() => {
+      window.location.hash = '#/settings/factories';
+    });
+
+    await page.waitForTimeout(1000);
+
+    // 1. 停在登入頁
+    await expect(page).toHaveURL(/.*#\/login.*/);
+    await expect(page.locator('.login-card')).toBeVisible();
+
+    // 2. ag_current_user 被清除
+    const cachedUser = await page.evaluate(() => localStorage.getItem('ag_current_user'));
+    expect(cachedUser).toBeNull();
+
+    // 3. 沒有送出任何 POST／PATCH／DELETE 請求
+    expect(mutations).toHaveLength(0);
+  });
+
+  test('測試 7: 正常登入後重新整理頁面，仍保持登入（不得誤傷正常 session）', async ({ page }) => {
+    await mockSuccessfulCloudLogin(page);
+
+    await page.goto('/#/login');
+    await page.fill('input[type="text"], input[name="username"]', 'testadmin');
+    await page.fill('input[type="password"]', 'testpassword123');
+    await page.click('button[type="submit"]');
+
+    await expect(page).toHaveURL(/.*#\/projects/);
+    await expect(page.locator('body')).toContainText('testadmin');
+
+    // 重新整理頁面
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+
+    // 仍保持登入，停留於 #/projects 且顯示使用者資訊
+    await expect(page).toHaveURL(/.*#\/projects/);
+    await expect(page.locator('body')).toContainText('testadmin');
+    expect(page.url()).not.toContain('/login');
+  });
 });
+
