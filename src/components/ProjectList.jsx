@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { getJSON, setJSON } from '../utils/storage';
+import { isSignOffComplete } from '../utils/signOffStatus';
+import { validateAlignment } from '../utils/validator';
 import './ProjectList.css';
 
 export default function ProjectList({ projects, onSelectProject, onCreateProject, onDeleteProject, onImportExcel }) {
@@ -122,19 +124,39 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     proj.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 2. 根據完成進度與退件狀態過濾 (D-21, 9A)
-  const isProjectRejected = (p) => !!p.data?.basicInfo?.signOff?.rejection;
-  const isProjectCompleted = (p) => !isProjectRejected(p) && p.alignmentRate === 100;
+  // 2. 根據簽核狀態機與退件狀態判定狀態 (D-21, D-147, D-148, 9A.6.2)
+  const getProjectStatus = (p) => {
+    if (isSignOffComplete(p.data)) {
+      return { key: 'approved', label: '已核准 ✓', className: 'aligned' };
+    }
+    if (p.data?.basicInfo?.signOff?.rejection) {
+      return { key: 'rejected', label: '⛔ 已退件 待修正', className: 'rejected' };
+    }
+    const sign = p.data?.basicInfo?.signOff || {};
+    const signedCount = (sign.rdSignature ? 1 : 0) + (sign.engineeringReviewSignature ? 1 : 0) + (sign.qaSignature ? 1 : 0);
+    if (signedCount > 0) {
+      return { key: 'signing', label: `簽核中 (${signedCount}/3) ⏳`, className: 'in-progress' };
+    }
+    const rate = p.data ? validateAlignment(p.data).alignmentRate : (p.alignmentRate || 0);
+    if (rate === 0) {
+      return { key: 'draft', label: '草稿', className: 'pending' };
+    }
+    return { key: 'in-progress', label: '填寫中 ⏳', className: 'in-progress' };
+  };
+
+  const isProjectRejected = (p) => getProjectStatus(p).key === 'rejected';
+  const isProjectCompleted = (p) => getProjectStatus(p).key === 'approved';
 
   const filteredProjects = searchedProjects.filter(proj => {
+    const status = getProjectStatus(proj);
     if (filterMode === 'in-progress') {
-      return !isProjectRejected(proj) && !isProjectCompleted(proj);
+      return status.key !== 'approved' && status.key !== 'rejected';
     }
     if (filterMode === 'rejected') {
-      return isProjectRejected(proj);
+      return status.key === 'rejected';
     }
     if (filterMode === 'completed') {
-      return isProjectCompleted(proj);
+      return status.key === 'approved';
     }
     return true; // 'all'
   }).sort((a, b) => {
@@ -327,6 +349,9 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                   minute: '2-digit'
                 });
 
+                const projRate = proj.data ? validateAlignment(proj.data).alignmentRate : (proj.alignmentRate || 0);
+                const projStatus = getProjectStatus(proj);
+
                 return (
                   <tr key={proj.id}>
                     <td className="proj-name-cell">
@@ -337,29 +362,19 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                       <div className="table-progress-wrapper">
                         <div className="table-progress-bar-bg">
                           <div 
-                            className={`table-progress-bar-fg ${proj.alignmentRate === 100 ? 'completed' : ''}`}
-                            style={{ width: `${proj.alignmentRate}%` }}
+                            className={`table-progress-bar-fg ${projRate === 100 ? 'completed' : ''}`}
+                            style={{ width: `${projRate}%` }}
                           ></div>
                         </div>
-                        <span className={`table-progress-rate ${proj.alignmentRate === 100 ? 'aligned' : ''}`}>
-                          {proj.alignmentRate}%
+                        <span className={`table-progress-rate ${projRate === 100 ? 'aligned' : ''}`}>
+                          {projRate}%
                         </span>
                       </div>
                     </td>
                     <td className="hide-on-mobile">
-                      {isProjectRejected(proj) ? (
-                        <span className="status-badge" style={{ background: '#ffe4e6', color: '#e11d48', border: '1px solid #fecdd3' }}>
-                          ⛔ 已退件 待修正
-                        </span>
-                      ) : isProjectCompleted(proj) ? (
-                        <span className="status-badge aligned">
-                          已核准 ✓
-                        </span>
-                      ) : (
-                        <span className="status-badge in-progress">
-                          進行中 ⏳
-                        </span>
-                      )}
+                      <span className={`status-badge ${projStatus.className}`} style={projStatus.key === 'rejected' ? { background: '#ffe4e6', color: '#e11d48', border: '1px solid #fecdd3' } : undefined}>
+                        {projStatus.label}
+                      </span>
                     </td>
                     <td className="table-date-cell hide-on-mobile">{dateStr}</td>
                     <td>

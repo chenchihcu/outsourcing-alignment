@@ -19,7 +19,8 @@ export default function Dashboard({ data, onGoToSection, sectionStatus = {}, cur
 
   const errors = useMemo(() => warnings.filter((w) => w.type === 'error'), [warnings]);
   const warns = useMemo(() => warnings.filter((w) => w.type === 'warning'), [warnings]);
-  const todos = errors;
+  // D-134: 待辦清單同時包含 error 與 warning
+  const todos = useMemo(() => [...errors, ...warns], [errors, warns]);
   const doneSteps = WORKFLOW_STEP_KEYS.filter((key) => sectionStatus[key]?.state === 'done').length;
 
   const byParty = useMemo(() => {
@@ -35,7 +36,9 @@ export default function Dashboard({ data, onGoToSection, sectionStatus = {}, cur
     if (!isQaOrAdmin) return todos;
     return todos.filter((w) => partyOf(w.message) === 'sign');
   }, [todos, isQaOrAdmin]);
-  const nextItem = actionableWarnings.filter(w => w.type === 'error')[0]
+  // D-134: 下一步優先取 error，若無 error 則取第一個 warning
+  const nextItem = actionableWarnings.find(w => w.type === 'error')
+    || actionableWarnings.find(w => w.type === 'warning')
     || null;
 
   const [showAll, setShowAll] = useState(false);

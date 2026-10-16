@@ -178,6 +178,7 @@ export default function Settings({
   currentUser
 }) {
   const [newFactory, setNewFactory] = useState('');
+  const [sigError, setSigError] = useState('');
 
   // 本機模式帳號表單 State
   const [newUsername, setNewUsername] = useState('');
@@ -279,17 +280,22 @@ export default function Settings({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <input 
                 type="file" 
-                accept="image/*" 
+                accept="image/png,image/jpeg" 
                 id="signature-upload-input" 
                 style={{ display: 'none' }} 
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  e.target.value = ''; // 重設 input,讓同一張簽章圖可再次選取(如清除後重新上傳)
+                  e.target.value = '';
                   if (file) {
                     const reader = new FileReader();
                     reader.onload = async (event) => {
-                      const compressed = await compressImage(event.target.result);
-                      onUpdateAccountSignature(currentUser.username, compressed);
+                      try {
+                        setSigError('');
+                        const compressed = await compressImage(event.target.result);
+                        onUpdateAccountSignature(currentUser.username, compressed);
+                      } catch (err) {
+                        setSigError(err.message);
+                      }
                     };
                     reader.readAsDataURL(file);
                   }
@@ -307,13 +313,21 @@ export default function Settings({
                   <button 
                     type="button" 
                     className="btn btn-secondary" 
-                    onClick={() => onUpdateAccountSignature(currentUser.username, '')}
+                    onClick={() => {
+                      setSigError('');
+                      onUpdateAccountSignature(currentUser.username, '');
+                    }}
                     style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.3)' }}
                   >
                     🗑️ 清除簽章
                   </button>
                 )}
               </div>
+              {sigError && (
+                <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '4px' }}>
+                  ⚠️ {sigError}
+                </div>
+              )}
               <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>僅支援 JPG/PNG 格式，檔案大小建議小於 500KB</span>
             </div>
           </div>

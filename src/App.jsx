@@ -15,7 +15,7 @@ import LoginModal from './components/LoginModal';
 import { validateAlignment } from './utils/validator';
 import { getNextWorkflowStep, getWorkflowStatuses } from './utils/workflow';
 import { parseRequirementExcel } from './utils/excelParser';
-import { getJSON, setJSON, removeKey } from './utils/storage';
+import { getJSON, setJSON, removeKey, getStoredProjects, updateStoredProject, insertStoredProject, deleteStoredProject } from './utils/storage';
 import { isSupabaseEnabled } from './data/supabaseClient';
 import {
   pullProjects,
@@ -519,39 +519,35 @@ export default function App() {
   const saveProjectData = useCallback((projId, name, projData) => {
     if (!projId || !projData) return;
     const report = validateAlignment(projData);
-    const updatedAt = new Date().toISOString();
     const user = currentUserRef.current;
     const storageKey = user ? getProjectsKey(user).replace('ag_', '') : null;
 
-    // D-153: 重新讀取儲存區最新資料，只更新當前機種，防止覆寫其他分頁的修改
-    const currentList = storageKey ? getJSON(storageKey, projectsRef.current) : projectsRef.current;
-    const exists = currentList.some(p => p.id === projId);
-    let next;
-    if (exists) {
-      next = currentList.map(p =>
-        p.id === projId
-          ? { ...p, name, data: projData, alignmentRate: report.alignmentRate, updatedAt, version: (p.version || 0) + 1 }
-          : p
-      );
-    } else {
-      next = [...currentList, { id: projId, name, data: projData, alignmentRate: report.alignmentRate, createdAt: updatedAt, updatedAt, version: 1 }];
-    }
-
-    projectsRef.current = next;
-    setProjects(next);
-    // 同步落盤:beforeunload / 登出等時機 setState 不會再 commit,persist effect 不會執行
     if (storageKey) {
-      setJSON(storageKey, sanitizeProjects(next));
-    }
-    // 雲端同步(關閉時 pushProject 為 no-op)
-    if (isSupabaseEnabled && user) {
-      const base = next.find(p => p.id === projId);
-      if (base) {
-        pushProject(getWorkspace(user), base, user?.id).catch(e => {
-          if (import.meta.env.DEV) console.warn('[cloud] 上推失敗', e);
-          // E2 — 上推失敗不能無聲:儲存指示仍顯示已儲存,需以橫幅告知僅存於本機
-          setSyncError('雲端同步失敗，此筆變更目前僅儲存於本機。請確認網路連線。');
-        });
+      const updateResult = updateStoredProject(storageKey, projId, (current) => {
+        return {
+          ...current,
+          name: name || current.name,
+          data: projData,
+          alignmentRate: report.alignmentRate,
+        };
+      });
+
+      if (updateResult.success && updateResult.project) {
+        const nextList = getStoredProjects(storageKey);
+        projectsRef.current = nextList;
+        setProjects(nextList);
+
+        // 雲端同步(關閉時 pushProject 為 no-op)
+        if (isSupabaseEnabled && user) {
+          pushProject(getWorkspace(user), updateResult.project, user?.id).catch(e => {
+            if (import.meta.env.DEV) console.warn('[cloud] 上推失敗', e);
+            setSyncError('雲端同步失敗，此筆變更目前僅儲存於本機。請確認網路連線。');
+          });
+        }
+      } else if (updateResult.deleted) {
+        setSyncError('此機種已被其他分頁或裝置刪除。');
+      } else if (updateResult.conflict) {
+        setSyncError('此機種已有較新的變更，請重新整理確認。');
       }
     }
   }, []);
@@ -639,26 +635,74 @@ export default function App() {
   const handleLogoutRef = useRef(handleLogout);
   useEffect(() => { handleLogoutRef.current = handleLogout; });
 
-  // I3 — 30 分鐘無操作自動登出(保護共用工作站)
+  // D-157: 跨分頁協調 30 分鐘無操作自動登出與 2 分鐘倒數提示
+  const [idleWarningSeconds, setIdleWarningSeconds] = useState(null);
+
+  const resetActivity = useCallback(() => {
+    const now = Date.now();
+    localStorage.setItem('ag_last_activity', String(now));
+    setIdleWarningSeconds(null);
+  }, []);
+
   useEffect(() => {
     if (!currentUser) return;
     const TIMEOUT_MS = 30 * 60 * 1000;
-    let timerId;
-    const reset = () => {
-      clearTimeout(timerId);
-      timerId = setTimeout(() => {
-        // 透過 ref 取最新版本,避免 30 分鐘前的 stale closure 漏存當前編輯
+    const WARNING_MS = 2 * 60 * 1000; // 倒數 2 分鐘
+
+    // 初始化最後活動時間
+    if (!localStorage.getItem('ag_last_activity')) {
+      localStorage.setItem('ag_last_activity', String(Date.now()));
+    }
+
+    let lastWrite = 0;
+    const handleUserActivity = () => {
+      const now = Date.now();
+      if (now - lastWrite > 15000) {
+        lastWrite = now;
+        localStorage.setItem('ag_last_activity', String(now));
+      }
+      setIdleWarningSeconds(null);
+    };
+
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
+
+    // 定期檢查跨分頁最後活動時間
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const lastAct = Number(localStorage.getItem('ag_last_activity') || String(now));
+      const elapsed = now - lastAct;
+
+      if (elapsed >= TIMEOUT_MS) {
+        clearInterval(intervalId);
+        setIdleWarningSeconds(null);
         void handleLogoutRef.current().finally(() => {
           setSyncError('因長時間無操作，已自動登出，請重新登入。');
         });
-      }, TIMEOUT_MS);
+      } else if (elapsed >= TIMEOUT_MS - WARNING_MS) {
+        const remainingSec = Math.max(1, Math.ceil((TIMEOUT_MS - elapsed) / 1000));
+        setIdleWarningSeconds(remainingSec);
+      } else {
+        setIdleWarningSeconds(null);
+      }
+    }, 5000);
+
+    // 跨分頁 storage 監聽 (登出同步與活動重設)
+    const handleStorage = (e) => {
+      if (e.key === 'ag_current_user' && !e.newValue && currentUserRef.current) {
+        void handleLogoutRef.current().finally(() => {
+          setSyncError('已於其他分頁登出。');
+        });
+      } else if (e.key === 'ag_last_activity') {
+        setIdleWarningSeconds(null);
+      }
     };
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(ev => window.addEventListener(ev, reset, { passive: true }));
-    reset();
+    window.addEventListener('storage', handleStorage);
+
     return () => {
-      clearTimeout(timerId);
-      events.forEach(ev => window.removeEventListener(ev, reset));
+      clearInterval(intervalId);
+      events.forEach(ev => window.removeEventListener(ev, handleUserActivity));
+      window.removeEventListener('storage', handleStorage);
     };
   }, [currentUser]);
 
@@ -723,15 +767,6 @@ export default function App() {
     return () => { cancelled = true; unsub(); };
   }, []);
 
-  useEffect(() => {
-    if (!currentUser || projects.length === 0) return;
-    const key = getProjectsKey(currentUser);
-    // 身分切換期間,projects 仍是上一個命名空間的內容,寫入會汙染新身分的資料
-    if (projectsKeyRef.current !== key) return;
-    // U10 — 偵測 localStorage 容量滿
-    const ok = setJSON(key.replace('ag_', ''), sanitizeProjects(projects));
-    if (!ok) setSyncError('本機儲存空間不足，資料可能無法完整保存。請清理瀏覽器資料或改用雲端模式。'); // eslint-disable-line react-hooks/set-state-in-effect
-  }, [projects, currentUser]);
 
   // 自動恢復上次編輯的機種
   const lastIdRef = useRef(null);
@@ -890,11 +925,14 @@ export default function App() {
         updatedAt: new Date().toISOString(),
         alignmentRate: 0,
         data: sanitizeProjectData(parsedData),
-        originalWbBase64: base64
+        originalWbBase64: base64,
+        version: 1,
       };
 
-      const newList = [...projects, newProj];
-      setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+      const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+      insertStoredProject(storageKey, newProj);
+      const newList = getStoredProjects(storageKey);
+      projectsRef.current = newList;
       setProjects(newList);
       if (isSupabaseEnabled) pushProject(getWorkspace(currentUser), newProj, currentUser?.id).catch(e => { if (import.meta.env.DEV) console.warn('[cloud] 新增上推失敗', e); });
 
@@ -937,11 +975,14 @@ export default function App() {
         updatedAt: new Date().toISOString(),
         alignmentRate: 0,
         data: parsedData,
-        originalWbBase64: fileBase64
+        originalWbBase64: fileBase64,
+        version: 1,
       };
 
-      const newList = [...projects, newProj];
-      setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+      const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+      insertStoredProject(storageKey, newProj);
+      const newList = getStoredProjects(storageKey);
+      projectsRef.current = newList;
       setProjects(newList);
       if (isSupabaseEnabled) pushProject(getWorkspace(currentUser), newProj, currentUser?.id).catch(e => { if (import.meta.env.DEV) console.warn('[cloud] 匯入上推失敗', e); });
 
@@ -957,9 +998,11 @@ export default function App() {
     const proj = projects.find(p => p.id === id);
     if (!proj) return;
     // D2 — 刪除（已由清單操作端進行確認）
-    const snapshot = projects; // D2 — 保留快照供雲端失敗時還原
-    const newList = projects.filter(p => p.id !== id);
-    setJSON(getProjectsKey(currentUser).replace('ag_', ''), newList);
+    const storageKey = getProjectsKey(currentUser).replace('ag_', '');
+    const snapshot = getStoredProjects(storageKey);
+    deleteStoredProject(storageKey, id);
+    const newList = getStoredProjects(storageKey);
+    projectsRef.current = newList;
     setProjects(newList);
 
     if (currentProjectId === id) {
@@ -972,8 +1015,9 @@ export default function App() {
       } catch (e) {
         if (import.meta.env.DEV) console.error('[cloud] 刪除失敗', e);
         // D2 — 雲端刪除失敗時還原本機清單
+        setJSON(storageKey, snapshot);
+        projectsRef.current = snapshot;
         setProjects(snapshot);
-        setJSON(getProjectsKey(currentUser).replace('ag_', ''), snapshot);
         setSyncError('雲端刪除失敗，機種已恢復。請確認網路連線後再試。');
       }
     }
@@ -1238,6 +1282,14 @@ export default function App() {
           <div style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '6px', padding: '8px 14px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', color: '#fbbf24', gap: '12px' }}>
             <span>⚠️ {syncError}</span>
             <button type="button" onClick={() => setSyncError(null)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: '1rem', lineHeight: 1 }} aria-label="關閉">✕</button>
+          </div>
+        )}
+
+        {/* D-157: 閒置登出倒數 2 分鐘橫幅 */}
+        {idleWarningSeconds !== null && (
+          <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', padding: '10px 16px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ef4444', gap: '12px' }}>
+            <span>⏳ 由於長時間未操作，系統將於 <strong>{idleWarningSeconds}</strong> 秒後自動登出以保護資料安全。</span>
+            <button type="button" className="btn btn-primary btn-xs" onClick={resetActivity}>繼續使用</button>
           </div>
         )}
 
