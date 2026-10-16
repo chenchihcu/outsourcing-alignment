@@ -30,16 +30,13 @@ VITE_SUPABASE_ANON_KEY=eyJhbGci...
 supabase/migrations/0001_init.sql
 supabase/migrations/0002_admin_rls.sql
 supabase/migrations/0003_factories.sql
-supabase/migrations/0004_security_hardening.sql
-supabase/migrations/0005_signoff_guard.sql
 ```
 
-這會建立 `profiles`、`projects`、`factories` 資料表、Row-Level Security 嚴格隔離規則、三方簽章授權驗證、刪除防護、版本號自動遞增、自動建立 profile 的 trigger,並把需即時同步的資料表加入 Realtime publication。
+這會建立 `profiles`、`projects`、`factories` 資料表、Row-Level Security 規則、自動建立 profile 的 trigger,並把需即時同步的資料表加入 Realtime publication。
 
-### 4. 嚴格帳號安全設定 (必做)
-前往 Supabase Dashboard → **Authentication**：
-1. **關閉公開註冊 (Allow new users to sign up = off)**：禁止外部任意人自行註冊帳號，所有帳號必須由管理員透過系統邀請建立。
-2. **保留 Email 驗證 (Confirm email = on)**：確保所有邀請與帳號信箱皆為真實可接收通知之信箱。
+### 4.(開發便利)關閉 Email 驗證
+Authentication → Providers → Email → 視需要關閉「Confirm email」,
+讓註冊後可直接登入(正式環境建議保留驗證)。
 
 ### 5. 重新啟動開發伺服器
 ```bash
@@ -49,36 +46,60 @@ npm run dev
 
 ---
 
-## 部署上線:Cloudflare Pages / Netlify (前端) + Supabase (後端)
+## 部署上線:Netlify(前端)+ Supabase(後端)
 
-> **兩者角色不同、同時使用**:Cloudflare Pages 或 Netlify 託管「前端網頁」,Supabase 提供「資料庫 / 帳號 / 即時同步」。前端透過環境變數連到 Supabase。`vite.config.js` 的動態 `base` 已適配根路徑,無需額外修改。
+> **兩者角色不同、同時使用**:Netlify 託管「前端網頁」,Supabase 提供「資料庫 / 帳號 / 即時同步」。前端透過下面兩個環境變數連到 Supabase。`vite.config.js` 的 `base: '/'` 已適配 Netlify 根路徑,無需修改。
 
-### A. Cloudflare Pages 部署 (推薦:全球邊緣託管)
-1. **設定設定檔**:專案根目錄備有 `wrangler.jsonc`,靜態目錄指向 `./dist`,啟用 `single-page-application` 404 回退機制。
-2. **安全標頭**:由 `public/_headers` 自動隨建置產出帶入 CSP、X-Frame-Options、noindex 及 `/assets/*` 長期快取。
-3. **注入環境變數建置**:
-   - 建置時需提供 `VITE_SUPABASE_URL` 與 `VITE_SUPABASE_ANON_KEY`(於本機 `.env` 或 Cloudflare 儀表板/CI 設定)。
-   - 執行建置並同步發布:`npm run build; npm run deploy:cf`。
-4. **Supabase 放行網域**:將 Cloudflare Pages 網址(如 `https://outsourcing-alignment.pages.dev`)加入 Supabase **Authentication → URL Configuration** 的 **Site URL** 與 **Redirect URLs**。
-
-### B. Netlify 部署 (Git 自動整合)
-1. Netlify → **Add new site → Import an existing project**,連結 GitHub 儲存庫。
-2. Build 設定:
+### A. 連結儲存庫並設定 build
+1. Netlify → **Add new site → Import an existing project**,連結你的 GitHub 儲存庫。
+2. Build 設定(Vite 預設即可):
    - **Build command**:`npm run build`
    - **Publish directory**:`dist`
-   - **Node version**:20
-3. 設定環境變數:`VITE_SUPABASE_URL` 與 `VITE_SUPABASE_ANON_KEY`。
-4. 根目錄 `netlify.toml` 已配置單頁應用 200 回退與安全標頭。
+   - **Node version**:18 以上(可用環境變數 `NODE_VERSION=20` 指定)
+3. Production branch 使用 `main`。完成任務後推送 feature branch,合併到 `main` 後由 Netlify Git integration 自動部署正式站。
+
+> 一般實作完成後不要執行 `netlify deploy --prod`;該命令是手動 production upload,會需要額外確認。正常流程以 GitHub → Netlify 自動同步為準。
+
+### B. 設定環境變數(關鍵步驟)
+Site → **Site configuration → Environment variables → Add a variable**,新增與本機 `.env` **相同**的兩個變數:
+
+| Key | Value |
+|---|---|
+| `VITE_SUPABASE_URL` | `https://xxxx.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGci...` |
+
+> ⚠️ **環境變數只在「新的 build」生效**。設定後要到 **Deploys → Trigger deploy → Deploy site** 重新部署一次,雲端模式才會套用。
+>
+> 🔐 `anon` key 本就設計成可公開於前端(資料安全由 Supabase 的 **RLS 規則**把關),放 Netlify 環境變數沒問題;但 **`service_role` key 絕對不要**放前端或環境變數。
+
+### C. netlify.toml(已附於專案根目錄)
+鎖定 build 設定與單頁應用的路由 fallback,避免重新整理時 404:
+
+```toml
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# 單頁應用:所有路徑回退到 index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+```
+
+### D. Supabase 端放行 Netlify 網域
+Supabase → **Authentication → URL Configuration**,把 Netlify 網址(如 `https://your-site.netlify.app`)加入 **Site URL** 與 **Redirect URLs**,登入流程才不會被擋。
 
 ### 角色對照(一眼看懂)
 
-| | Cloudflare Pages / Netlify | Supabase |
+| | Netlify | Supabase |
 |---|---|---|
-| 負責 | 前端網站託管、CDN、邊緣路由 | 資料庫、帳號驗證、即時同步、檔案儲存 |
+| 負責 | 前端網站託管、CDN、自動部署 | 資料庫、帳號驗證、即時同步、檔案儲存 |
 | 你的專案 | 跑「畫面」(列表/表單/儀表板) | 存「資料」+ 跨裝置同步 |
 | 是否有資料庫 | ❌ | ✅ Postgres |
-| 關係 | 互補,**同時使用、缺一不可** | |
-
 | 關係 | 互補,**同時使用、缺一不可** | |
 
 ---

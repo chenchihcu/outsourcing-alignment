@@ -26,9 +26,9 @@
 | 建置工具 | Vite 8 |
 | Excel 處理 | SheetJS (xlsx) |
 | 程式語言 | JavaScript (JSX) |
-| 樣式 | CSS（自訂變數 + 響應式 + Apple HIG 適配） |
+| 樣式 | CSS（自訂變數 + 響應式） |
 | 程式碼檢查 | ESLint 10 |
-| CI/CD & 託管 | GitHub Actions (CI) + Cloudflare Pages (Wrangler) / Netlify Git 自動部署 |
+| CI/CD | GitHub Actions build check + Netlify Git 自動部署 |
 
 ## 目錄結構
 
@@ -79,7 +79,7 @@ npm run preview
 # 執行程式碼檢查
 npm run lint
 
-# 執行生產建置與完整 QA gate (含離線合約與 Chrome 按鍵巡檢)
+# 執行生產建置與完整 QA gate
 npm run qa:gate
 
 # 檢查正式依賴的高風險公告
@@ -87,29 +87,19 @@ npm audit --omit=dev --audit-level=high
 
 # 僅檢查安全設定與 migration 合約（不連線、不寫遠端資料）
 npm run qa:security
-
-# 同步部署至 Cloudflare Pages / Workers 邊緣靜態站台
-npm run deploy:cf
 ```
 
-`qa:gate` 是包含生產建置、五大離線合約（storage / concurrency / stress / workflow / security）與 Headless Chrome 按鍵互動巡檢（`qa:buttons`）之日常驗收標準，不代表 Supabase RLS 已驗證。正式雲端權限測試必須先完成備份，再依 [正式安全發布手冊](docs/SECURITY_ROLLOUT.md) 執行 opt-in 的 `npm run qa:cloud-security`。
+`qa:gate` 是離線／瀏覽器日常 gate，不代表 Supabase RLS 已驗證。正式雲端權限測試必須先完成備份，再依 [正式安全發布手冊](docs/SECURITY_ROLLOUT.md) 執行 opt-in 的 `npm run qa:cloud-security`。
 
 ## 部署
 
-本專案支援多平台前端邊緣託管架構，GitHub Actions 負責 PR/CI 檢驗，線上環境支援 Cloudflare 與 Netlify：
+本專案以 Netlify 作為正式前端站台，GitHub Actions 只做 build check：
 
-1. **Cloudflare Pages / Workers Static Assets（推薦全球邊緣託管）**：
-   - 專案根目錄備有 `wrangler.jsonc`，靜態產物目錄指向 `./dist`，設定單頁應用 (`single-page-application`) 404 回退。
-   - `public/_headers` 預設注入嚴格安全性標頭（CSP、X-Frame-Options、strict-origin、noindex 與靜態快取 `Cache-Control: public, max-age=31536000, immutable`）。
-   - 執行 `npm run deploy:cf` 即可直接同步發布至 Cloudflare 全球邊緣網路。
-
-2. **Netlify 站台（Git 自動部署）**：
-   - 合併或推送至 `main` 後，由 Netlify Git integration 自動建置發布。
-   - 根目錄 `netlify.toml` 提供單頁路由重定向與安全標頭。
-
-3. **CI 與儲存庫**：
-   - `.github/workflows/deploy.yml` 專注於 PR 與 main 推送之 build check 及安全稽核。
-   - 儲存庫：<https://github.com/chenchihcu/outsourcing-alignment>
+1. 完成任務後先推送 feature branch，確認 `npm run build` 通過
+2. 合併或推送至 `main` 後，由 Netlify Git integration 自動建置與發布 production
+3. `.github/workflows/deploy.yml` 僅驗證 build，不再部署 GitHub Pages
+4. 一般任務不要使用 `netlify deploy --prod`；手動 production deploy 僅保留作緊急備援
+5. 儲存庫：<https://github.com/chenchihcu/Product-outsourcing-alignment-platform>
 
 涉及 Supabase migration、RLS、角色或 production 資料的修改必須走隔離分支與 PR，並遵守 [正式安全發布手冊](docs/SECURITY_ROLLOUT.md) 的備份、go/no-go、負向權限測試與回滾步驟。
 

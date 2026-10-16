@@ -336,7 +336,7 @@ export default function App() {
   const [syncError, setSyncError] = useState(null);
 
 
-  // 登入狀態與使用者管理（純雲端上線模式，啟動時絕不信任本機快取）
+  // 登入狀態與使用者管理
   const [currentUser, setCurrentUser] = useState(() => {
     return isSupabaseEnabled ? null : getJSON('current_user', null);
   });
@@ -854,6 +854,13 @@ export default function App() {
     }
   };
 
+  const handleAddAccount = (acc) => {
+    setAccounts([...accounts, acc]);
+  };
+
+  const handleRemoveAccount = (uname) => {
+    setAccounts(accounts.filter(a => a.username !== uname));
+  };
 
   // 3. 選取機種並載入詳細資料
   const handleSelectProject = (id, currentList = null, targetTab = null) => {
@@ -1221,89 +1228,13 @@ export default function App() {
     ));
   };
 
-  const handleGoToSection = (tab, msg) => {
-    handleTabChange(tab);
-    if (msg) {
-      setHighlightField(msg);
-      setTimeout(() => {
-        setHighlightField('');
-      }, 3000);
-    }
-  };
-
-  // 路由同步 (響應瀏覽器上一頁/下一頁與手動切換 Hash)
-  const handleBackToListRef = useRef(handleBackToList);
-  const handleSelectProjectRef = useRef(handleSelectProject);
-  useEffect(() => {
-    handleBackToListRef.current = handleBackToList;
-    handleSelectProjectRef.current = handleSelectProject;
-  });
-
-  // 初次載入或重新整理時，若 URL 帶有專案 ID 且尚未載入該專案，自動選取該機種
-  const initialRouteCheckedRef = useRef(false);
-  useEffect(() => {
-    if (!initialRouteCheckedRef.current && projects.length > 0) {
-      initialRouteCheckedRef.current = true;
-      const r = parseHash();
-      if ((r.route === 'project-overview' || r.route === 'project-step') && r.params.id) {
-        const found = projects.find(p => p.id === r.params.id);
-        if (found) {
-          const targetId = r.params.id;
-          setTimeout(() => {
-            handleSelectProjectRef.current(targetId, projects);
-          }, 0);
-        }
-      }
-    }
-  }, [projects]);
-
-  useEffect(() => {
-    const handleHash = () => {
-      const current = parseHash();
-      if (!currentUserRef.current) return;
-
-      if (current.route === 'projects') {
-        if (currentProjectIdRef.current) {
-          handleBackToListRef.current();
-        }
-      } else if (current.route === 'project-overview') {
-        const projId = current.params.id;
-        if (projId && projId !== currentProjectIdRef.current) {
-          handleSelectProjectRef.current(projId);
-        }
-        setActiveTab('dashboard');
-      } else if (current.route === 'project-step') {
-        const projId = current.params.id;
-        if (projId && projId !== currentProjectIdRef.current) {
-          handleSelectProjectRef.current(projId);
-        }
-        if (current.params.tabKey) {
-          setActiveTab(current.params.tabKey);
-        }
-      } else if (current.route === 'settings-factories' || current.route === 'settings-users') {
-        setActiveTab('settings');
-      }
-    };
-
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
-
-  // 動態網頁標題同步 (規格 6.2 規則 5)
-  useEffect(() => {
-    if (!currentUser) {
-      document.title = '登入 ｜ 產品委外加工系統';
-    } else if (!currentProjectId) {
-      document.title = '機種管理中心 ｜ 產品委外加工系統';
-    } else {
-      const stepName = WORKFLOW_STEPS.find(s => s.key === activeTab)?.label || (activeTab === 'dashboard' ? '儀表板' : '設定');
-      document.title = `${fileName || '機種'} ｜ ${stepName} ｜ 產品委外加工系統`;
-    }
-  }, [currentUser, currentProjectId, activeTab, fileName]);
-
   const handleUpdateAccountSignature = (uname, signature) => {
+    setAccounts(prev => prev.map(a =>
+      a.username === uname ? { ...a, signature } : a
+    ));
     if (currentUser && currentUser.username === uname) {
       setCurrentUser(prev => ({ ...prev, signature }));
+      // 雲端模式:寫回 Supabase profile;否則 token 刷新或重新登入後簽章會遺失
       if (isSupabaseEnabled) {
         updateMySignature(signature).catch((e) => {
           if (import.meta.env.DEV) console.warn('[auth] 簽章雲端同步失敗', e);
@@ -1364,6 +1295,10 @@ export default function App() {
             factories={factories}
             onAddFactory={handleAddFactory}
             onRemoveFactory={handleRemoveFactory}
+            accounts={accounts}
+            onAddAccount={handleAddAccount}
+            onRemoveAccount={handleRemoveAccount}
+            onUpdateAccountLevel={handleUpdateAccountLevel}
             onUpdateAccountSignature={handleUpdateAccountSignature}
             currentUser={currentUser}
           />

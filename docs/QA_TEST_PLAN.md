@@ -31,7 +31,6 @@ npm run qa:concurrency
 npm run qa:stress
 npm run qa:workflow
 npm run qa:security
-npm run qa:buttons
 npm run qa:offline
 ```
 
@@ -44,9 +43,8 @@ npm run qa:offline
 | `qa:stress` | Excel 解析/匯出往返、長字串、特殊字元、批次匯出、記憶體壓力 | 0 failed |
 | `qa:workflow` | 十步驟順序、待處理/進行中/完成狀態、條件式不適用與退件狀態 | 0 failed |
 | `qa:security` | SheetJS 固定版本、雲端 session gate、RLS migration、invite-user 與 rollback 合約 | 0 failed |
-| `qa:buttons` | Headless Chrome (CDP) 互動式全功能按鍵巡檢 (含機種增刪、簽章套用/移除、導覽、側欄、設定與退件流程) | 0 failed |
 | `qa:offline` | 五個離線 QA 腳本依序執行 | 全部 0 failed |
-| `qa:gate` | 生產建置 + 離線 QA + Chrome 按鈕巡檢 | build 成功且全部 QA 0 failed |
+| `qa:gate` | 生產建置 + 離線 QA | build 成功且全部 QA 0 failed |
 
 目前基線:
 
@@ -55,7 +53,6 @@ npm run qa:offline
 - `qa:stress`: 30 passed, 0 failed
 - `qa:workflow`: 14 passed, 0 failed
 - `qa:security`: 17 passed, 0 failed
-- `qa:buttons`: 20 passed, 0 failed (具備 Linux CI `--disable-dev-shm-usage` 與 20 秒啟動寬限)
 - Excel 200 次往返基準: 平均解析需小於 50ms, 平均匯出需小於 100ms
 
 ## 3. 測試範圍

@@ -35,8 +35,6 @@ jobs:
         run: npm run qa:gate
         env:
           BUTTON_AUDIT_BROWSER_PATH: /usr/bin/google-chrome
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://jqtvmdlnondubzaximle.supabase.co' }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_7bmAjp-e_t0eRAyQxKj70Q_Hv5dQXow' }}
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high

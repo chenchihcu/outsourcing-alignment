@@ -75,11 +75,8 @@ async function step(name, fn) {
 
 function createStaticServer(appUrl) {
   return http.createServer((req, res) => {
-    let pathname = decodeURIComponent(new URL(req.url, appUrl).pathname);
-    if (pathname.startsWith('/Product-outsourcing-alignment-platform/')) {
-      pathname = pathname.slice('/Product-outsourcing-alignment-platform'.length);
-    }
-    const target = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+    const pathname = decodeURIComponent(new URL(req.url, appUrl).pathname);
+    const target = pathname === '/' ? 'index.html' : pathname.slice(1);
     const filePath = path.join(distRoot, target);
 
     if (!filePath.startsWith(distRoot)) {
@@ -128,49 +125,38 @@ async function eventText(data) {
   return String(data);
 }
 
-async function waitForVersion(port, edgeProcess, getStderr) {
-  for (let i = 0; i < 200; i++) {
-    if (edgeProcess && edgeProcess.exitCode !== null) {
-      throw new Error(`Browser process exited early with code ${edgeProcess.exitCode}: ${getStderr()}`);
-    }
+async function waitForVersion(port) {
+  for (let i = 0; i < 80; i++) {
     try {
       const res = await fetch(`http://127.0.0.1:${port}/json/version`);
       if (res.ok) return await res.json();
     } catch {
-      // Browser is still starting.
+      // Edge is still starting.
     }
     await sleep(100);
   }
-  throw new Error(`Edge/Chrome CDP endpoint did not start within 20s. Stderr: ${getStderr()}`);
+  throw new Error('Edge CDP endpoint did not start');
 }
 
-async function launchBrowserOnce() {
-  assert(fs.existsSync(edgePath), `找不到 Edge/Chrome 瀏覽器：${edgePath}`);
+async function startBrowser() {
+  assert(fs.existsSync(edgePath), `找不到 Edge 瀏覽器：${edgePath}`);
 
   const cdpPort = 10800 + Math.floor(Math.random() * 1000);
-  userDataDir = path.resolve('scratch', `edge-button-audit-${Date.now()}-${Math.floor(Math.random() * 1000)}`);
+  userDataDir = path.resolve('scratch', `edge-button-audit-${Date.now()}`);
   await mkdir(userDataDir, { recursive: true });
 
-  let stderrOutput = '';
   edge = spawn(edgePath, [
     '--headless=new',
     '--disable-gpu',
-    '--disable-dev-shm-usage',
-    '--disable-software-rasterizer',
-    '--disable-extensions',
     '--no-sandbox',
     '--no-first-run',
     '--no-default-browser-check',
     `--remote-debugging-port=${cdpPort}`,
     `--user-data-dir=${userDataDir}`,
     'about:blank',
-  ], { stdio: ['ignore', 'ignore', 'pipe'], windowsHide: true });
+  ], { stdio: 'ignore', windowsHide: true });
 
-  edge.stderr?.on('data', (chunk) => {
-    stderrOutput += chunk.toString('utf8');
-  });
-
-  const version = await waitForVersion(cdpPort, edge, () => stderrOutput.trim());
+  const version = await waitForVersion(cdpPort);
   ws = new WebSocket(version.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
     ws.addEventListener('open', resolve, { once: true });
@@ -220,23 +206,6 @@ async function launchBrowserOnce() {
     for (const [, item] of pending) item.reject(new Error('WebSocket closed'));
     pending.clear();
   });
-}
-
-async function startBrowser() {
-  try {
-    await launchBrowserOnce();
-  } catch (err) {
-    console.warn(`[buttonAudit] 首次啟動瀏覽器失敗 (${err.message})，正在進行自動重試...`);
-    try { ws?.close(); } catch {}
-    try { edge?.kill(); } catch {}
-    if (userDataDir) {
-      await sleep(200);
-      await rm(userDataDir, { recursive: true, force: true }).catch(() => {});
-      userDataDir = null;
-    }
-    await sleep(500);
-    await launchBrowserOnce();
-  }
 }
 
 function send(method, params = {}, sid = sessionId) {
@@ -357,37 +326,6 @@ async function setupPage(appUrl) {
         level: 'Administrator',
         signature: '${signature}'
       }));
-
-      // 攔截 Supabase REST API，使其在離網環境或無真實後端下能自主完成 100% 巡檢
-      const origFetch = window.fetch;
-      window.fetch = async function(resource, init) {
-        const urlStr = typeof resource === 'string' ? resource : (resource?.url || '');
-        if (urlStr.includes('/rest/v1/profiles')) {
-          return new Response(JSON.stringify([{
-            id: '${auditUserId}',
-            username: ${JSON.stringify(auditUser)},
-            unit: '管理處',
-            role: 'admin',
-            level: 'Administrator',
-            signature: '${signature}',
-            created_at: '2026-01-01T00:00:00.000Z'
-          }]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        }
-        if (urlStr.includes('/rest/v1/projects')) {
-          return new Response(JSON.stringify([]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        }
-        if (urlStr.includes('/rest/v1/factories')) {
-          return new Response(JSON.stringify([
-            { name: '富士康' },
-            { name: '捷普' },
-            { name: '醫電鼎眾' }
-          ]), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        }
-        if (urlStr.includes('/auth/v1/')) {
-          return new Response(JSON.stringify(sessionData), { status: 200, headers: { 'Content-Type': 'application/json' } });
-        }
-        return origFetch.apply(this, arguments);
-      };
     `,
   });
   await send('Page.navigate', { url: appUrl });

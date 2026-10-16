@@ -75,7 +75,7 @@ export default function LoginModal({ onLogin, accounts = [] }) {
           <h2>系統登入 / 權限驗證</h2>
           <p>醫電鼎眾 Mitcorp | 產品委外加工資訊系統</p>
           <div className="login-mode-tag">
-            ☁ 雲端模式 (Cloudflare 邊緣託管 / 跨裝置同步)
+            {isSupabaseEnabled ? '☁ 雲端帳號(跨裝置同步)' : '💾 本機模式(離線)'}
           </div>
         </div>
 

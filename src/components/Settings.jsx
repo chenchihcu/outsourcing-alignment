@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useState, useEffect, useRef } from 'react';
 import './Settings.css';
 import { compressImage } from '../utils/imageCompressor';
+import { isSupabaseEnabled } from '../data/supabaseClient';
 import { inviteUser, listAllProfiles, updateUserProfile } from '../data/auth';
 import { generateSalt, hashPassword } from '../utils/cryptoAuth';
 
@@ -68,7 +69,7 @@ function CloudUserManagement({ currentUser }) {
     <div className="settings-section-card glass-card" style={{ gridColumn: '1 / -1' }}>
       <h3>☁️ 雲端使用者管理（邀請制）</h3>
       <p className="card-desc">
-        本系統為純雲端上線架構。使用者帳號由系統管理處統一開通邀請；受邀者可於手機或任何裝置完成驗證並登入。
+        帳號由管理員統一邀請。對方收到邀請郵件並設定密碼後即可登入；帳號無法自行申請。
       </p>
 
       {roleError && (
@@ -108,7 +109,7 @@ function CloudUserManagement({ currentUser }) {
       {msg && <p style={{ marginTop: '10px', fontSize: '0.85rem', color: msg.startsWith('✅') ? '#4ade80' : '#f87171' }}>{msg}</p>}
 
       {/* 使用者清單 */}
-      <h4 style={{ marginTop: '24px', marginBottom: '8px' }}>現有雲端使用者（{profiles.length}）</h4>
+      <h4 style={{ marginTop: '24px', marginBottom: '8px' }}>現有使用者（{profiles.length}）</h4>
       {loading ? (
         <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>載入中…</p>
       ) : (
@@ -170,12 +171,23 @@ export default function Settings({
   factories,
   onAddFactory,
   onRemoveFactory,
+  accounts,
+  onAddAccount,
+  onRemoveAccount,
+  onUpdateAccountLevel,
   onUpdateAccountSignature,
   currentUser
 }) {
   const sigInputRef = useRef(null);
   const [newFactory, setNewFactory] = useState('');
   const [sigError, setSigError] = useState('');
+
+  // 本機模式帳號表單 State
+  const [newUsername, setNewUsername] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [revealedPasswords, setRevealedPasswords] = useState({});
+  const [newUnit, setNewUnit] = useState('研發單位');
+  const [newLevel, setNewLevel] = useState('Standard');
 
   const handleAddFactorySubmit = (e) => {
     e.preventDefault();
@@ -240,8 +252,8 @@ export default function Settings({
       <h2 className="section-title">⚙️ 系統資料與權限設定管理</h2>
 
       <div className="settings-grid">
-        {/* 雲端模式：Admin 使用者管理 */}
-        {currentUser?.role === 'admin' && (
+        {/* 雲端模式：Admin 使用者管理（取代本機帳號管理） */}
+        {isSupabaseEnabled && currentUser.role === 'admin' && (
           <CloudUserManagement currentUser={currentUser} />
         )}
 
@@ -249,7 +261,7 @@ export default function Settings({
         <div className="settings-section-card glass-card" style={{ gridColumn: '1 / -1' }}>
           <h3>🖋️ 個人電子簽章設定</h3>
           <p className="card-desc">
-            在此上傳您的個人電子簽章圖片（建議使用透明背景的 PNG 圖檔，比例約 3:1）。設定後，您在「簽章與匯出」進行線上簽名時，系統將直接以簽章圖檔作為簽核依據，使報告更顯正式與專業。
+                  在此上傳您的個人電子簽章圖片（建議使用透明背景的 PNG 圖檔，比例約 3:1）。設定後，您在「簽章與匯出」進行線上簽名時，系統將直接以簽章圖檔作為簽核依據，使報告更顯正式與專業。
           </p>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap', marginTop: '16px' }}>
             <div 
@@ -265,7 +277,7 @@ export default function Settings({
                 overflow: 'hidden'
               }}
             >
-              {currentUser?.signature ? (
+              {currentUser.signature ? (
                 <img src={currentUser.signature} alt="我的簽章" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               ) : (
                 <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>尚未設定電子簽章</span>
@@ -304,7 +316,7 @@ export default function Settings({
                 >
                   📤 上傳簽章圖檔
                 </button>
-                {currentUser?.signature && (
+                {currentUser.signature && (
                   <button 
                     type="button" 
                     className="btn btn-secondary" 
@@ -547,6 +559,19 @@ Settings.propTypes = {
   factories: PropTypes.arrayOf(PropTypes.string).isRequired,
   onAddFactory: PropTypes.func.isRequired,
   onRemoveFactory: PropTypes.func.isRequired,
+  accounts: PropTypes.arrayOf(
+    PropTypes.shape({
+      username: PropTypes.string.isRequired,
+      password: PropTypes.string.isRequired,
+      unit: PropTypes.string,
+      role: PropTypes.string,
+      level: PropTypes.string,
+      signature: PropTypes.string,
+    })
+  ).isRequired,
+  onAddAccount: PropTypes.func.isRequired,
+  onRemoveAccount: PropTypes.func.isRequired,
+  onUpdateAccountLevel: PropTypes.func.isRequired,
   onUpdateAccountSignature: PropTypes.func.isRequired,
   currentUser: PropTypes.shape({
     id: PropTypes.string,
@@ -557,3 +582,11 @@ Settings.propTypes = {
     signature: PropTypes.string,
   }),
 };
+
+
+
+
+
+
+
+
