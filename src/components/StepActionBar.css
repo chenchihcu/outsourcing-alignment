@@ -1,0 +1,96 @@
+/* =========================================================================
+   StepActionBar — 步驟導覽動作列
+   桌機與平板 (≥768px): 靠右排列、標準按鈕尺寸。
+   手機 (≤767px): Sticky 貼底、雙按鈕 50px 觸控熱區、Safe-Area 適配與虛擬鍵盤避讓。
+   ========================================================================= */
+
+.step-action-bar {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.step-action-bar-inner {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.step-btn-placeholder {
+  display: none;
+}
+
+.step-btn-prev,
+.step-btn-next {
+  min-height: 44px;
+  padding: 0 1.25rem;
+  border-radius: var(--r-btn, 12px);
+  font-size: var(--fs-callout, 15px);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-btn-next {
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+}
+
+/* ===== 手機專屬樣式 (≤767px) ===== */
+@media (max-width: 767px) {
+  .step-action-bar {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: var(--c-bar);
+    backdrop-filter: var(--c-blur-bg);
+    -webkit-backdrop-filter: var(--c-blur-bg);
+    border-top: 0.5px solid var(--c-hairline);
+    margin: 24px calc(-1 * max(var(--sp-4), var(--safe-r, 0px))) calc(-1 * max(var(--sp-4), var(--safe-b, 0px))) calc(-1 * max(var(--sp-4), var(--safe-l, 0px)));
+    padding: 8px max(var(--sp-4), var(--safe-r, 0px)) calc(8px + var(--safe-b, 0px)) max(var(--sp-4), var(--safe-l, 0px));
+    box-sizing: border-box;
+    transition: position 0.2s ease, margin 0.2s ease;
+  }
+
+  .step-action-bar.keyboard-open {
+    position: static !important;
+    margin: 16px 0 0 0 !important;
+    padding: 8px 0 !important;
+    background: transparent !important;
+    border-top: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .step-action-bar-inner {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .step-btn-prev {
+    flex: 1;
+    min-height: var(--tap-primary, 50px);
+    height: 50px;
+    font-size: var(--fs-callout, 16px);
+    border-radius: var(--r-btn, 12px);
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+
+  .step-btn-next {
+    flex: 1.4;
+    min-height: var(--tap-primary, 50px);
+    height: 50px;
+    font-size: var(--fs-callout, 16px);
+    border-radius: var(--r-btn, 12px);
+    padding: 0 12px;
+    white-space: nowrap;
+  }
+}

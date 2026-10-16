@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
+import StepActionBar from './StepActionBar';
 import './FormSections.css';
 
 export default function SmtControlSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
@@ -70,10 +71,11 @@ export default function SmtControlSection({ data, onChange, currentUser, highlig
         </fieldset>
       )}
 
-      <div className="action-row">
-        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
-        <button type="button" className="btn btn-primary" onClick={onNext}>下一步：DIP 與特殊製程</button>
-      </div>
+      <StepActionBar
+        onPrev={onPrev}
+        onNext={onNext}
+        nextLabel="下一步：DIP 與特殊製程"
+      />
     </div>
   );
 }

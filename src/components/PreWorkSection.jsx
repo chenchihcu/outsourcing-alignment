@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass, updateFieldWithOwner } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
+import StepActionBar from './StepActionBar';
 import './FormSections.css';
 
 export default function PreWorkSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
@@ -180,10 +181,11 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
         )}
       </fieldset>
 
-      <div className="action-row">
-        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
-        <button type="button" className="btn btn-primary" onClick={onNext}>下一步：測溫點配置</button>
-      </div>
+      <StepActionBar
+        onPrev={onPrev}
+        onNext={onNext}
+        nextLabel="下一步：測溫點配置"
+      />
     </div>
   );
 }

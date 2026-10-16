@@ -792,14 +792,17 @@ export default function App() {
   }, []);
 
 
-  // 自動恢復上次編輯的機種
+  // 自動恢復上次編輯的機種 (僅在非明確指定子分頁時預設進入 dashboard)
   const lastIdRef = useRef(null);
   useEffect(() => {
     if (!currentUser || currentProjectId || projects.length === 0) return;
-    const lastId = getJSON('last_project_id', null);
-    if (lastId && lastId !== lastIdRef.current && projects.some(p => p.id === lastId)) {
-      lastIdRef.current = lastId;
-      const project = projects.find(p => p.id === lastId);
+    const r = parseHash();
+    const isExplicitProjectRoute = (r.route === 'project-step' || r.route === 'project-overview' || r.route === 'project-print') && r.params.id;
+    const targetId = isExplicitProjectRoute ? r.params.id : getJSON('last_project_id', null);
+
+    if (targetId && targetId !== lastIdRef.current && projects.some(p => p.id === targetId)) {
+      lastIdRef.current = targetId;
+      const project = projects.find(p => p.id === targetId);
       if (project) {
         /* eslint-disable react-hooks/set-state-in-effect */
         editedSinceLoadRef.current = false;
@@ -816,8 +819,14 @@ export default function App() {
             setOriginalWb(XLSX.read(bytes.buffer, { type: 'array' }));
           } catch { setOriginalWb(null); } // D10 — 損毀的 base64 不讓整個載入失敗
         }
-        setCurrentProjectId(lastId);
-        setActiveTab('dashboard');
+        setCurrentProjectId(targetId);
+        if (r.route === 'project-step' && r.params.tabKey) {
+          setActiveTab(r.params.tabKey);
+        } else if (r.route === 'project-print') {
+          setActiveTab('print');
+        } else {
+          setActiveTab('dashboard');
+        }
       }
     }
   }, [currentUser, projects, currentProjectId]);
@@ -1329,6 +1338,7 @@ export default function App() {
           <AccountSettings
             currentUser={currentUser}
             onUpdateAccountSignature={handleUpdateAccountSignature}
+            onLogout={handleLogout}
           />
         );
       case 'print':
@@ -1450,6 +1460,7 @@ export default function App() {
             <AccountSettings
               currentUser={currentUser}
               onUpdateAccountSignature={handleUpdateAccountSignature}
+              onLogout={handleLogout}
             />
           </div>
         ) : activeTab === 'settings' ? (

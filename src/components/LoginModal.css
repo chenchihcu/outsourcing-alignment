@@ -2,7 +2,7 @@
   display: inline-block;
   margin-top: 10px;
   padding: 3px 10px;
-  font-size: 0.72rem;
+  font-size: var(--fs-caption, 12px);
   font-weight: 600;
   color: var(--c-text-2, #565d68);
   background: var(--c-surface-2, #f1f3f5);
@@ -147,19 +147,38 @@
 }
 
 /* ===== 響應式優化：手機窄螢幕下登入視窗排版微調 ===== */
-@media (max-width: 480px) {
+@media (max-width: 767px) {
+  .login-page-container {
+    align-items: flex-start;
+    padding: 16px;
+    box-sizing: border-box;
+  }
   .login-card {
-    padding: 24px 18px !important;
-    max-width: 90% !important;
+    margin-top: calc(var(--safe-t) + 48px);
+    padding: 24px 20px !important;
+    max-width: 100% !important;
+    border-radius: var(--r-card, 16px);
+    box-sizing: border-box;
   }
   .login-header h2 {
     font-size: 1.3rem !important;
+  }
+  .login-form .btn-primary {
+    min-height: var(--tap-primary, 50px);
+    height: var(--tap-primary, 50px);
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--r-btn, 12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .quick-login-grid {
     grid-template-columns: 1fr !important; /* 單列堆疊，防止小尺寸下重疊 */
     gap: 8px !important;
   }
   .quick-login-btn {
+    min-height: 44px;
     padding: 8px !important;
   }
 }

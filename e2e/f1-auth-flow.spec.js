@@ -30,14 +30,14 @@ test.describe('F1: 登入、登出與未登入保護流程', () => {
     // 空白送出
     await page.click('button[type="submit"]');
     expect(dialogFired).toBe(false);
-    await expect(page.locator('.login-error-banner, [role="alert"]')).toBeVisible();
+    await expect(page.locator('.login-form [role="alert"]')).toBeVisible();
 
     // 錯誤帳密
     await page.fill('input[type="text"], input[name="username"]', 'wronguser');
     await page.fill('input[type="password"]', 'wrongpass');
     await page.click('button[type="submit"]');
     expect(dialogFired).toBe(false);
-    await expect(page.locator('.login-error-banner, [role="alert"]')).toContainText(/錯誤|不存在/);
+    await expect(page.locator('.login-form [role="alert"]')).toContainText(/錯誤|不存在/);
   });
 
   test('F1-3: 正確登入後進入機種管理中心並顯示使用者資訊', async ({ page }) => {
@@ -88,8 +88,14 @@ test.describe('F1: 登入、登出與未登入保護流程', () => {
     if (await burger.isVisible()) {
       await burger.click();
       await page.waitForTimeout(300);
+    } else {
+      const accountTab = page.locator('.mobile-tab-item:has-text("帳號")');
+      if (await accountTab.isVisible()) {
+        await accountTab.click();
+        await page.waitForTimeout(300);
+      }
     }
-    const logoutBtn = page.locator('.user-logout, button:has-text("登出")');
+    const logoutBtn = page.locator('.user-logout:visible, button:has-text("登出"):visible');
     await logoutBtn.first().click();
     await expect(page).toHaveURL(/.*#\/login/);
 

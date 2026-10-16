@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { useFieldOwner } from '../hooks/useFieldOwner';
 import { isFieldDisabled, getFieldHighlightClass } from '../utils/fieldUtils';
 import { sectionSvg } from '../utils/svgIcons';
+import StepActionBar from './StepActionBar';
 import './FormSections.css';
 
 export default function BasicInfoSection({ data, onChange, currentUser, factories, highlightField, onNext, onPrev }) {
@@ -89,10 +90,11 @@ export default function BasicInfoSection({ data, onChange, currentUser, factorie
         </div>
       </div>
 
-      <div className="action-row">
-        {onPrev && <button type="button" className="btn btn-secondary" onClick={onPrev}>上一步</button>}
-        <button type="button" className="btn btn-primary" onClick={onNext}>下一步：品質與加工需求</button>
-      </div>
+      <StepActionBar
+        onPrev={onPrev}
+        onNext={onNext}
+        nextLabel="下一步：品質與加工需求"
+      />
     </div>
   );
 }

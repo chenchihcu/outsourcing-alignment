@@ -522,126 +522,162 @@
 /* Use light theme colors as defaults */
 
 /* 響應式優化：機種管理中心手機版排版幾何衝突修正與 Apple HIG 卡片化 */
-@media (max-width: 768px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-  
+/* 響應式優化：機種管理中心手機版排版幾何衝突修正與 Apple HIG 卡片化 */
+@media (max-width: 767px) {
   .project-list-container {
     padding: 12px 12px 32px 12px;
     gap: 14px;
   }
 
-  .project-list-header {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 16px;
-    gap: 12px;
-    text-align: center;
-    border-radius: var(--r-ios-card, 16px);
+  /* 手機版大標「機種」＋右上「+」按鈕 */
+  .mobile-project-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 4px 8px;
   }
 
-  .project-list-header h2 {
-    font-size: 20px;
+  .mobile-page-title {
+    font-size: var(--fs-large-title, 34px);
     font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--c-text-1);
+    margin: 0;
   }
 
-  .header-actions {
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
+  .mobile-header-menu-anchor {
+    position: relative;
   }
 
-  .header-actions .btn {
-    width: 100%;
+  .mobile-header-add-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
     min-height: 44px;
+    border-radius: var(--r-full, 9999px);
+    background: var(--c-accent, #6366f1);
+    color: var(--c-on-accent, #ffffff);
+    border: none;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    border-radius: var(--r-ios-btn, 12px);
-    font-size: 15px;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+    cursor: pointer;
   }
 
+  .mobile-header-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 100;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: var(--r-card, 16px);
+    padding: 6px;
+    min-width: 180px;
+    box-shadow: var(--sh-3);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--c-text-1);
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 10px;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .mobile-dropdown-item:active {
+    background: var(--c-surface-2);
+  }
+
+  /* 搜尋列 */
   .project-search-container {
-    padding: 12px 16px;
-    border-radius: var(--r-ios-card, 16px);
+    min-height: 44px;
+    height: 44px;
+    padding: 0 8px 0 14px;
+    border-radius: var(--r-input, 10px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
   }
 
   .search-input {
     font-size: 16px !important; /* 防止 Safari 自動縮放 */
-  }
-
-  .project-list-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 14px;
-    gap: 12px;
-    border-radius: var(--r-ios-card, 16px);
-  }
-
-  .toolbar-tabs {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    color: var(--c-text-1);
+    flex: 1;
+    min-width: 0;
   }
 
   .search-clear-btn {
     min-width: 44px;
     min-height: 44px;
+    width: 44px;
+    height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--c-text-2);
+    cursor: pointer;
   }
 
-  .tab-filter-btn {
-    flex: 1 1 calc(50% - 4px);
-    min-height: 44px;
-    justify-content: center;
-    padding: 8px 12px;
-    border-radius: var(--r-ios-btn, 12px);
-    font-size: 13px;
-    font-weight: 600;
-  }
-
-  .toolbar-settings {
-    flex-direction: column;
-    gap: 12px;
-    width: 100%;
-    border-top: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08));
-    padding-top: 12px;
-  }
-
-  .control-group {
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .control-group .btn-toggle-group {
+  /* 手機版單列 Segmented Control（進行中／已完成／退件／全部，每段 ≥44 高） */
+  .mobile-segmented-control {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--c-surface-2);
     padding: 3px;
-    border-radius: 8px;
-  }
-
-  .control-group .toggle-btn {
-    min-height: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    padding: 6px 12px;
-    font-size: 13px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 6px;
+    border-radius: 12px;
+    gap: 3px;
+    width: 100%;
     box-sizing: border-box;
   }
 
-  .table-pagination {
-    gap: 8px;
-    padding: 12px 16px;
-    border-radius: var(--r-ios-card, 16px);
+  .mobile-segment-btn {
+    min-height: 44px;
+    height: 44px;
+    border: none;
+    background: transparent;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--c-text-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 2px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    text-align: center;
   }
-}
 
-/* 手機端與 iPhone 16 Pro Max 專屬：iOS Inset Grouped 卡片化結構 */
-@media (max-width: 640px) {
+  .mobile-segment-btn.active {
+    background: var(--c-surface);
+    color: var(--c-text-1);
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  /* 卡片化表格 */
   .project-table-wrapper {
     background: transparent !important;
     border: none !important;
@@ -657,7 +693,7 @@
   }
 
   .project-table thead {
-    display: none !important; /* 隱藏桌機表頭，轉為卡片內部自我描述 */
+    display: none !important; /* 隱藏桌機表頭 */
   }
 
   .project-table tbody {
@@ -671,36 +707,117 @@
     display: flex !important;
     flex-direction: column !important;
     gap: 10px !important;
-    background: var(--c-surface, rgba(255, 255, 255, 0.85)) !important;
-    backdrop-filter: blur(20px) !important;
-    -webkit-backdrop-filter: blur(20px) !important;
-    border: 0.5px solid var(--c-border-hairline, rgba(0, 0, 0, 0.08)) !important;
-    border-radius: var(--r-ios-card, 16px) !important;
+    background: var(--c-surface) !important;
+    border: 0.5px solid var(--c-border) !important;
+    border-radius: var(--r-card, 16px) !important;
     padding: 16px !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+    box-shadow: var(--sh-1) !important;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
   }
 
-  .project-table tbody tr td {
+  .project-table tbody tr:active {
+    transform: scale(0.99);
+  }
+
+  .project-table tbody tr td:not(.hide-on-mobile) {
     display: block !important;
     padding: 0 !important;
     border: none !important;
     background: transparent !important;
   }
+  .project-table tbody tr td.hide-on-mobile {
+    display: none !important;
+  }
 
   .proj-name-cell {
     display: flex !important;
     align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
     gap: 8px !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    color: #111827 !important;
+  }
+
+  .proj-name-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   .proj-name-text {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: var(--c-text-1) !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     max-width: none !important;
-    white-space: normal !important;
-    line-height: 1.4 !important;
-    word-break: break-word !important;
+  }
+
+  .mobile-row-more-anchor {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .mobile-more-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--c-text-2);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .mobile-more-btn:active {
+    background: var(--c-surface-2);
+  }
+
+  .mobile-row-popover {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 50;
+    background: var(--c-surface);
+    border: 0.5px solid var(--c-border);
+    border-radius: 12px;
+    padding: 6px;
+    min-width: 140px;
+    box-shadow: var(--sh-3);
+  }
+
+  .mobile-popover-item {
+    width: 100%;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .mobile-popover-item.text-danger {
+    color: var(--c-error);
+  }
+
+  .mobile-delete-confirm-box {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 160px;
   }
 
   .table-progress-wrapper {
@@ -721,41 +838,28 @@
     width: 40px !important;
   }
 
-  .table-actions-cell {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 8px !important;
-    width: 100% !important;
-    margin-top: 4px !important;
-  }
-
-  .table-actions-cell > span {
-    display: flex !important;
-    gap: 8px !important;
-    width: 100% !important;
-  }
-
-  .table-action-btn {
-    min-height: 44px !important;
-    font-size: 14px !important;
-    border-radius: var(--r-ios-btn, 12px) !important;
+  .status-cell {
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    padding: 8px 14px !important;
   }
 
-  .table-action-btn.btn-edit {
-    flex: 1 !important;
-    min-height: 48px !important;
+  .table-date-cell {
+    font-size: 13px !important;
+    color: var(--c-text-3) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px;
   }
 
-  .table-action-btn.btn-delete {
-    flex: 0 0 auto !important;
+  .mobile-date-label {
+    font-weight: 500;
+    color: var(--c-text-2);
   }
 
-  .btn-confirm-delete {
-    flex: 1 !important;
+  .table-pagination {
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: var(--r-card, 16px);
   }
 }
 

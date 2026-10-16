@@ -136,7 +136,7 @@
   border-radius: var(--r-full);
   border: 1.5px solid var(--c-border-strong);
   color: var(--c-text-2);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-caption, 12px);
   font-weight: 700;
   display: inline-flex;
   align-items: center;
@@ -144,23 +144,23 @@
 }
 .nav-item.active .nav-step-num { border-color: var(--c-accent); color: var(--c-accent-hover); }
 .nav-step-num.done { background: var(--c-success-weak); border-color: var(--c-success); color: var(--c-success); }
-.nav-step-num.in-progress { background: #fff7ed; border-color: #f59e0b; color: #b45309; }
+.nav-step-num.in-progress { background: var(--c-warning-weak); border-color: var(--c-warning); color: var(--c-warning); }
 .nav-step-num.not-applicable { background: var(--c-surface-2); border-color: var(--c-border-strong); color: var(--c-text-2); }
 
 .nav-state {
   flex-shrink: 0;
   padding: 1px 6px;
   border-radius: var(--r-full);
-  font-size: 0.65rem;
+  font-size: var(--fs-caption, 12px);
   font-weight: 700;
   color: var(--c-success);
   background: var(--c-success-weak);
 }
-.nav-state.inProgress { color: #b45309; background: #fff7ed; }
+.nav-state.inProgress { color: var(--c-warning); background: var(--c-warning-weak); }
 .nav-state.not-applicable { color: var(--c-text-2); background: var(--c-surface-2); }
 
 .nav-badge {
-  font-size: var(--fs-xs);
+  font-size: var(--fs-caption, 12px);
   font-weight: 700;
   color: var(--c-text-2);
   background: var(--c-surface-2);
@@ -272,27 +272,32 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.topbar-right { display: flex; align-items: center; gap: var(--sp-3); flex-shrink: 0; }
+.topbar-mobile-back {
+  display: none;
+}
 .save-hint {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-caption, 12px);
   white-space: nowrap;
   color: var(--c-text-3);
   transition: color var(--dur) var(--ease);
 }
 .save-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.save-icon { display: inline-flex; align-items: center; justify-content: center; }
+.save-spinning { animation: save-spin 1s linear infinite; }
+@keyframes save-spin { to { transform: rotate(360deg); } }
 .save-saving { color: var(--c-warning); }
-.save-saving .save-dot { animation: save-pulse 1s ease-in-out infinite; }
 .save-saved { color: var(--c-success); }
+.save-text-mobile { display: none; }
 @keyframes save-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
 .presence-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--fs-xs);
+  font-size: var(--fs-caption, 12px);
   font-weight: 600;
   color: var(--c-accent-hover);
   background: var(--c-accent-weak);
@@ -303,8 +308,10 @@
 }
 .topbar-back { padding: 0 var(--sp-3); font-size: var(--fs-sm); }
 
-/* ---------------- 手機步驟列(預設隱藏,<1024 顯示) ---------------- */
+/* ---------------- 手機步驟列與分頁列(預設隱藏，僅 ≤767px 顯示) ---------------- */
 .shell-steprail { display: none; }
+.mobile-tab-bar { display: none; }
+.shell-context-rail { display: none; }
 
 /* ---------------- 內容區 ---------------- */
 .shell-content {
@@ -338,17 +345,14 @@
 }
 
 /* =========================================================================
-   平板/手機 (<1024px):側欄變抽屜 + 步驟列常駐
+   平板 (768–1023px): 側欄變抽屜 + 步驟列常駐
    ========================================================================= */
-/* =========================================================================
-   平板/手機 (<1024px):側欄變抽屜 + 步驟列常駐 (支援 iPhone 16 Pro Max Safe Area & iOS HIG)
-   ========================================================================= */
-@media (max-width: 1023px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   .shell-topbar {
-    padding-top: env(safe-area-inset-top, 0px);
-    height: calc(var(--shell-topbar-h) + env(safe-area-inset-top, 0px));
-    padding-left: max(var(--sp-4), env(safe-area-inset-left, 0px));
-    padding-right: max(var(--sp-4), env(safe-area-inset-right, 0px));
+    padding-top: var(--safe-t, 0px);
+    height: calc(var(--shell-topbar-h) + var(--safe-t, 0px));
+    padding-left: max(var(--sp-4), var(--safe-l, 0px));
+    padding-right: max(var(--sp-4), var(--safe-r, 0px));
     background: var(--c-blur-surface);
     backdrop-filter: var(--c-blur-bg);
     -webkit-backdrop-filter: var(--c-blur-bg);
@@ -360,25 +364,13 @@
     top: 0; left: 0;
     height: 100dvh;
     width: min(85vw, 340px);
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: max(var(--sp-4), env(safe-area-inset-bottom, 0px));
+    padding-top: var(--safe-t, 0px);
+    padding-bottom: max(var(--sp-4), var(--safe-b, 0px));
     transform: translateX(-100%);
     box-shadow: var(--sh-pop);
     transition: transform var(--dur) var(--ease);
   }
   .shell[data-drawer='true'] .shell-sidebar { transform: translateX(0); }
-
-  .shell-sidebar .user-logout {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    font-size: 1.15rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--r-md);
-  }
 
   .topbar-burger {
     display: inline-flex;
@@ -391,20 +383,19 @@
     border: 0.5px solid var(--c-border-hairline);
   }
 
-  /* 頂部步驟列:橫向捲動,邊緣淡出提示「還有更多」, 毛玻璃背景 */
   .shell-steprail {
     display: flex;
     gap: var(--sp-2);
     align-items: center;
     overflow-x: auto;
     touch-action: pan-x;
-    padding: var(--sp-3) max(var(--sp-4), env(safe-area-inset-right, 0px)) var(--sp-3) max(var(--sp-4), env(safe-area-inset-left, 0px));
+    padding: var(--sp-3) max(var(--sp-4), var(--safe-r, 0px)) var(--sp-3) max(var(--sp-4), var(--safe-l, 0px));
     background: var(--c-blur-surface);
     backdrop-filter: var(--c-blur-bg);
     -webkit-backdrop-filter: var(--c-blur-bg);
     border-bottom: 0.5px solid var(--c-border-hairline);
     position: sticky;
-    top: calc(var(--shell-topbar-h) + env(safe-area-inset-top, 0px));
+    top: calc(var(--shell-topbar-h) + var(--safe-t, 0px));
     z-index: 35;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -443,17 +434,17 @@
     width: 18px; height: 18px;
     border-radius: var(--r-full);
     border: 1.5px solid currentColor;
-    font-size: 0.65rem;
+    font-size: var(--fs-caption, 12px);
     font-weight: 700;
     display: inline-flex; align-items: center; justify-content: center;
   }
   .step-pill.status-done:not(.active) { color: var(--c-success); border-color: var(--c-success); }
   .step-pill.status-done:not(.active) .pill-num { background: var(--c-success-weak); }
-  .step-pill.status-inProgress:not(.active) { color: #b45309; border-color: #f59e0b; background: #fff7ed; }
+  .step-pill.status-inProgress:not(.active) { color: var(--c-warning); border-color: var(--c-warning); background: var(--c-warning-weak); }
   .step-pill.not-applicable:not(.active) { color: var(--c-text-2); border-color: var(--c-border-strong); background: var(--c-surface-2); }
-  .pill-state { font-size: 0.65rem; font-weight: 700; }
+  .pill-state { font-size: var(--fs-caption, 12px); font-weight: 700; }
   .pill-badge {
-    font-size: 0.65rem; font-weight: 700;
+    font-size: var(--fs-caption, 12px); font-weight: 700;
     background: rgba(255, 255, 255, 0.2);
     border-radius: var(--r-full); padding: 0 6px;
   }
@@ -477,22 +468,235 @@
   .shell[data-drawer='true'] .drawer-scrim { opacity: 1; pointer-events: auto; }
 
   .shell-content {
-    padding: var(--sp-5) max(var(--sp-4), env(safe-area-inset-right, 0px)) max(var(--sp-8), calc(env(safe-area-inset-bottom, 0px) + var(--sp-6))) max(var(--sp-4), env(safe-area-inset-left, 0px));
+    padding: var(--sp-5) max(var(--sp-4), var(--safe-r, 0px)) max(var(--sp-8), calc(var(--safe-b, 0px) + var(--sp-6))) max(var(--sp-4), var(--safe-l, 0px));
   }
 }
 
-@media (max-width: 560px) {
-  .shell-content {
-    padding: var(--sp-4) max(var(--sp-3), env(safe-area-inset-right, 0px)) max(var(--sp-8), calc(env(safe-area-inset-bottom, 0px) + var(--sp-6))) max(var(--sp-3), env(safe-area-inset-left, 0px));
+/* =========================================================================
+   手機 (≤767px): iPhone 16 Pro Max 專屬殼層 (底部分頁列 + 精簡頂欄 + 情境步驟列)
+   ========================================================================= */
+@media (max-width: 767px) {
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .shell {
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    min-height: 100dvh;
+  }
+
+  .shell-body {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 手機端側欄徹底隱藏 (被底部分頁列取代) */
+  .shell-sidebar {
+    display: none !important;
+  }
+  .topbar-burger {
+    display: none !important;
   }
   .topbar-back {
-    padding: 0 var(--sp-4);
-    min-height: 44px;
-    border-radius: var(--r-md);
-    font-size: 14px;
+    display: none !important;
+  }
+  .drawer-scrim {
+    display: none !important;
+  }
+
+  /* 頂欄 (Sticky Top, 44px + Safe Area Top) */
+  .shell-topbar {
+    padding-top: var(--safe-t, 0px);
+    height: calc(var(--navbar-h, 44px) + var(--safe-t, 0px));
+    padding-left: max(var(--sp-4), var(--safe-l, 0px));
+    padding-right: max(var(--sp-4), var(--safe-r, 0px));
+    background: var(--c-bar);
+    backdrop-filter: var(--c-blur-bg);
+    -webkit-backdrop-filter: var(--c-blur-bg);
+    border-bottom: 0.5px solid var(--c-hairline);
+    gap: var(--sp-2);
+  }
+
+  .topbar-mobile-back {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
+    gap: 2px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 4px;
+    background: transparent;
+    border: none;
+    color: var(--c-accent);
+    font-size: var(--fs-headline, 17px);
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
   }
-  .save-hint { display: none; }
+  .mobile-back-text {
+    font-size: var(--fs-body, 17px);
+  }
+
+  .topbar-title {
+    font-size: var(--fs-headline, 17px);
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .topbar-right {
+    gap: var(--sp-2);
+  }
+
+  .save-hint {
+    font-size: var(--fs-footnote, 13px);
+  }
+  .save-text-desktop {
+    display: none !important;
+  }
+  .save-text-mobile {
+    display: inline !important;
+  }
+
+  /* 隱藏桌機/平板橫向步驟列，改用精簡情境列 */
+  .shell-steprail {
+    display: none !important;
+  }
+
+  .shell-context-rail {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 50px;
+    max-height: 52px;
+    padding: 0 max(var(--sp-4), var(--safe-r, 0px)) 0 max(var(--sp-4), var(--safe-l, 0px));
+    background: var(--c-bar);
+    backdrop-filter: var(--c-blur-bg);
+    -webkit-backdrop-filter: var(--c-blur-bg);
+    border-bottom: 0.5px solid var(--c-hairline);
+    position: sticky;
+    top: calc(var(--navbar-h, 44px) + var(--safe-t, 0px));
+    z-index: 35;
+    box-sizing: border-box;
+  }
+
+  .context-rail-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .context-rail-title {
+    font-size: var(--fs-subhead, 15px);
+    font-weight: 600;
+    color: var(--c-text-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .context-progress-bar-bg {
+    width: 100%;
+    height: 3px;
+    background: var(--c-border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .context-progress-bar-fg {
+    height: 100%;
+    background: var(--c-accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .context-rail-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--c-surface-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-btn, 12px);
+    color: var(--c-text-1);
+    font-size: var(--fs-footnote, 13px);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* 內容區留白處理 */
+  .shell-content {
+    padding: var(--sp-4) max(var(--sp-4), var(--safe-r, 0px)) calc(var(--tabbar-h, 49px) + var(--safe-b, 0px) + 24px) max(var(--sp-4), var(--safe-l, 0px));
+  }
+
+  .shell-content.with-action-bar {
+    padding-bottom: calc(var(--actionbar-h, 66px) + var(--safe-b, 0px) + 24px);
+  }
+
+  /* 底部分頁列 (MobileTabBar) */
+  .mobile-tab-bar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    bottom: 0;
+    z-index: 40;
+    height: calc(var(--tabbar-h, 49px) + var(--safe-b, 0px));
+    padding-bottom: var(--safe-b, 0px);
+    background: var(--c-bar);
+    backdrop-filter: var(--c-blur-bg);
+    -webkit-backdrop-filter: var(--c-blur-bg);
+    border-top: 0.5px solid var(--c-hairline);
+    align-items: stretch;
+    justify-content: space-around;
+    box-sizing: border-box;
+  }
+
+  .mobile-tab-item {
+    flex: 1;
+    min-width: 44px;
+    min-height: 49px;
+    border: none;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--c-text-2);
+    cursor: pointer;
+    padding: 4px 0;
+    -webkit-tap-highlight-color: transparent;
+    text-decoration: none;
+    transition: color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  }
+
+  .mobile-tab-item:active {
+    transform: scale(0.94);
+  }
+
+  .mobile-tab-item.active {
+    color: var(--c-accent);
+    font-weight: 600;
+  }
+
+  .mobile-tab-label {
+    font-size: var(--fs-tab, 11px);
+    line-height: 1.2;
+    white-space: nowrap;
+  }
 }
+

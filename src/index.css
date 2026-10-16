@@ -5,7 +5,7 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
+  color-scheme: light dark;
 
   /* 舊變數名 → 橋接到 design tokens(企業風),元件無須改動即套用新樣式 */
   --text-color: var(--c-text-1);
@@ -169,22 +169,23 @@ h1, h2, h3, h4 {
 
 .form-label {
   display: block;
-  font-size: 0.85rem;
+  font-size: var(--fs-subhead, 0.9375rem);
   font-weight: 500;
   text-transform: uppercase;
-  color: #4b5563;
+  color: var(--c-text-2);
   margin-bottom: 0.5rem;
 }
 
 .form-input {
   width: 100%;
+  min-height: var(--control-h, 44px);
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--c-surface);
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: #1f2937;
+  border-radius: var(--r-input, 10px);
+  color: var(--c-text-1);
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   transition: all 0.2s ease;
 }
 
@@ -195,13 +196,27 @@ h1, h2, h3, h4 {
 }
 
 /* 下拉選單 (Select) 與選項 (Option) 樣式修正：
-   解決在深色/淺色主題變更時，下拉選單選項可能因瀏覽器預設樣式或繼承關係
-   導致文字與背景色相同（如白底白字、黑底黑字）而看不見選項的幾何視覺衝突 */
+   在深色/淺色主題變更時，下拉選單選項依 token 渲染，
+   防範白底白字或黑底黑字衝突 */
 select.form-input {
   cursor: pointer;
 }
 
 select option {
-  background-color: #ffffff !important;
-  color: #1f2937 !important;
+  background-color: var(--c-surface) !important;
+  color: var(--c-text-1) !important;
 }
+
+/* 響應式通用隱藏/顯示輔助類別 (以 767px / 768px 為行動與桌機分界) */
+@media (min-width: 768px) {
+  .show-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
