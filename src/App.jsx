@@ -352,18 +352,10 @@ export default function App() {
   const [accounts, setAccounts] = useState(() => {
     migrateSharedKeys();
     const saved = getJSON('accounts', null);
-    if (!saved || !Array.isArray(saved) || (saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
+    if (saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
       return DEFAULT_ACCOUNTS;
     }
-    // 確保 DEFAULT_ACCOUNTS 中的核心帳號 (admin, rd, eng, qa) 至少存在，防範被舊版快取覆蓋而無法登入
-    const merged = [...saved];
-    DEFAULT_ACCOUNTS.forEach((def) => {
-      const exists = merged.some((m) => String(m.username).toLowerCase() === String(def.username).toLowerCase());
-      if (!exists) {
-        merged.push(def);
-      }
-    });
-    return merged;
+    return saved || [];
   });
 
   const currentAlignmentRate = useMemo(
@@ -650,6 +642,7 @@ export default function App() {
     } catch (err) {
       if (import.meta.env.DEV) console.error('[auth] 本機 session 清除失敗', err);
     } finally {
+      localStorage.removeItem('ag_last_activity');
       removeKey('current_user');
       currentUserRef.current = null;
       setCurrentUser(null);
@@ -670,6 +663,7 @@ export default function App() {
 
   // D-157: 跨分頁協調 30 分鐘無操作自動登出與 2 分鐘倒數提示
   const [idleWarningSeconds, setIdleWarningSeconds] = useState(null);
+  const [logoutNotice, setLogoutNotice] = useState(null);
 
   const resetActivity = useCallback(() => {
     const now = Date.now();
@@ -697,7 +691,7 @@ export default function App() {
       setIdleWarningSeconds(null);
     };
 
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'pointerdown'];
     events.forEach(ev => window.addEventListener(ev, handleUserActivity, { passive: true }));
 
     // 定期檢查跨分頁最後活動時間
@@ -710,7 +704,7 @@ export default function App() {
         clearInterval(intervalId);
         setIdleWarningSeconds(null);
         void handleLogoutRef.current().finally(() => {
-          setSyncError('因長時間無操作，已自動登出，請重新登入。');
+          setLogoutNotice('因長時間無操作，已自動登出，請重新登入。');
         });
       } else if (elapsed >= TIMEOUT_MS - WARNING_MS) {
         const remainingSec = Math.max(1, Math.ceil((TIMEOUT_MS - elapsed) / 1000));
@@ -1384,11 +1378,13 @@ export default function App() {
   }
 
   const handleLoginSuccess = (user) => {
+    localStorage.setItem('ag_last_activity', String(Date.now()));
+    setLogoutNotice(null);
     currentUserRef.current = user;
     setCurrentUser(user);
     const current = parseHash();
     if (current.route === 'login' && current.query?.from) {
-      const fromPath = decodeURIComponent(current.query.from);
+      const fromPath = current.query.from;
       navigateTo(fromPath.startsWith('/') ? fromPath : '/' + fromPath, true);
     } else {
       navigateTo('/projects', true);
@@ -1397,7 +1393,7 @@ export default function App() {
 
   if (!currentUser) {
     return (
-      <LoginModal onLogin={handleLoginSuccess} accounts={accounts} />
+      <LoginModal onLogin={handleLoginSuccess} accounts={accounts} logoutNotice={logoutNotice} />
     );
   }
 
