@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { normalizeApertureRatio } from './normalizeApertureRatio.js';
+import { CURRENT_DATA_VERSION } from './dataVersion.js';
 
 // 輔助函數：解析 Checkbox 狀態
 function parseCheckbox(val) {
@@ -38,13 +39,25 @@ function cleanPlaceholder(val) {
 export function parseRequirementExcel(arrayBuffer) {
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 
-  // D4 — 驗證必要工作表是否存在
+  // 0. 驗證資料版本 dataVersion (7C.3.3 / 已知待補)
+  let fileDataVersion = 0;
+  if (workbook.Custprops && workbook.Custprops.dataVersion !== undefined) {
+    const parsed = parseInt(workbook.Custprops.dataVersion, 10);
+    if (!Number.isNaN(parsed)) {
+      fileDataVersion = parsed;
+    }
+  }
+  if (fileDataVersion > CURRENT_DATA_VERSION) {
+    throw new Error(`此檔案資料版本較新 (v${fileDataVersion})，目前系統版本為 v${CURRENT_DATA_VERSION}，請先更新系統後再匯入。`);
+  }
+
+  // D-144 — 驗證必要工作表是否存在
   const requiredSheets = ['產品基本資料', '製程管制與前置作業', '試產報告要求'];
   const missingSheets = requiredSheets.filter(s => !workbook.SheetNames.includes(s));
   if (missingSheets.length > 0) {
-    throw new Error(`此檔案不符合需求一覽表模板格式（缺少工作表：${missingSheets.join('、')}）`);
+    throw new Error(`缺少工作表：${missingSheets.join('、')}`);
   }
-  // D4 — 驗證標題列
+  // 驗證標題列
   const titleCell = workbook.Sheets['產品基本資料']?.['A1'];
   const titleStr = String(titleCell?.v || '');
   if (titleCell && !titleStr.includes('新機種') && !titleStr.includes('新產品導入')) {
@@ -52,6 +65,7 @@ export function parseRequirementExcel(arrayBuffer) {
   }
 
   const data = {
+    dataVersion: fileDataVersion,
     basicInfo: {},
     processControl: {},
     trialReport: {}
@@ -69,26 +83,35 @@ export function parseRequirementExcel(arrayBuffer) {
     data.basicInfo.factory = cleanPlaceholder(getVal('B4'));
     data.basicInfo.factoryArea = '';
 
-    // 產品階段 (Checkbox)
+    // 產品階段 (OD-28, D-77)
     const isEcn = parseCheckbox(getVal('G5'));
     data.basicInfo.stage = {
       evt: parseCheckbox(getVal('B5')),
       dvt: parseCheckbox(getVal('C5')),
-      pvt: parseCheckbox(getVal('E5')), 
-      politRun: parseCheckbox(getVal('F5')),
-      mp: parseCheckbox(getVal('H5')),
+      pvt: parseCheckbox(getVal('E5')), // 量產
+      politRun: parseCheckbox(getVal('F5')), // MP(小量)
+      mp: false,
       ecn: isEcn
     };
-    data.basicInfo._legacyEcn = isEcn;
-    data.basicInfo.ecnChange = isEcn ? { has: true, no: false } : { has: false, no: true };
     
-    // 烘烤參數
+    // ECN 狀態解析 (7C.3.3 三態)
+    const g5Val = String(getVal('G5') || '');
+    if (g5Val.includes('☑')) {
+      data.basicInfo.ecnChange = { has: true, no: false, verificationItem: '' };
+    } else if (g5Val.includes('（否）') || g5Val.includes('(否)')) {
+      data.basicInfo.ecnChange = { has: false, no: true, verificationItem: '' };
+    } else {
+      data.basicInfo.ecnChange = fileDataVersion >= 1 ? null : { has: false, no: true, verificationItem: '' };
+    }
+
+    // 烘烤參數 (D5/D6 若為佔位符則清空)
     data.basicInfo.pcbBake = cleanPlaceholder(getVal('D5')) || '';
     data.basicInfo.fpcaBake = cleanPlaceholder(getVal('D6')) || '';
 
     // 產品類別
     data.basicInfo.category = { general: false, medical: false };
 
+    // D-123: 料號去除前後空白
     data.basicInfo.productNo = cleanPlaceholder(getVal('B7')) || '';
     data.basicInfo.productDesc = cleanPlaceholder(getVal('B8')) || '';
 
@@ -132,51 +155,105 @@ export function parseRequirementExcel(arrayBuffer) {
       otherProcessText: otherProcessText
     };
 
-    // AOI
-    data.basicInfo.aoi = {
-      top: parseCheckbox(getVal('B16')),
-      bottom: parseCheckbox(getVal('C16'))
-    };
+    // AOI (7C.3.3 三態)
+    const a16Val = String(getVal('A16') || '');
+    const aoiTop = parseCheckbox(getVal('B16'));
+    const aoiBottom = parseCheckbox(getVal('C16'));
+    if (aoiTop || aoiBottom) {
+      data.basicInfo.aoi = { top: aoiTop, bottom: aoiBottom };
+    } else if (a16Val.includes('（不需要）') || a16Val.includes('(不需要)')) {
+      data.basicInfo.aoi = { top: false, bottom: false };
+    } else {
+      data.basicInfo.aoi = fileDataVersion >= 1 ? null : { top: false, bottom: false };
+    }
 
-    // 點膠與 QR code
-    data.basicInfo.glue = parseCheckbox(getVal('A17'));
-    data.basicInfo.qrCode = {
-      need: parseCheckbox(getVal('E17')),
-      noNeed: parseCheckbox(getVal('F17'))
-    };
+    // 點膠 (7C.3.3 三態)
+    const a17Val = String(getVal('A17') || '');
+    if (a17Val.includes('☑')) {
+      data.basicInfo.glue = true;
+    } else if (a17Val.includes('（不需要）') || a17Val.includes('(不需要)')) {
+      data.basicInfo.glue = false;
+    } else {
+      data.basicInfo.glue = fileDataVersion >= 1 ? null : false;
+    }
 
-    // 序號管控
-    data.basicInfo.snControl = {
-      need: parseCheckbox(getVal('B18')),
-      noNeed: parseCheckbox(getVal('C18'))
-    };
+    // QR code (成對三態)
+    const qrNeed = parseCheckbox(getVal('E17'));
+    const qrNoNeed = parseCheckbox(getVal('F17'));
+    if (qrNeed || qrNoNeed) {
+      data.basicInfo.qrCode = { need: qrNeed, noNeed: qrNoNeed };
+    } else {
+      data.basicInfo.qrCode = { need: null, noNeed: null };
+    }
 
-    // 特殊/風險零件清單 (Row 22, Row 23)
-    data.basicInfo.riskParts = [
-      {
+    // 序號管控 (成對三態)
+    const snNeed = parseCheckbox(getVal('B18'));
+    const snNoNeed = parseCheckbox(getVal('C18'));
+    if (snNeed || snNoNeed) {
+      data.basicInfo.snControl = { need: snNeed, noNeed: snNoNeed };
+    } else {
+      data.basicInfo.snControl = { need: null, noNeed: null };
+    }
+
+    // 特殊/風險零件清單 (Row 22, Row 23, D-104)
+    data.basicInfo.riskParts = [];
+    const r1Name = cleanPlaceholder(getVal('B22'));
+    if (r1Name) {
+      data.basicInfo.riskParts.push({
         id: 1,
-        name: getVal('B22') || '',
+        name: r1Name,
         packageType: getVal('D22') || '',
         riskDesc: getVal('E22') || ''
-      },
-      {
+      });
+    }
+    const r2Name = cleanPlaceholder(getVal('B23'));
+    if (r2Name) {
+      data.basicInfo.riskParts.push({
         id: 2,
-        name: getVal('B23') || '',
+        name: r2Name,
         packageType: getVal('D23') || '',
         riskDesc: getVal('E23') || ''
-      }
-    ];
+      });
+    }
 
-    // 工程文件一覽表
+    // 工程文件一覽表 (OD-58 拆分 A29 / G29, 7C.3.3 支援不適用原因)
+    const parseDocItem = (addr) => {
+      const v = String(getVal(addr) || '');
+      const checked = parseCheckbox(v);
+      const match = v.match(/[（(]不適用[：:]([^）)]+)[）)]/);
+      return { checked, notApplicableReason: match ? match[1].trim() : '' };
+    };
+
+    const bomDoc = parseDocItem('A27');
+    const gerberDoc = parseDocItem('C27');
+    const coordDoc = parseDocItem('E27');
+    const placeDoc = parseDocItem('G27');
+    const specDoc = parseDocItem('A28');
+    const reflowDoc = parseDocItem('G28');
+    const assemDoc = parseDocItem('A29');
+    const packDoc = parseDocItem('G29');
+    const testDoc = parseDocItem('C29');
+
     data.basicInfo.documents = {
-      bom: parseCheckbox(getVal('A27')),
-      gerber: parseCheckbox(getVal('C27')),
-      coordinate: parseCheckbox(getVal('E27')),
-      placement: parseCheckbox(getVal('G27')),
-      materialSpec: parseCheckbox(getVal('A28')),
-      reflowProfile: parseCheckbox(getVal('G28')),
-      assemblyPackingSop: parseCheckbox(getVal('A29')) || parseCheckbox(getVal('G29')),
-      testSop: parseCheckbox(getVal('C29'))
+      bom: bomDoc.checked,
+      bomReason: bomDoc.notApplicableReason,
+      gerber: gerberDoc.checked,
+      gerberReason: gerberDoc.notApplicableReason,
+      coordinate: coordDoc.checked,
+      coordinateReason: coordDoc.notApplicableReason,
+      placement: placeDoc.checked,
+      placementReason: placeDoc.notApplicableReason,
+      materialSpec: specDoc.checked,
+      materialSpecReason: specDoc.notApplicableReason,
+      reflowProfile: reflowDoc.checked,
+      reflowProfileReason: reflowDoc.notApplicableReason,
+      assemblySop: assemDoc.checked,
+      assemblySopReason: assemDoc.notApplicableReason,
+      packingSop: packDoc.checked,
+      packingSopReason: packDoc.notApplicableReason,
+      testSop: testDoc.checked,
+      testSopReason: testDoc.notApplicableReason,
+      assemblyPackingSop: assemDoc.checked || packDoc.checked
     };
 
     // 治工具一覽表
@@ -187,7 +264,14 @@ export function parseRequirementExcel(arrayBuffer) {
     } else if (d33Val.includes('☑ 一般鋼板')) {
       stencilStyle = 'general';
     }
-    const nanoCoating = d33Val.includes('☑ 奈米鋼板');
+    let nanoCoating = null;
+    if (d33Val.includes('表面奈米塗層：有') || d33Val.includes('☑ 奈米鋼板')) {
+      nanoCoating = true;
+    } else if (d33Val.includes('表面奈米塗層：無')) {
+      nanoCoating = false;
+    } else {
+      nanoCoating = fileDataVersion >= 1 ? null : false;
+    }
 
     // 解析 A38 SMT刷錫載具 (D-162)
     const a38Val = String(getVal('A38') || '');
@@ -225,44 +309,34 @@ export function parseRequirementExcel(arrayBuffer) {
     const parsedThickness = rawThickness.replace(/[^\d.]/g, '');
     const apertureRatio = normalizeApertureRatio(getVal('C33'));
 
+    const parseFixtureItem = (addrNeed, addrNoNeed, addrQty) => {
+      const n = parseCheckbox(getVal(addrNeed));
+      const no = parseCheckbox(getVal(addrNoNeed));
+      if (n || no) {
+        return { need: n, noNeed: no, qty: cleanQty(getVal(addrQty)) };
+      }
+      return { need: null, noNeed: null, qty: cleanQty(getVal(addrQty)) };
+    };
+
     data.basicInfo.tooling = {
       stencil: {
-        need: true,
-        noNeed: false,
+        need: parseCheckbox(getVal('A33')),
+        noNeed: !parseCheckbox(getVal('A33')),
         thickness: parsedThickness,
         apertureRatio: apertureRatio,
         style: stencilStyle,
         nanoCoating: nanoCoating
       },
-      routingFixture: {
-        need: parseCheckbox(getVal('B34')),
-        noNeed: parseCheckbox(getVal('C34')),
-        qty: cleanQty(getVal('D34'))
-      },
-      glueFixture: {
-        need: parseCheckbox(getVal('B35')),
-        noNeed: parseCheckbox(getVal('C35')),
-        qty: cleanQty(getVal('D35'))
-      },
-      testFixture: {
-        need: parseCheckbox(getVal('B36')),
-        noNeed: parseCheckbox(getVal('C36')),
-        qty: cleanQty(getVal('D36'))
-      },
-      assemblyFixture: {
-        need: parseCheckbox(getVal('B37')),
-        noNeed: parseCheckbox(getVal('C37')),
-        qty: cleanQty(getVal('D37'))
-      },
-      smtCarrier,
-      otherFixture
+      routingFixture: parseFixtureItem('B34', 'C34', 'D34'),
+      glueFixture: parseFixtureItem('B35', 'C35', 'D35'),
+      testFixture: parseFixtureItem('B36', 'C36', 'D36'),
+      assemblyFixture: parseFixtureItem('B37', 'C37', 'D37'),
+      smtCarrier: smtCarrier,
+      otherFixture: otherFixture
     };
 
-    // 簽核欄文字狀態 (D-101 / D-115: 簽章圖檔不自 Excel 還原，保持安全)
+    // 簽核欄 (D-06, D-115: 匯入一律清除簽章與時間，不得還原簽核狀態)
     data.basicInfo.signOff = {
-      rdConfirm: getVal('B40') || '',
-      engineeringReview: getVal('D40') || '',
-      qaConfirm: getVal('G40') || '',
       rdSignature: '',
       engineeringReviewSignature: '',
       qaSignature: '',
@@ -271,38 +345,16 @@ export function parseRequirementExcel(arrayBuffer) {
       qaSignedAt: ''
     };
 
-    // G1 欄位擁有者解析 (D-115: 忽略簽名圖檔，保留純 _owners 相容)
+    // D-115 舊檔簽章偵測 (標記 _hasLegacySignatures 供 UI 提示需要重新簽核)
     const g1Val = getVal('G1');
-    if (g1Val) {
-      try {
-        const parsed = JSON.parse(g1Val);
-        if (parsed && typeof parsed === 'object') {
-          if ('owners' in parsed) {
-            data._owners = parsed.owners || {};
-          } else {
-            data._owners = parsed;
-          }
-        } else {
-          data._owners = {};
-        }
-      } catch {
-        data._owners = {};
-      }
-    } else {
-      data._owners = {};
-      if (data.basicInfo.stage?.evt) data._owners['basicInfo.stage.evt'] = '研發單位';
-      if (data.basicInfo.stage?.dvt) data._owners['basicInfo.stage.dvt'] = '研發單位';
-      if (data.basicInfo.stage?.pvt) data._owners['basicInfo.stage.pvt'] = '工程單位';
-      if (data.basicInfo.stage?.politRun) data._owners['basicInfo.stage.politRun'] = '工程單位';
+    const a41Val = getVal('A41');
+    const c41Val = getVal('C41');
+    const f41Val = getVal('F41');
+    if (g1Val || (a41Val && String(a41Val).includes('已簽')) || (c41Val && String(c41Val).includes('已簽')) || (f41Val && String(f41Val).includes('已簽'))) {
+      data._hasLegacySignatures = true;
     }
-
-    // 遷移殘留的 stage.*
-    ['evt', 'dvt', 'pvt', 'politRun', 'mp'].forEach(k => {
-      if (data._owners?.[`stage.${k}`] !== undefined) {
-        data._owners[`basicInfo.stage.${k}`] = data._owners[`stage.${k}`];
-        delete data._owners[`stage.${k}`];
-      }
-    });
+    // D-115: _owners 亦不從檔案匯入
+    data._owners = {};
   }
 
   // 2. 解析【製程管制與前置作業】工作表
@@ -310,228 +362,171 @@ export function parseRequirementExcel(arrayBuffer) {
   if (sheet2) {
     const getVal = (addr) => sheet2[addr] ? sheet2[addr].v : null;
 
-    // 前置作業
-    data.processControl.sampleProvided = {
-      trialBoard: parseCheckbox(getVal('B5')),
-      tempBoard: parseCheckbox(getVal('C5')),
-      standardPart: parseCheckbox(getVal('D5'))
-    };
-
-    const pcbCondVal = getVal('D6') || '';
-    const fpcaCondVal = getVal('D7') || '';
-    
-    // 解析 PCB 烘烤條件
-    const pcbNorm = String(pcbCondVal).replace(/℃/g, '°C').replace(/\s+/g, ' ');
-    const pcbMatch = pcbNorm.match(/PCB 烘烤:\s*([_\d]+)\s*°C\s*±\s*([_\d]+)\s*°C\s*×\s*([_\d]+)\s*hr/);
-    let pcbBakeTemp = '', pcbBakeTol = '', pcbBakeHr = '';
-    if (pcbMatch) {
-      pcbBakeTemp = pcbMatch[1].replace(/_/g, '').trim();
-      pcbBakeTol = pcbMatch[2].replace(/_/g, '').trim();
-      pcbBakeHr = pcbMatch[3].replace(/_/g, '').trim();
+    // 樣品提供 (7C.3.3)
+    const a5Val = String(getVal('A5') || '');
+    const tb = parseCheckbox(getVal('B5'));
+    const teb = parseCheckbox(getVal('C5'));
+    const sp = parseCheckbox(getVal('D5'));
+    if (tb || teb || sp) {
+      data.processControl.sampleProvided = { trialBoard: tb, tempBoard: teb, standardPart: sp };
+    } else if (a5Val.includes('不提供樣品')) {
+      data.processControl.sampleProvided = { trialBoard: false, tempBoard: false, standardPart: false, noSample: true };
     } else {
-      const numbers = String(pcbCondVal).match(/\d+/g);
-      if (numbers && numbers.length >= 3) {
-        pcbBakeTemp = numbers[0];
-        pcbBakeTol = numbers[1];
-        pcbBakeHr = numbers[2];
-      }
+      data.processControl.sampleProvided = fileDataVersion >= 1 ? null : { trialBoard: false, tempBoard: false, standardPart: false };
     }
 
-    // 解析 FPCA 烘烤條件
-    const fpcaNorm = String(fpcaCondVal).replace(/℃/g, '°C').replace(/\s+/g, ' ');
-    const fpcaMatch = fpcaNorm.match(/FPCA 烘烤:.*?([_\d]+)\s*°C\s*×\s*([_\d]+)\s*hr/);
-    let fpcaBakeTemp = '', fpcaBakeHr = '';
-    if (fpcaMatch) {
-      fpcaBakeTemp = fpcaMatch[1].replace(/_/g, '').trim();
-      fpcaBakeHr = fpcaMatch[2].replace(/_/g, '').trim();
-    } else {
-      const numbers = String(fpcaCondVal).match(/\d+/g);
-      if (numbers && numbers.length >= 2) {
-        fpcaBakeTemp = numbers[0];
-        fpcaBakeHr = numbers[1];
-      }
-    }
-
+    // 烘烤
+    const bakeNeed = parseCheckbox(getVal('B6'));
+    const bakeNoNeed = parseCheckbox(getVal('C6'));
     data.processControl.bakeRequired = {
-      need: parseCheckbox(getVal('B6')),
-      noNeed: parseCheckbox(getVal('C6')),
-      pcbBakeCond: pcbCondVal,
-      fpcaBakeCond: fpcaCondVal,
-      pcbBakeTemp,
-      pcbBakeTol,
-      pcbBakeHr,
-      fpcaBakeTemp,
-      fpcaBakeHr
+      need: (bakeNeed || bakeNoNeed) ? bakeNeed : null,
+      noNeed: (bakeNeed || bakeNoNeed) ? bakeNoNeed : null,
+      pcbBakeCond: cleanPlaceholder(getVal('D6')) || '',
+      fpcaBakeCond: cleanPlaceholder(getVal('D7')) || ''
     };
 
-    // SMT 首件 (D-102: 同時支援 D8 整合文字與舊版各欄位)
-    const d8Val = String(getVal('D8') || '');
-    const isLcrChecked = d8Val.includes('☑ 量測 LCR') || (!d8Val.includes('量測 LCR') && parseCheckbox(getVal('D8')));
-    const isSpiChecked = d8Val.includes('☑ SPI') || (!d8Val.includes('SPI') && parseCheckbox(getVal('C8')));
-    const isSteelChecked = d8Val.includes('☑ 鋼板張力') || (!d8Val.includes('鋼板張力') && parseCheckbox(getVal('E8')));
-    let ledTestVal = null;
-    if (d8Val.includes('LED 點亮: 有')) ledTestVal = 'yes';
-    else if (d8Val.includes('LED 點亮: 無')) ledTestVal = 'no';
-    else if (parseCheckbox(getVal('F8'))) ledTestVal = 'yes';
-    else if (parseCheckbox(getVal('G8'))) ledTestVal = 'no';
-
-    const isPcbReflow = d8Val.includes('☑ PCB 外觀') || (!d8Val.includes('PCB 外觀') && parseCheckbox(getVal('H8')));
-    const isSolderability = d8Val.includes('☑ 濕潤性') || (!d8Val.includes('濕潤性') && parseCheckbox(getVal('I8')));
-
-    const stencilApertureRatio = normalizeApertureRatio(getVal('J8')) || data.basicInfo.tooling?.stencil?.apertureRatio || '';
+    // 首件檢查
     data.processControl.smtFirstPiece = {
       polarity: parseCheckbox(getVal('B8')),
-      measureLcr: isLcrChecked,
-      spi: isSpiChecked,
-      steelTension: isSteelChecked,
-      ledTest: ledTestVal,
-      pcbReflow: isPcbReflow,
-      solderability: isSolderability,
-      stencilApertureRatio
-    };
-
-    const cleanDipMemo = (val) => {
-      if (!val) return '';
-      return String(val).replace(/^注意事項[:：]\s*/, '').trim();
+      measureLcr: String(getVal('D8') || '').includes('☑ 量測 LCR'),
+      spi: String(getVal('D8') || '').includes('☑ SPI 錫膏厚度'),
+      steelTension: String(getVal('D8') || '').includes('☑ 鋼板張力'),
+      ledTest: String(getVal('D8') || '').includes('LED 點亮: 有') ? 'yes' : (String(getVal('D8') || '').includes('LED 點亮: 無') ? 'no' : ''),
+      pcbReflow: String(getVal('D8') || '').includes('☑ PCB 外觀'),
+      solderability: String(getVal('D8') || '').includes('☑ 濕潤性'),
+      stencilApertureRatio: data.basicInfo.tooling?.stencil?.apertureRatio || ''
     };
 
     data.processControl.dipFirstPiece = {
       cutLead: parseCheckbox(getVal('B9')),
-      memo: cleanDipMemo(getVal('D9'))
+      memo: cleanPlaceholder(String(getVal('D9') || '').replace(/^注意事項[:：]?\s*/, ''))
     };
 
+    // 焊接順序
     data.processControl.smtOrder = {
       bToT: parseCheckbox(getVal('B11')),
       tToB: parseCheckbox(getVal('C11'))
     };
+
     data.processControl.dipOrder = {
       bToT: parseCheckbox(getVal('E11')),
       tToB: parseCheckbox(getVal('F11'))
     };
 
+    // 關鍵零件
+    const kpHas = parseCheckbox(getVal('B12'));
+    const kpNone = parseCheckbox(getVal('C12'));
     data.processControl.keyParts = {
-      has: parseCheckbox(getVal('B12')),
-      none: parseCheckbox(getVal('C12'))
+      has: (kpHas || kpNone) ? kpHas : null,
+      none: (kpHas || kpNone) ? kpNone : null
     };
 
-    // 測溫點配置 (D-110: 支援新版固定格式 #2 [loc] (desc) {memo} 及舊版逗號拆分)
-    const pts = [];
-    pts.push({
+    // 測溫點配置 (D-110: 包含空白點與逗號字元)
+    data.processControl.tempPoints = [];
+    const p1Pos = cleanPlaceholder(getVal('B15'));
+    const p1Desc = cleanPlaceholder(getVal('C15'));
+    const p1Memo = cleanPlaceholder(getVal('D15'));
+    data.processControl.tempPoints.push({
       id: 1,
-      pos: String(getVal('B15') || '').trim(),
-      desc: String(getVal('C15') || '').trim(),
-      memo: String(getVal('D15') || '').trim()
+      pos: p1Pos,
+      desc: p1Desc,
+      memo: p1Memo
     });
 
     const b16Val = String(getVal('B16') || '');
-    if (b16Val.includes('#2') || b16Val.includes('#3')) {
-      for (let i = 2; i <= 6; i++) {
-        const regex = new RegExp(`#${i}\\s*\\[([^\\]]*)\\]\\s*\\(([^)]*)\\)\\s*\\{([^}]*)\\}`);
-        const m = b16Val.match(regex);
-        if (m) {
-          const loc = m[1].trim() === '空白' ? '' : m[1].trim();
-          pts.push({ id: i, pos: loc, desc: m[2].trim(), memo: m[3].trim() });
-        } else {
-          pts.push({ id: i, pos: '', desc: '', memo: '' });
+    if (b16Val) {
+      const parts = b16Val.split(/\s*;\s*/);
+      parts.forEach((part, idx) => {
+        const num = idx + 2;
+        if (part.includes('[空白]')) {
+          data.processControl.tempPoints.push({ id: num, pos: '', desc: '', memo: '' });
+          return;
         }
-      }
-    } else {
-      const rawPos = String(getVal('B16') || '').split(/[,，]+/);
-      const rawDesc = String(getVal('C16') || '').split(/[,，\s\n]+/);
-      const rawMemo = String(getVal('D16') || '').split(/[,，\s\n]+/);
-      for (let i = 0; i < 5; i++) {
-        pts.push({
-          id: i + 2,
-          pos: (rawPos[i] || '').trim(),
-          desc: (rawDesc[i] || '').trim(),
-          memo: (rawMemo[i] || '').trim()
-        });
-      }
-    }
-    data.processControl.tempPoints = pts;
-
-    // Underfill
-    const rawBake = getVal('B18') || '';
-    let bakeTemp = '';
-    let bakeTime = '';
-    if (rawBake && !String(rawBake).includes('__')) {
-      const match = String(rawBake).match(/(\d+)\s*°C.*(\d+)\s*min/i);
-      if (match) {
-        bakeTemp = match[1];
-        bakeTime = match[2];
-      }
+        const match = part.match(/#\d+\s*\[(.*?)\](?:\s*\((.*?)\))?(?:\s*\{(.*?)\})?/);
+        if (match) {
+          data.processControl.tempPoints.push({
+            id: num,
+            pos: match[1] || '',
+            desc: match[2] || '',
+            memo: match[3] || ''
+          });
+        } else {
+          // 兼容舊格式
+          data.processControl.tempPoints.push({
+            id: num,
+            pos: cleanPlaceholder(part),
+            desc: '',
+            memo: ''
+          });
+        }
+      });
     }
 
-    const rawGlue = getVal('D18') || '';
-    let glueModel = String(rawGlue).trim();
-    if (glueModel.includes('___') || glueModel === '膠材型號:' || glueModel === '膠材型號:___________') {
-      glueModel = '';
+    // 補齊 6 點
+    while (data.processControl.tempPoints.length < 6) {
+      data.processControl.tempPoints.push({
+        id: data.processControl.tempPoints.length + 1,
+        pos: '',
+        desc: '',
+        memo: ''
+      });
     }
 
+    // Underfill (D-111: 非貪婪正規表示式防截斷)
+    const b18Val = String(getVal('B18') || '');
+    const d18Val = String(getVal('D18') || '');
+    const ufMatch = b18Val.match(/(\d+(?:\.\d+)?)\s*°C\D*?(\d+(?:\.\d+)?)\s*min/i);
     data.processControl.underfill = {
-      bakeTemp,
-      bakeTime,
-      glueModel
+      bakeTemp: ufMatch ? ufMatch[1] : '',
+      bakeTime: ufMatch ? ufMatch[2] : '',
+      glueModel: cleanPlaceholder(d18Val.replace(/^膠材型號[:：]?\s*/, ''))
     };
 
+    // 重工記號
     data.processControl.reworkMark = {
       need: parseCheckbox(getVal('B19')),
       noNeed: parseCheckbox(getVal('C19')),
-      sopMark: getVal('E19') || ''
+      sopMark: cleanPlaceholder(getVal('E19'))
     };
 
-    // 特殊製程備註 (含 ECN 驗證項目解析，D-105)
-    let specialMemo = cleanPlaceholder(getVal('A22')) || '';
-    const ecnMatch = specialMemo.match(/\[ECN 驗證項目:\s*([^\]]+)\]/);
+    // 特殊製程備註 (D-105: 提取 ECN 驗證項目)
+    let a22Val = cleanPlaceholder(getVal('A22'));
+    const ecnMatch = a22Val.match(/\[ECN 驗證項目:\s*(.*?)\]/);
     if (ecnMatch) {
       if (data.basicInfo.ecnChange) {
         data.basicInfo.ecnChange.verificationItem = ecnMatch[1].trim();
       }
-      specialMemo = specialMemo.replace(/\[ECN 驗證項目:\s*[^\]]+\]/, '').trim();
+      a22Val = a22Val.replace(/\[ECN 驗證項目:\s*.*?\]/, '').trim();
     }
-    data.processControl.specialProcessMemo = specialMemo;
+    data.processControl.specialProcessMemo = a22Val;
 
-    // 包材方式解析 (D-103, D-76, D-117: 僅 ☑/■/✔ 判定為勾選)
-    const isChecked = (v) => {
-      if (!v) return false;
-      const s = String(v).trim();
-      return /[☑■✔]/.test(s);
-    };
+    // 包材種類 (D-117, D-76)
+    const pcbaStatic = parseCheckbox(getVal('B25'));
+    const pcbaHoneycomb = parseCheckbox(getVal('D25'));
+    const pcbaTray = parseCheckbox(getVal('F25'));
 
-    const pcbaStatic = isChecked(getVal('B25'));
-    const pcbaHoneycomb = isChecked(getVal('D25'));
-    const pcbaTray = isChecked(getVal('F25'));
+    const fpcaStatic = parseCheckbox(getVal('B26'));
+    const fpcaHoneycomb = parseCheckbox(getVal('D26'));
+    const fpcaTray = parseCheckbox(getVal('F26'));
 
-    const fpcaStatic = isChecked(getVal('B26'));
-    const fpcaHoneycomb = isChecked(getVal('D26'));
-    const fpcaTray = isChecked(getVal('F26'));
+    let detectedPackagingType = '';
+    if (pcbaStatic || pcbaHoneycomb || pcbaTray) {
+      detectedPackagingType = 'pcba';
+    } else if (fpcaStatic || fpcaHoneycomb || fpcaTray) {
+      detectedPackagingType = 'fpca';
+    }
 
+    data.processControl.packagingType = detectedPackagingType;
     data.processControl.pcbaPackaging = {
       staticBag: pcbaStatic,
       honeycomb: pcbaHoneycomb,
-      tray: pcbaTray,
-      sensorCover: false,
-      cameraCover: false
+      tray: pcbaTray
     };
-
     data.processControl.fpcaPackaging = {
       staticBag: fpcaStatic,
       honeycomb: fpcaHoneycomb,
-      tray: fpcaTray,
-      sensorCover: false,
-      cameraCover: false
+      tray: fpcaTray
     };
-
-    // D-117: 自動還原 packagingType
-    const hasPcba = pcbaStatic || pcbaHoneycomb || pcbaTray;
-    const hasFpca = fpcaStatic || fpcaHoneycomb || fpcaTray;
-    if (hasPcba && !hasFpca) {
-      data.processControl.packagingType = 'pcba';
-    } else if (hasFpca && !hasPcba) {
-      data.processControl.packagingType = 'fpca';
-    } else {
-      data.processControl.packagingType = '';
-    }
   }
 
   // 3. 解析【試產報告要求】工作表
@@ -539,60 +534,61 @@ export function parseRequirementExcel(arrayBuffer) {
   if (sheet3) {
     const getVal = (addr) => sheet3[addr] ? sheet3[addr].v : null;
 
-    data.trialReport.passCriteria = {};
-
+    // 印刷紀錄
     data.trialReport.printRecords = [
-      { id: 1, name: getVal('B6') || '', checked: parseCheckbox(getVal('C6')), date: '' },
-      { id: 2, name: getVal('B7') || '', checked: parseCheckbox(getVal('C7')), date: '' },
-      { id: 3, name: getVal('B8') || '', checked: parseCheckbox(getVal('C8')), date: '' }
+      { id: 1, name: "錫膏檢查紀錄表", checked: parseCheckbox(getVal('C6')) },
+      { id: 2, name: "迴焊爐溫記錄", checked: parseCheckbox(getVal('C7')) }
     ];
 
+    // 檢驗紀錄 (D-112: 讀回 12, 13, 14, 16, 17)
     data.trialReport.inspectRecords = [
-      { id: 1, name: 'PCB 板彎/翹曲檢驗紀錄（原材料檢驗：烘烤前/烘烤後）', checked: parseCheckbox(getVal('C12')), date: '' },
-      { id: 2, name: getVal('B13') || '', checked: parseCheckbox(getVal('C13')), date: '' },
-      { id: 3, name: getVal('B14') || '', checked: parseCheckbox(getVal('C14')), date: '' },
-      { id: 4, name: getVal('B16') || '', checked: parseCheckbox(getVal('C16')), date: '' },
-      { id: 5, name: getVal('B17') || '', checked: parseCheckbox(getVal('C17')), date: '' }
+      { id: 1, name: "PCB 板彎/翹曲檢驗紀錄", checked: parseCheckbox(getVal('C12')) },
+      { id: 2, name: "首件檢查紀錄表", checked: parseCheckbox(getVal('C13')) },
+      { id: 3, name: "鋼板張力量測紀錄", checked: parseCheckbox(getVal('C14')) },
+      { id: 4, name: "鋼板清洗紀錄表", checked: parseCheckbox(getVal('C16')) },
+      { id: 5, name: "錫膏厚度測試紀錄", checked: parseCheckbox(getVal('C17')) }
     ];
 
-    // C. SMT 良率報告 (D-102: 支援 A20 與 C20)
-    const a20Val = String(getVal('A20') || '');
-    const c20Val = getVal('C20');
-    data.trialReport.yieldReport = {
-      ready: a20Val.includes('☑') || a20Val.includes('[已備妥]') || parseCheckbox(c20Val)
-    };
-
-    // D. 照片提供
-    const parseXrayParts = (val) => {
-      if (!val) return ['', '', '', ''];
-      const str = String(val);
-      const match = str.match(/指定零件[:：]\s*(.*)/);
-      if (match && match[1]) {
-        const parts = match[1].split(/[,，\s]+/).map(p => cleanPlaceholder(p.trim())).filter(Boolean);
-        const res = ['', '', '', ''];
-        for (let i = 0; i < 4; i++) {
-          res[i] = parts[i] || '';
+    // 照片紀錄與 X-Ray 零件 (D-119: 僅依逗號切分，絕不因空格切分零件名稱)
+    const b25Val = String(getVal('B25') || '');
+    let xrayParts = [];
+    if (b25Val.includes('指定零件:')) {
+      const partsStr = b25Val.replace(/.*指定零件:\s*/, '').trim();
+      if (partsStr) {
+        if (partsStr.includes('；') || /^\d+:/.test(partsStr)) {
+          xrayParts = ['', '', '', ''];
+          const items = partsStr.split(/\s*；\s*/);
+          items.forEach(item => {
+            const m = item.match(/^(\d+):(.*)/);
+            if (m) {
+              const idx = parseInt(m[1], 10) - 1;
+              if (idx >= 0 && idx < 4) {
+                xrayParts[idx] = cleanPlaceholder(m[2]);
+              }
+            }
+          });
+        } else {
+          xrayParts = partsStr.split(/[,，]/).map(cleanPlaceholder);
         }
-        return res;
       }
-      return ['', '', '', ''];
-    };
+    }
 
-    const photoB25 = getVal('B25') || '';
     data.trialReport.photoRecords = [
-      { id: 1, name: getVal('B24') || '', checked: parseCheckbox(getVal('C24')), date: '' },
-      { 
-        id: 2, 
-        name: photoB25, 
-        checked: parseCheckbox(getVal('C25')), 
-        date: '',
+      { id: 1, name: "試錫板照片", checked: parseCheckbox(getVal('C24')) },
+      {
+        id: 2,
+        name: "X-Ray 照片",
+        checked: parseCheckbox(getVal('C25')),
         isXray: true,
-        parts: parseXrayParts(photoB25)
-      },
-      { id: 3, name: getVal('B26') || '', checked: parseCheckbox(getVal('C26')), date: '' },
-      { id: 4, name: getVal('B27') || '', checked: parseCheckbox(getVal('C27')), date: '' },
-      { id: 5, name: getVal('B28') || '', checked: parseCheckbox(getVal('C28')), date: '' }
+        parts: xrayParts
+      }
     ];
+
+    // 良率報告 (D-102: 讀回 A20 狀態)
+    const a20Val = String(getVal('A20') || '');
+    data.trialReport.yieldReport = {
+      ready: a20Val.includes('☑') || a20Val.includes('[已備妥]')
+    };
   }
 
   return data;

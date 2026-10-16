@@ -1,0 +1,30 @@
+[
+  {
+    "path": "id",
+    "reason": "匯入時由系統生成新 ID"
+  },
+  {
+    "path": "updatedAt",
+    "reason": "時間戳記每次寫入生成"
+  },
+  {
+    "path": "createdAt",
+    "reason": "時間戳記生成"
+  },
+  {
+    "path": "basicInfo.signOff",
+    "reason": "D-06/D-115: 匯入一律清除簽章與時間，不得還原簽核狀態"
+  },
+  {
+    "path": "_owners",
+    "reason": "D-115/D-30: 匯入不從檔案還原擁有者欄位"
+  },
+  {
+    "path": "_warnings",
+    "reason": "遷移時之記憶體警示訊息"
+  },
+  {
+    "path": "rejection",
+    "reason": "匯入不保留舊退件狀態"
+  }
+]

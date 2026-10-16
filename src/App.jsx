@@ -32,11 +32,13 @@ import {
 import { migrateLocalProjects } from './data/migrateLocal';
 import { getCurrentUser, onAuthChange, signOut, updateMySignature } from './data/auth';
 import * as XLSX from 'xlsx';
+import { migrateProjectData, CURRENT_DATA_VERSION } from './utils/dataVersion.js';
 import './App.css';
 
 function sanitizeProjectData(data) {
   if (!data) return data;
-  const clone = { ...data };
+  const migrated = migrateProjectData(data);
+  const clone = { ...migrated };
   
   // 產品階段：確保 mp 存在，遷移舊版 ecn 至新結構
   if (clone.basicInfo) {
@@ -196,7 +198,7 @@ function sanitizeProjects(list) {
   if (!Array.isArray(list)) return [];
   return list.map(p => {
     if (p && p.data) {
-      return { ...p, data: sanitizeProjectData(p.data) };
+      return { ...p, data: sanitizeProjectData(p.data), dataVersion: CURRENT_DATA_VERSION };
     }
     return p;
   });
