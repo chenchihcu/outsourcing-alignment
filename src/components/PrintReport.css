@@ -128,7 +128,7 @@
   }
 
   .print-table {
-    width: 100%;
+    width: calc(100% - 1px);
     border-collapse: collapse;
     margin-bottom: 12px;
     break-inside: avoid-page;
