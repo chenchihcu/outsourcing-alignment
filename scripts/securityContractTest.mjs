@@ -79,5 +79,36 @@ check(
   'an explicit emergency rollback exists and warns that security is weakened',
 );
 
+const migration0005 = read('supabase/migrations/0005_signoff_guard.sql');
+for (const [fragment, message] of [
+  ['protect_project_signoff', '0005 migration includes sign-off protection trigger function'],
+  ['protect_project_deletion', '0005 migration includes deletion protection trigger function'],
+  ['increment_project_version', '0005 migration includes version increment trigger function'],
+  ['projects_insert_scoped', '0005 migration restricts project insert to rd, eng, admin'],
+  ['version bigint not null default 0', '0005 migration adds version column for optimistic locking'],
+]) {
+  check(migration0005.includes(fragment), message);
+}
+
+const rollback0005 = read('supabase/rollback/0005_signoff_guard_rollback.sql');
+check(
+  rollback0005.includes('trg_protect_project_signoff') && rollback0005.includes('trg_protect_project_deletion'),
+  'an explicit rollback for 0005 migration exists',
+);
+
+const excelParserSource = read('src/utils/excelParser.js');
+check(
+  !excelParserSource.includes('rdSignature = ') && !excelParserSource.includes('qaSignature = ')
+    && !excelParserSource.includes('signatures.rdSignature'),
+  'excelParser clears/ignores signatures from imported files',
+);
+
+const loginSource = read('src/components/LoginModal.jsx');
+check(
+  loginSource.includes('verifyAccountPassword') && loginSource.includes('sanitizeUserForSession'),
+  'LoginModal uses PBKDF2 hash verification and sanitizes user session',
+);
+
 console.log(`\nSecurity contract results: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exitCode = 1;
+

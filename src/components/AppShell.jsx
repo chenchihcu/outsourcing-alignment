@@ -148,9 +148,8 @@ export default function AppShell({
                 />
               ))}
 
-              {currentUser?.role === 'admin' && (
-                <div className="nav-group-label">系統</div>
-              )}
+              <div className="nav-group-label">個人與設定</div>
+              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
               {currentUser?.role === 'admin' && (
                 <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
               )}
@@ -158,10 +157,15 @@ export default function AppShell({
           ) : (
             <>
               <div className="nav-group-label">工作區</div>
-              <button type="button" className="nav-item active">
+              <button type="button" className={`nav-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`} onClick={onBackToList}>
                 <span className="nav-icon">🗂️</span>
                 <span className="nav-label">機種管理中心</span>
               </button>
+              <div className="nav-group-label">個人與設定</div>
+              <NavItem {...navShared} tab="account" icon="👤" label="我的帳號" />
+              {currentUser?.role === 'admin' && (
+                <NavItem {...navShared} tab="settings" icon="⚙️" label="系統設定" />
+              )}
             </>
           )}
         </nav>

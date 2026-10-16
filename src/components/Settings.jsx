@@ -4,6 +4,7 @@ import './Settings.css';
 import { compressImage } from '../utils/imageCompressor';
 import { isSupabaseEnabled } from '../data/supabaseClient';
 import { inviteUser, listAllProfiles, updateUserProfile } from '../data/auth';
+import { generateSalt, hashPassword } from '../utils/cryptoAuth';
 
 const CLOUD_ROLE_OPTIONS = [
   { value: 'rd',    label: '研發單位',             unit: '研發單位',             level: 'Engineer' },
@@ -198,7 +199,7 @@ export default function Settings({
   const [userFormSuccess, setUserFormSuccess] = useState('');
   const [confirmDeleteUser, setConfirmDeleteUser] = useState(null);
 
-  const handleAddAccountSubmit = (e) => {
+  const handleAddAccountSubmit = async (e) => {
     e.preventDefault();
     setUserFormError('');
     setUserFormSuccess('');
@@ -223,9 +224,13 @@ export default function Settings({
       return;
     }
 
+    const salt = generateSalt();
+    const hash = await hashPassword(newPassword, salt);
+
     const newAcc = {
       username: newUsername.trim(),
-      password: newPassword.trim(),
+      passwordHash: hash,
+      passwordSalt: salt,
       unit: newUnit,
       role: newUnit === '研發單位' ? 'rd' : newUnit === '工程單位' ? 'eng' : newUnit === '審核單位(品保處)' ? 'qa' : 'admin',
       level: newLevel

@@ -10,6 +10,7 @@ const PrintReport = lazy(() =>
   import('./components/PrintReport').catch(() => ({ default: () => null }))
 );
 import Settings from './components/Settings';
+import AccountSettings from './components/AccountSettings';
 
 import LoginModal from './components/LoginModal';
 import { validateAlignment } from './utils/validator';
@@ -35,6 +36,7 @@ import * as XLSX from 'xlsx';
 import { navigateTo, TAB_TO_STEP_KEY, parseHash } from './utils/hashRouter.js';
 import { WORKFLOW_STEPS } from './utils/workflow.js';
 import { migrateProjectData, CURRENT_DATA_VERSION } from './utils/dataVersion.js';
+import { sanitizeUserForSession } from './utils/cryptoAuth.js';
 import './App.css';
 
 function sanitizeProjectData(data) {
@@ -221,29 +223,48 @@ const getProjectsKey = (user) => {
   return 'ag_projects';
 };
 
-const getStorageSuffix = (user) => {
-  if (!user) return '';
-  if (user.role === 'admin') return '_admin_test';
-  return '';
-};
+// D-126: 帳號清單與加工廠主檔全系統共用，啟動時合併舊有的 _admin_test key
+function migrateSharedKeys() {
+  try {
+    const legacyAdminAccounts = getJSON('accounts_admin_test', null);
+    if (Array.isArray(legacyAdminAccounts) && legacyAdminAccounts.length > 0) {
+      const mainAccounts = getJSON('accounts', []) || [];
+      const merged = [...mainAccounts];
+      legacyAdminAccounts.forEach((acc) => {
+        if (!merged.some((m) => String(m.username).toLowerCase() === String(acc.username).toLowerCase())) {
+          merged.push(acc);
+        }
+      });
+      setJSON('accounts', merged);
+      removeKey('accounts_admin_test');
+    }
+
+    const legacyAdminFactories = getJSON('factories_admin_test', null);
+    if (Array.isArray(legacyAdminFactories) && legacyAdminFactories.length > 0) {
+      const mainFactories = getJSON('factories', []) || [];
+      const merged = Array.from(new Set([...mainFactories, ...legacyAdminFactories]));
+      setJSON('factories', merged);
+      removeKey('factories_admin_test');
+    }
+  } catch {
+    /* 遷移例外忽略 */
+  }
+}
 
 const normalizeFactories = (list) => {
   if (!Array.isArray(list)) return [];
   return Array.from(new Set(list.map((fac) => String(fac || '').trim()).filter(Boolean)));
 };
 
-const getFactoriesCacheKey = (user) => {
+const getFactoriesCacheKey = () => {
   if (isSupabaseEnabled) return 'factories_cloud';
-  return 'factories' + getStorageSuffix(user);
+  return 'factories';
 };
 
-const getCachedFactories = (user) => {
-  const cached = getJSON(getFactoriesCacheKey(user), null);
+const getCachedFactories = () => {
+  migrateSharedKeys();
+  const cached = getJSON(getFactoriesCacheKey(), null);
   if (Array.isArray(cached)) return normalizeFactories(cached);
-  if (isSupabaseEnabled) {
-    const legacy = getJSON('factories' + getStorageSuffix(user), null);
-    if (Array.isArray(legacy)) return normalizeFactories(legacy);
-  }
   return DEFAULT_FACTORIES;
 };
 
@@ -327,8 +348,8 @@ export default function App() {
   });
 
   const [accounts, setAccounts] = useState(() => {
-    const suffix = getStorageSuffix(currentUser);
-    const saved = getJSON('accounts' + suffix, null);
+    migrateSharedKeys();
+    const saved = getJSON('accounts', null);
     // 沒有存檔，或存檔為空陣列（被前次 session 清空）→ 用預設值填回，確保至少一個入口
     if (saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0)) {
       return DEFAULT_ACCOUNTS;
@@ -717,25 +738,17 @@ export default function App() {
     setJSON(key, normalizeFactories(factories));
   }, [factories, currentUser]);
 
-  // 身分命名空間(admin 測試庫)切換時:改為從新命名空間「載入」,
-  // 避免把上一個身分的 in-memory 狀態寫進新身分的 key(互相汙染)
-  const accountsSuffixRef = useRef(getStorageSuffix(currentUser));
+  // D-126: 帳號清單全系統共用
   useEffect(() => {
-    const suffix = getStorageSuffix(currentUser);
-    if (suffix !== accountsSuffixRef.current) {
-      accountsSuffixRef.current = suffix;
-      const saved = getJSON('accounts' + suffix, null);
-      setAccounts(saved === null || (Array.isArray(saved) && saved.length === 0 && DEFAULT_ACCOUNTS.length > 0) ? DEFAULT_ACCOUNTS : saved);
-      return;
+    if (Array.isArray(accounts)) {
+      setJSON('accounts', accounts);
     }
-    setJSON('accounts' + suffix, accounts);
-  }, [accounts, currentUser]);
+  }, [accounts]);
 
   useEffect(() => {
     if (currentUser) {
-      // D-139: 存入 localStorage 前剔除明文密碼
-      const safeUser = { ...currentUser };
-      delete safeUser.password;
+      // D-139: 存入 localStorage 前剔除明文密碼與雜湊敏感欄位
+      const safeUser = sanitizeUserForSession(currentUser);
       setJSON('current_user', safeUser);
     } else {
       removeKey('current_user');
@@ -1098,12 +1111,13 @@ export default function App() {
     if (!initialRouteCheckedRef.current && projects.length > 0) {
       initialRouteCheckedRef.current = true;
       const r = parseHash();
-      if ((r.route === 'project-overview' || r.route === 'project-step') && r.params.id) {
+      if ((r.route === 'project-overview' || r.route === 'project-step' || r.route === 'project-print') && r.params.id) {
         const found = projects.find(p => p.id === r.params.id);
         if (found) {
           const targetId = r.params.id;
           setTimeout(() => {
             handleSelectProjectRef.current(targetId, projects);
+            if (r.route === 'project-print') setActiveTab('print');
           }, 0);
         }
       }
@@ -1119,6 +1133,12 @@ export default function App() {
         if (currentProjectIdRef.current) {
           handleBackToListRef.current();
         }
+      } else if (current.route === 'project-print') {
+        const projId = current.params.id;
+        if (projId && projId !== currentProjectIdRef.current) {
+          handleSelectProjectRef.current(projId);
+        }
+        setActiveTab('print');
       } else if (current.route === 'project-overview') {
         const projId = current.params.id;
         if (projId && projId !== currentProjectIdRef.current) {
@@ -1232,6 +1252,52 @@ export default function App() {
             currentUser={currentUser}
           />
         );
+      case 'account':
+        return (
+          <AccountSettings
+            currentUser={currentUser}
+            onUpdateAccountSignature={handleUpdateAccountSignature}
+          />
+        );
+      case 'print':
+        return (
+          <div className="print-preview-wrapper" style={{ padding: '16px', maxWidth: '1024px', margin: '0 auto' }}>
+            <div className="print-preview-actions" style={{ display: 'flex', gap: '12px', marginBottom: '16px', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => navigateTo(`/projects/${currentProjectId}/sign-off`)}
+              >
+                ← 返回簽核
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => window.print()}
+              >
+                🖨️ 列印 / 另存 PDF
+              </button>
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    navigator.share({
+                      title: `${fileName || '機種'}_列印報表`,
+                      text: `產品委外加工需求一覽表 - ${fileName || ''}`,
+                      url: window.location.href,
+                    }).catch(() => {});
+                  }}
+                >
+                  📤 分享
+                </button>
+              )}
+            </div>
+            <div className="print-preview-sheet" style={{ background: '#fff', color: '#000', padding: '24px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+              <PrintReport data={data} />
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -1293,7 +1359,28 @@ export default function App() {
           </div>
         )}
 
-        {!currentProjectId ? (
+        {activeTab === 'account' ? (
+          <div className="tab-content animate-fade-in">
+            <AccountSettings
+              currentUser={currentUser}
+              onUpdateAccountSignature={handleUpdateAccountSignature}
+            />
+          </div>
+        ) : activeTab === 'settings' ? (
+          <div className="tab-content animate-fade-in">
+            <Settings
+              factories={factories}
+              onAddFactory={handleAddFactory}
+              onRemoveFactory={handleRemoveFactory}
+              accounts={accounts}
+              onAddAccount={handleAddAccount}
+              onRemoveAccount={handleRemoveAccount}
+              onUpdateAccountLevel={handleUpdateAccountLevel}
+              onUpdateAccountSignature={handleUpdateAccountSignature}
+              currentUser={currentUser}
+            />
+          </div>
+        ) : !currentProjectId ? (
           <ProjectList
             projects={projects}
             onSelectProject={handleSelectProject}

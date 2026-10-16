@@ -4,16 +4,27 @@ import './LoginModal.css';
 import { isSupabaseEnabled } from '../data/supabaseClient';
 import { signIn } from '../data/auth';
 
+import { verifyAccountPassword, sanitizeUserForSession } from '../utils/cryptoAuth';
+
 export default function LoginModal({ onLogin, accounts = [] }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const tryLocalLogin = (uname, pw) => {
+  const tryLocalLogin = async (uname, pw) => {
     const list = accounts || [];
-    const account = list.find((a) => a.username === uname && a.password === pw);
-    if (account) { onLogin(account); setError(''); return true; }
+    const normalizedUname = String(uname || '').trim().toLowerCase();
+    const account = list.find((a) => String(a.username || '').trim().toLowerCase() === normalizedUname);
+    
+    if (account) {
+      const isMatch = await verifyAccountPassword(pw, account);
+      if (isMatch) {
+        onLogin(sanitizeUserForSession(account));
+        setError('');
+        return true;
+      }
+    }
     return false;
   };
 
@@ -26,7 +37,7 @@ export default function LoginModal({ onLogin, accounts = [] }) {
       setBusy(true);
       try {
         const user = await signIn(username, password);
-        if (user) onLogin(user);
+        if (user) onLogin(sanitizeUserForSession(user));
         else setError('登入失敗，請確認帳號與密碼。');
       } catch (err) {
         setError(err?.message || '操作失敗，請稍後再試。');
@@ -36,9 +47,14 @@ export default function LoginModal({ onLogin, accounts = [] }) {
       return;
     }
 
-    // 離線模式：比對本機已建立之帳號
-    if (tryLocalLogin(username, password)) return;
-    setError('帳號或密碼錯誤！');
+    // 離線模式：比對本機已建立之帳號 (D-02, D-135)
+    setBusy(true);
+    try {
+      const ok = await tryLocalLogin(username, password);
+      if (!ok) setError('帳號或密碼錯誤！');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
