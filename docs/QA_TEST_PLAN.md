@@ -10,7 +10,7 @@
 
 - 可測: Excel 範本往返、localStorage 包裝、競爭條件模擬、建置、瀏覽器手動流程、Supabase 測試 workspace。
 - 不可測: 對正式 Supabase production 資料做大量寫入、刪除或壓測。
-- 不變更: 資料模型、Supabase schema/RLS、Netlify production deploy 流程、正式使用者資料。
+- 不變更: 資料模型、Supabase schema/RLS、Cloudflare Workers production deploy 流程、正式使用者資料。
 
 若未來需要對正式雲端或正式站台做壓測，必須另外走 High-Risk Path，補上資料清理、回滾、權限、go/no-go 與風險 ledger。
 

@@ -28,7 +28,7 @@
 | 程式語言 | JavaScript (JSX) |
 | 樣式 | CSS（自訂變數 + 響應式） |
 | 程式碼檢查 | ESLint 10 |
-| CI/CD | GitHub Actions build check + Netlify Git 自動部署 |
+| CI/CD | GitHub Actions build check + Cloudflare Workers 部署 |
 
 ## 目錄結構
 
@@ -93,13 +93,12 @@ npm run qa:security
 
 ## 部署
 
-本專案以 Netlify 作為正式前端站台，GitHub Actions 只做 build check：
+本專案以 Cloudflare Workers 作為正式前端站台（https://outsourcing-alignment.chihfu-chen-tw.workers.dev/），GitHub Actions 只做 build check：
 
 1. 完成任務後先推送 feature branch，確認 `npm run build` 通過
-2. 合併或推送至 `main` 後，由 Netlify Git integration 自動建置與發布 production
-3. `.github/workflows/deploy.yml` 僅驗證 build，不再部署 GitHub Pages
-4. 一般任務不要使用 `netlify deploy --prod`；手動 production deploy 僅保留作緊急備援
-5. 儲存庫：<https://github.com/chenchihcu/Product-outsourcing-alignment-platform>
+2. 本地驗收完成後執行 `npm run build`
+3. 部署由管理員本人於終端機執行 `npx wrangler deploy`（不於 CI/CD 自動部署）
+4. 儲存庫：<https://github.com/chenchihcu/Product-outsourcing-alignment-platform>
 
 涉及 Supabase migration、RLS、角色或 production 資料的修改必須走隔離分支與 PR，並遵守 [正式安全發布手冊](docs/SECURITY_ROLLOUT.md) 的備份、go/no-go、負向權限測試與回滾步驟。
 

@@ -35,7 +35,7 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   1. 委外加工廠選擇欄位 (`basicInfo.factory`) 為全域公共資料，全體角色皆可填寫，不應受 `_owners` 鎖定限制。
   2. 發包方內部（研發單位與工程單位）共享編輯基本資料與治工具項目，彼此之間不互相鎖定（當 `_owners` 為研發單位或工程單位時，雙方皆可繼續共編），僅鎖定非發包方的加工廠角色編輯。
 - **Vite 專案多平台部署 base path**:
-  為了同時相容 GitHub Pages (需要 '/Product-outsourcing-alignment-platform/' 子路徑) 與 Netlify (需要 '/' 根目錄) 部署，**嚴禁將 vite.config.js 的 base 參數寫死**。必須統一使用動態環境變數判定：`process.env.GITHUB_ACTIONS ? '/Product-outsourcing-alignment-platform/' : '/'`。
+  為了同時相容 GitHub Pages (需要 '/Product-outsourcing-alignment-platform/' 子路徑) 與 Cloudflare Workers (需要 '/' 根目錄) 部署，**嚴禁將 vite.config.js 的 base 參數寫死**。必須統一使用動態環境變數判定：`process.env.GITHUB_ACTIONS ? '/Product-outsourcing-alignment-platform/' : '/'`。
 
 ## 驗收 gate
 

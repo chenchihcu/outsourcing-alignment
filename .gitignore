@@ -49,8 +49,8 @@ preview-*.png
 scratch/*
 !scratch/read_layout.js
 
-# Local Netlify folder
-.netlify
+# Cloudflare Wrangler
+.wrangler
 
 # Supabase CLI 暫存狀態(自動重建,勿提交)
 supabase/.temp/
