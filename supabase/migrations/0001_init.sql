@@ -105,5 +105,17 @@ create policy projects_all on public.projects
 
 -- =========================================================================
 -- Realtime:讓 projects 變更可被即時訂閱(P3)
+-- 使用 pg_publication_tables 防呆檢查，避免重複加入 publication 時報錯
 -- =========================================================================
-alter publication supabase_realtime add table public.projects;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'projects'
+  ) then
+    alter publication supabase_realtime add table public.projects;
+  end if;
+end $$;
