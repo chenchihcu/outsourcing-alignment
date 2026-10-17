@@ -10,6 +10,17 @@ function cleanXrayPart(part) {
   return /_{2,}/.test(value) ? '' : value;
 }
 
+export function formatTrialReportDisplayName(name) {
+  if (!name) return '';
+  const str = String(name);
+  if (str === '錫膏檢查紀錄表') return '錫膏印刷日常檢查表 (Printing Log)';
+  if (str.includes('PCB 板彎/翹曲')) return 'PCB 板彎與板翹檢驗紀錄 (Bow & Twist / IPC-TM-650)';
+  if (str === '迴焊爐溫記錄') return '回焊溫度曲線量測紀錄 (Reflow Thermal Profile)';
+  if (str === '錫膏厚度測試紀錄') return '錫膏厚度 / SPI 測試紀錄 (Solder Paste Thickness / SPI)';
+  if (str.includes('X-Ray')) return str.replace('X-Ray 照片', 'BGA / QFN 封裝 X-Ray 檢驗照片');
+  return str;
+}
+
 export default function TrialReportSection({ data, onChange, currentUser, highlightField, onNext, onPrev }) {
   const { setField } = useFieldOwner(onChange, currentUser);
 
@@ -39,7 +50,7 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
                 <input type="checkbox" checked={rec.checked || false}
                   onChange={(e) => handleRecordChange('printRecords', idx, 'checked', e.target.checked)}
                   disabled={isFieldDisabled(data, currentUser, `trialReport.printRecords.${idx}.checked`)} />
-                <span className="record-name">{rec.name}</span>
+                <span className="record-name">{formatTrialReportDisplayName(rec.name)}</span>
               </label>
             </div>
           ))}
@@ -47,7 +58,7 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
       </div>
 
       <div className="record-list-section">
-        <h4 className="list-group-title" data-accent="purple"><span className="card-icon-circle card-icon-xs">{sectionSvg.search}</span>B. 檢驗紀錄</h4>
+        <h4 className="list-group-title" data-accent="purple"><span className="card-icon-circle card-icon-xs">{sectionSvg.search}</span>B. 檢驗紀錄 (Inspection Reports)</h4>
         <div className="records-grid">
           {inspectRecords.map((rec, idx) => (
             <div key={rec.id} className="record-row edit-active" style={{ margin: 0 }}>
@@ -55,7 +66,7 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
                 <input type="checkbox" checked={rec.checked || false}
                   onChange={(e) => handleRecordChange('inspectRecords', idx, 'checked', e.target.checked)}
                   disabled={isFieldDisabled(data, currentUser, `trialReport.inspectRecords.${idx}.checked`)} />
-                <span className="record-name">{rec.name}</span>
+                <span className="record-name">{formatTrialReportDisplayName(rec.name)}</span>
               </label>
             </div>
           ))}
@@ -63,21 +74,21 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
       </div>
 
       <div className="record-list-section">
-        <h4 className="list-group-title" data-accent="emerald"><span className="card-icon-circle card-icon-xs">{sectionSvg.chart}</span>C. SMT 生產良率報告（含可製造性設計問題分析 DFM）</h4>
+        <h4 className="list-group-title" data-accent="emerald"><span className="card-icon-circle card-icon-xs">{sectionSvg.chart}</span>C. SMT 生產良率與 DFM 分析報告 (Trial Run Yield & DFM Report)</h4>
         <div className="records-grid">
           <div className="record-row edit-active" style={{ margin: 0 }}>
             <label className="checkbox-label flex-1">
               <input type="checkbox" checked={data.trialReport?.yieldReport?.ready || false}
                 onChange={(e) => setField('trialReport.yieldReport.ready', e.target.checked)}
                 disabled={isFieldDisabled(data, currentUser, 'trialReport.yieldReport.ready')} />
-              <span className="record-name">SMT 良率報告已備妥</span>
+              <span className="record-name">SMT 良率與 DFM 分析報告已備妥</span>
             </label>
           </div>
         </div>
       </div>
 
       <div className="record-list-section">
-        <h4 className="list-group-title" data-accent="pink"><span className="card-icon-circle card-icon-xs">{sectionSvg.camera}</span>D. 照片提供</h4>
+        <h4 className="list-group-title" data-accent="pink"><span className="card-icon-circle card-icon-xs">{sectionSvg.camera}</span>D. 外觀與 X-Ray 檢驗照片 (Visual & X-Ray Photos)</h4>
         <div className="records-grid">
           {photoRecords.map((rec, idx) => (
             <div key={rec.id} className="record-row edit-active" style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start', margin: 0 }}>
@@ -86,7 +97,7 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
                   onChange={(e) => handleRecordChange('photoRecords', idx, 'checked', e.target.checked)}
                   disabled={isFieldDisabled(data, currentUser, `trialReport.photoRecords.${idx}.checked`)} />
                 <span className="record-name">
-                  {rec.isXray ? String(rec.name).split(/指定零件/)[0] + '指定零件:' : rec.name}
+                  {rec.isXray ? String(formatTrialReportDisplayName(rec.name)).split(/指定零件/)[0] + '指定零件:' : formatTrialReportDisplayName(rec.name)}
                 </span>
               </label>
               {rec.isXray && (

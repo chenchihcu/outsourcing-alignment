@@ -46,6 +46,21 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   1. 各元件樣式嚴禁散落硬編碼未載入的 Webfont（如 `'Outfit'`、`'Inter'`）或隨機 px/rem（如 `0.88rem`, `0.95rem`, `1.05rem`, `13px`, `14px` 等），必須統一以 `src/styles/tokens.css` 的 `--font-sans`、`--font-display`、`--font-mono` 與 `--fs-*`（`--fs-caption` 至 `--fs-large-title`）為唯一事實來源（SSOT）。
   2. 繁體中文系統字體堆疊必須兼顧 macOS/iOS (`PingFang TC`)、Windows (`Segoe UI` + `微軟正黑體`) 與 Linux (`Noto Sans TC`)，確保在廠區離線無外網環境下不依賴外部 Webfont CDN 亦具備清晰排版。
   3. 全域維持 `button, input, select, textarea { font-family: inherit; }` 防範原生表單控制項字型脫鉤；動態數值、百分比與 KPI 必須宣告 `font-variant-numeric: tabular-nums` 防止數值跳動導致排版抖動。
+- **SMT/PCBA 電子製造語意與專業名詞標準 (Terminology & Domain Semantics SSOT)**:
+  規則：全站介面、驗證提示與報表文案必須嚴格對照 IPC-A-610、IPC J-STD-001、IPC-7525、IPC-7530、IPC-1601 與業界 EMS 規範，嚴禁倒退回口語俗稱或歧義詞彙：
+  1. 焊點冶金：一律使用「潤濕性 / 沾錫性 (Solder Wetting)」，嚴禁使用「濕潤性」。
+  2. 膠材物化：Underfill 點膠後條件為「熱固化 (Thermal Curing)」，嚴禁稱為「後烘烤 (Baking)」。
+  3. 出貨包材：一律使用「抗靜電托盤 (ESD Tray)」，嚴禁使用塑膠加工行話「脆盤」；保護物料一律使用「感測器/鏡頭保護膜 (Protective Film)」，避免消費端用語「保護貼」。
+  4. 烘烤除濕：打件前對象為裸板，正名為「PCB / FPC 裸板預烘烤去濕 (Pre-Baking)」，區隔組裝後的 FPCA。
+  5. 鋼網與製程：一律使用「鋼網 (Stencil)」與「鋼網開孔縮放比例 (Aperture-to-Pad Ratio)」；載具正名為「SMT 印刷 / 回焊載具 (Printing/Reflow Carrier)」。
+  6. 樣品確認：正名為「試錫空板 (Dummy Board)」、「測溫板 (Profile Board)」、「黃金樣板 (Golden Sample)」。
+  7. 資料結構解耦：為確保 Excel 往返（`qa:roundtrip`）100% 保真，底層歷史 JSON key 維持穩定，名詞正名由 UI 呈現層與驗證規則層統一映射。
+  檢查：執行 `npm run qa:offline` 全數通過，且全局搜尋無「脆盤」、「濕潤性」、「後烘烤」等違規俗稱。
+  出處：terminology_audit_report 2026-10-17、IPC 國際標準；重複：1 專案（架構紅線）。
+- **製程表單微圖示人因工程守衛 (Domain Micro-Icon Ergonomics Guardrail)**:
+  規則：表單區塊與選項之輔助微圖示一律由 `src/utils/svgIcons.jsx` 集中提供原生向量 SVG，嚴禁外掛重量級圖示庫或載入外部網路圖片資產。圖示必須包裹於 `.card-icon-circle`（卡片標題）或 `.item-micro-icon`（選項項目）中，尺寸嚴格限制為 14~20px，並自適應暗色與亮色主題變數，防範視覺雜訊並確保無網路環境下 100% 離線可用。
+  檢查：執行 `npm run build` 封裝無外部資產請求，且在高對比暗色模式下圖示輪廓清晰可辨。
+  出處：FormSections.css 2026-10-17；重複：1 專案。
 
 ## 驗收 gate
 

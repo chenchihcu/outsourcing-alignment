@@ -1,5 +1,6 @@
 import { Fragment } from 'react';
 import PropTypes from 'prop-types';
+import { formatTrialReportDisplayName } from './TrialReportSection';
 import './PrintReport.css';
 
 function cleanXrayPart(part) {
@@ -72,9 +73,9 @@ export default function PrintReport({ data }) {
   const shouldShowSpecialProcessMemo = hasText(specialProcessMemo) && !isInstructionalMemo(specialProcessMemo);
 
   const deliverySections = [
-    { label: 'G1. 印刷品質與迴焊紀錄', records: printRecords },
-    { label: 'G2. 檢驗紀錄', records: inspectRecords },
-    { label: 'G3. 照片與影像紀錄', records: photoRecords, formatName: formatPhotoRecordName },
+    { label: 'G1. 印刷品質與回焊紀錄 (Printing & Reflow)', records: printRecords, formatName: (rec) => formatTrialReportDisplayName(rec.name) },
+    { label: 'G2. 檢驗紀錄 (Inspection Reports)', records: inspectRecords, formatName: (rec) => formatTrialReportDisplayName(rec.name) },
+    { label: 'G3. 照片與影像紀錄 (Visual & X-Ray Photos)', records: photoRecords, formatName: formatPhotoRecordName },
   ];
 
   const pendingItems = [
@@ -128,13 +129,13 @@ export default function PrintReport({ data }) {
 
   const renderPackagingChecks = (packagingType, packagingData) => (
     <div>
-      <div className="print-inline-title">{packagingType === 'fpca' ? 'FPCA 包材' : 'PCBA 包材'}</div>
+      <div className="print-inline-title">{packagingType === 'fpca' ? 'FPC / FPCA 包材' : 'PCBA 包材'}</div>
       <div className="print-checkbox-grid">
         {renderCheck(packagingData?.staticBag, '靜電袋')}
         {renderCheck(packagingData?.honeycomb, '蜂巢式抗靜電隔板')}
-        {renderCheck(packagingData?.tray, 'Tray 抗靜電托盤 (ESD Tray)')}
-        {renderCheck(packagingData?.sensorCover, 'Sensor 保護貼')}
-        {renderCheck(packagingData?.cameraCover, 'Camera 保護貼')}
+        {renderCheck(packagingData?.tray, '抗靜電托盤 (ESD Tray)')}
+        {renderCheck(packagingData?.sensorCover, '感測器保護膜 (Sensor Protective Film)')}
+        {renderCheck(packagingData?.cameraCover, '鏡頭保護膜 (Camera Protective Film)')}
       </div>
     </div>
   );

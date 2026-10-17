@@ -56,9 +56,9 @@ export default function PreWorkSection({ data, onChange, currentUser, highlightF
   const packagingOptions = [
     ['staticBag', '靜電袋 (Shielding Bag)', processMicroIcons.shield],
     ['honeycomb', '蜂巢式抗靜電隔板 (Honeycomb Box)', processMicroIcons.packing],
-    ['tray', 'Tray 抗靜電托盤 (ESD Tray)', processMicroIcons.tray],
-    ['sensorCover', 'Sensor 防靜電保護膜', processMicroIcons.shield],
-    ['cameraCover', 'Camera 鏡頭保護膜', processMicroIcons.shield]
+    ['tray', '抗靜電托盤 (ESD Tray)', processMicroIcons.tray],
+    ['sensorCover', '感測器保護膜 (Sensor Protective Film)', processMicroIcons.shield],
+    ['cameraCover', '鏡頭保護膜 (Camera Protective Film)', processMicroIcons.shield]
   ];
 
   const sampleOptions = [
