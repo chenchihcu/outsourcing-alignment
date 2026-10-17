@@ -36,8 +36,8 @@ export default function DocumentsSection({ data, onChange, currentUser, onNext, 
                 />
                 <div className="doc-icon-container">{getDocumentIcon(key)}</div>
                 <div style={{ flex: 1 }}>
-                  <span className="doc-label" style={{ fontWeight: 600, fontSize: '0.98rem' }}>{label}</span>
-                  <p className="doc-desc" style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>{desc}</p>
+                  <span className="doc-label" style={{ fontWeight: 600, fontSize: 'var(--fs-base)' }}>{label}</span>
+                  <p className="doc-desc" style={{ fontSize: 'var(--fs-footnote)', color: '#6b7280', marginTop: '4px', lineHeight: 1.4 }}>{desc}</p>
                 </div>
               </label>
             </div>

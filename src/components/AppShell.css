@@ -581,17 +581,17 @@
     background: transparent;
     border: none;
     color: var(--c-accent);
-    font-size: var(--fs-headline, 17px);
+    font-size: var(--fs-headline, 13.5px);
     font-weight: 500;
     cursor: pointer;
     flex-shrink: 0;
   }
   .mobile-back-text {
-    font-size: var(--fs-body, 17px);
+    font-size: var(--fs-body, 13px);
   }
 
   .topbar-title {
-    font-size: var(--fs-headline, 17px);
+    font-size: var(--fs-headline, 13.5px);
     font-weight: 600;
     text-align: center;
     line-height: 1.2;
@@ -653,7 +653,7 @@
   }
 
   .context-rail-title {
-    font-size: var(--fs-subhead, 15px);
+    font-size: var(--fs-subhead, 13px);
     font-weight: 600;
     color: var(--c-text-1);
     white-space: nowrap;

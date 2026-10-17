@@ -361,9 +361,9 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
               <div className="control-group">
                 <span className="control-label">字體大小:</span>
                 <div className="btn-toggle-group">
-                  <button type="button" className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`} onClick={() => setFontSize('small')} title="12px">小</button>
-                  <button type="button" className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`} onClick={() => setFontSize('medium')} title="14px">中</button>
-                  <button type="button" className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`} onClick={() => setFontSize('large')} title="16px">大</button>
+                  <button type="button" className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`} onClick={() => setFontSize('small')} title="11px">小</button>
+                  <button type="button" className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`} onClick={() => setFontSize('medium')} title="13px">中</button>
+                  <button type="button" className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`} onClick={() => setFontSize('large')} title="14px">大</button>
                 </div>
               </div>
               <div className="control-group">

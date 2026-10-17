@@ -73,25 +73,25 @@ html {
   --sp-8: 32px;
   --sp-10: 40px;
 
-  /* ---- 字級 (高密度桌機基準與語意 Token) ---- */
-  --fs-xs: 0.75rem;    /* 12px */
-  --fs-sm: 0.8125rem;  /* 13px */
-  --fs-base: 0.875rem; /* 14px */
-  --fs-md: 0.9375rem;  /* 15px */
-  --fs-lg: 1.125rem;   /* 18px */
-  --fs-xl: 1.375rem;   /* 22px */
+  /* ---- 字級 (以 14px 為最高上限之冷靜高密度階層) ---- */
+  --fs-xs: 0.6875rem;  /* 11px */
+  --fs-sm: 0.75rem;    /* 12px */
+  --fs-base: 0.8125rem; /* 13px */
+  --fs-md: 0.84375rem; /* 13.5px */
+  --fs-lg: 0.875rem;   /* 14px (最高上限) */
+  --fs-xl: 0.875rem;   /* 14px (最高上限) */
 
-  --fs-large-title: 2.125rem; /* 34px / 41 */
-  --fs-title-1: 1.75rem;     /* 28px / 34 */
-  --fs-title-2: 1.375rem;    /* 22px / 28 */
-  --fs-title-3: 1.25rem;     /* 20px / 25 */
-  --fs-headline: 1.0625rem;  /* 17px / 22 semibold */
-  --fs-body: 1.0625rem;      /* 17px / 24 */
-  --fs-callout: 1rem;        /* 16px / 21 */
-  --fs-subhead: 0.9375rem;   /* 15px / 20 */
-  --fs-footnote: 0.8125rem;  /* 13px / 18 */
-  --fs-caption: 0.75rem;     /* 12px / 16 (全站最小字級) */
-  --fs-tab: 0.6875rem;       /* 11px / 13 (僅限底部分頁列標籤) */
+  --fs-large-title: 0.875rem; /* 14px (最高上限) */
+  --fs-title-1: 0.875rem;     /* 14px (最高上限) */
+  --fs-title-2: 0.875rem;     /* 14px (最高上限) */
+  --fs-title-3: 0.84375rem;   /* 13.5px */
+  --fs-headline: 0.84375rem;  /* 13.5px */
+  --fs-body: 0.8125rem;       /* 13px */
+  --fs-callout: 0.8125rem;    /* 13px */
+  --fs-subhead: 0.8125rem;    /* 13px */
+  --fs-footnote: 0.75rem;     /* 12px */
+  --fs-caption: 0.6875rem;    /* 11px */
+  --fs-tab: 0.6875rem;        /* 11px */
 
   /* ---- 控制元件高度與觸控尺度 ---- */
   --control-h: 38px;
@@ -136,20 +136,20 @@ html {
   --dur: 0.16s;
 }
 
-/* 手機版 (≤767px) iOS Dynamic Type (預設 Large) 覆寫 */
+/* 手機版 (≤767px) iOS Dynamic Type 覆寫 */
 @media (max-width: 767px) {
   :root {
-    --fs-large-title: 2.125rem; /* 34px */
-    --fs-title-1: 1.75rem;     /* 28px */
-    --fs-title-2: 1.375rem;    /* 22px */
-    --fs-title-3: 1.25rem;     /* 20px */
-    --fs-headline: 1.0625rem;  /* 17px semibold */
-    --fs-body: 1.0625rem;      /* 17px */
-    --fs-callout: 1rem;        /* 16px */
-    --fs-subhead: 0.9375rem;   /* 15px */
-    --fs-footnote: 0.8125rem;  /* 13px */
-    --fs-caption: 0.75rem;     /* 12px (全站最小字級) */
-    --fs-tab: 0.6875rem;       /* 11px (僅底欄標籤) */
+    --fs-large-title: 0.875rem; /* 14px */
+    --fs-title-1: 0.875rem;     /* 14px */
+    --fs-title-2: 0.875rem;     /* 14px */
+    --fs-title-3: 0.84375rem;   /* 13.5px */
+    --fs-headline: 0.84375rem;  /* 13.5px */
+    --fs-body: 0.8125rem;       /* 13px */
+    --fs-callout: 0.8125rem;    /* 13px */
+    --fs-subhead: 0.8125rem;    /* 13px */
+    --fs-footnote: 0.75rem;     /* 12px */
+    --fs-caption: 0.6875rem;    /* 11px */
+    --fs-tab: 0.6875rem;        /* 11px */
 
     --control-h: 44px;
     --touch-target: 44px;

@@ -183,7 +183,7 @@ h1, h2, h3, h4 {
 
 .form-label {
   display: block;
-  font-size: var(--fs-subhead, 0.9375rem);
+  font-size: var(--fs-subhead, 0.8125rem);
   font-weight: 500;
   text-transform: uppercase;
   color: var(--c-text-2);

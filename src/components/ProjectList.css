@@ -495,7 +495,7 @@
 /* 1. 字體大小 */
 .size-small .project-table th { font-size: var(--fs-tab); }
 .size-small .project-table td { font-size: var(--fs-caption); }
-.size-small .proj-folder-icon { font-size: var(--fs-base); }
+.size-small .proj-folder-icon { font-size: var(--fs-footnote); }
 .size-small .table-progress-rate { font-size: var(--fs-tab); }
 .size-small .table-date-cell { font-size: var(--fs-tab); }
 .size-small .table-action-btn { padding: 4px 8px !important; font-size: var(--fs-tab) !important; }
@@ -507,12 +507,12 @@
 .size-medium .table-date-cell { font-size: var(--fs-footnote); }
 .size-medium .table-action-btn { padding: 6px 12px !important; font-size: var(--fs-caption) !important; }
 
-.size-large .project-table th { font-size: var(--fs-subhead); }
-.size-large .project-table td { font-size: var(--fs-callout); }
-.size-large .proj-folder-icon { font-size: var(--fs-lg); }
-.size-large .table-progress-rate { font-size: var(--fs-subhead); }
-.size-large .table-date-cell { font-size: var(--fs-subhead); }
-.size-large .table-action-btn { padding: 8px 16px !important; font-size: var(--fs-footnote) !important; }
+.size-large .project-table th { font-size: var(--fs-md); }
+.size-large .project-table td { font-size: var(--fs-lg); }
+.size-large .proj-folder-icon { font-size: var(--fs-xl); }
+.size-large .table-progress-rate { font-size: var(--fs-md); }
+.size-large .table-date-cell { font-size: var(--fs-md); }
+.size-large .table-action-btn { padding: 8px 16px !important; font-size: var(--fs-base) !important; }
 
 /* 2. 行距間距 */
 .spacing-compact th, .spacing-compact td { padding: 6px 12px; }
@@ -663,7 +663,7 @@
   }
 
   .mobile-page-title {
-    font-size: var(--fs-title-1, 28px);
+    font-size: var(--fs-title-1, 14px);
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--c-text-1);

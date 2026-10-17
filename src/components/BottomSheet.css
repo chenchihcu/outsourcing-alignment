@@ -76,7 +76,7 @@
 
 .bottom-sheet-title {
   font-family: inherit;
-  font-size: var(--fs-headline, 17px);
+  font-size: var(--fs-headline, 13.5px);
   font-weight: 600;
   color: var(--c-text-1);
 }
@@ -126,7 +126,7 @@
   text-align: left;
   cursor: pointer;
   transition: background var(--dur) var(--ease);
-  font-size: var(--fs-body, 17px);
+  font-size: var(--fs-body, 13px);
 }
 
 .bottom-sheet-row:hover {

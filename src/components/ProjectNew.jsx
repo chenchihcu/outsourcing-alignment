@@ -117,7 +117,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
       </div>
 
       <div className="glass-card" style={{ padding: '28px', borderRadius: '12px', background: 'var(--c-surface, #ffffff)', border: '1px solid var(--c-border, #e2e8f0)' }}>
-        <h1 style={{ fontSize: 'var(--fs-title-3, 1.25rem)', fontWeight: 700, marginBottom: '8px' }}>
+        <h1 style={{ fontSize: 'var(--fs-title-3, 0.84375rem)', fontWeight: 700, marginBottom: '8px' }}>
           ➕ 建立新機種
         </h1>
         <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: 'var(--fs-md)', marginBottom: '24px' }}>

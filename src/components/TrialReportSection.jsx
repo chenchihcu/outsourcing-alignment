@@ -10,6 +10,7 @@ function cleanXrayPart(part) {
   return /_{2,}/.test(value) ? '' : value;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatTrialReportDisplayName(name) {
   if (!name) return '';
   const str = String(name);

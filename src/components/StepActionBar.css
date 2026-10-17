@@ -27,7 +27,7 @@
   min-height: 44px;
   padding: 0 1.25rem;
   border-radius: var(--r-btn, 12px);
-  font-size: var(--fs-callout, 15px);
+  font-size: var(--fs-callout, 13px);
   font-weight: 600;
   display: inline-flex;
   align-items: center;
@@ -78,7 +78,7 @@
     flex: 1;
     min-height: var(--tap-primary, 50px);
     height: 50px;
-    font-size: var(--fs-callout, 16px);
+    font-size: var(--fs-callout, 13px);
     border-radius: var(--r-btn, 12px);
     padding: 0 12px;
     white-space: nowrap;
@@ -88,7 +88,7 @@
     flex: 1.4;
     min-height: var(--tap-primary, 50px);
     height: 50px;
-    font-size: var(--fs-callout, 16px);
+    font-size: var(--fs-callout, 13px);
     border-radius: var(--r-btn, 12px);
     padding: 0 12px;
     white-space: nowrap;
