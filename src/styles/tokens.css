@@ -43,7 +43,9 @@ html {
   --c-error:   #dc2626;  --c-error-weak:   #fef2f2;  --c-error-border:   #fecaca;
   --c-info:    #2563eb;  --c-info-weak:    #eff6ff;  --c-info-border:    #bfdbfe;
 
-  /* ---- 字體族群 (含等寬數據字體) ---- */
+  /* ---- 字體族群 (SSOT: 跨平台繁體中文與系統字型堆疊) ---- */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei UI", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* ---- 陰影(扁平、克制) ---- */

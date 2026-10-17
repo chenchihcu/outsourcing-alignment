@@ -9,7 +9,7 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--fs-base);
   line-height: 1;
   opacity: 0.7;
   vertical-align: middle;
@@ -46,14 +46,14 @@
 }
 
 .settings-section-card h3 {
-  font-size: 1.25rem;
+  font-size: var(--fs-title-3);
   font-weight: 700;
   color: var(--c-text-1, #0f172a);
   margin-bottom: 8px;
 }
 
 .card-desc {
-  font-size: 0.875rem;
+  font-size: var(--fs-base);
   color: var(--c-text-2, #64748b);
   margin-bottom: 20px;
   line-height: 1.5;
@@ -183,7 +183,7 @@
   border: none;
   color: #ef4444;
   cursor: pointer;
-  font-size: 1.15rem;
+  font-size: var(--fs-lg);
   min-width: 44px;
   min-height: 44px;
   display: inline-flex;
@@ -214,13 +214,13 @@
 }
 
 .add-account-form h4 {
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   color: var(--c-text-1, #1f2937);
   margin-bottom: 12px;
 }
 
 .accounts-list-wrapper h4 {
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   color: var(--c-text-1, #1f2937);
   margin-bottom: 10px;
 }
@@ -239,7 +239,7 @@
   width: 100%;
   border-collapse: collapse;
   text-align: left;
-  font-size: 0.85rem;
+  font-size: var(--fs-base);
 }
 
 .settings-table th,
@@ -270,7 +270,7 @@
 .badge-level {
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: var(--fs-caption);
   font-weight: 600;
 }
 
@@ -291,7 +291,7 @@
   padding: 2px 8px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 0.75rem;
+  font-size: var(--fs-caption);
   transition: all 0.2s;
 }
 
@@ -312,7 +312,7 @@
   color: #6b7280;
   text-align: center;
   padding: 24px;
-  font-size: 0.85rem;
+  font-size: var(--fs-base);
 }
 
 .table-select-level {
@@ -321,7 +321,7 @@
   color: #1f2937;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: var(--fs-caption);
   font-family: inherit;
   outline: none;
   cursor: pointer;

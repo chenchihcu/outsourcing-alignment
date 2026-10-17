@@ -1,7 +1,7 @@
 @import './styles/tokens.css';
 
 :root {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang TC", "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
 
@@ -52,12 +52,17 @@ body {
   overflow-x: hidden;
 }
 
+/* 表單與互動元素全域繼承父層字體 */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
 .font-mono {
   font-family: var(--font-mono);
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -78,7 +83,7 @@ h1, h2, h3, h4 {
 
 /* Dynamic Buttons */
 .btn {
-  font-family: 'Inter', sans-serif;
+  font-family: inherit;
   font-weight: 600;
   font-size: var(--fs-base);
   min-height: var(--control-h);
@@ -144,7 +149,7 @@ h1, h2, h3, h4 {
   input[type="number"],
   select,
   textarea {
-    font-size: 16px !important; /* iOS HIG: 16px 防止 Safari 聚焦時觸發頁面自動放大 */
+    font-size: var(--fs-callout, 16px) !important; /* iOS HIG: 16px 防止 Safari 聚焦時觸發頁面自動放大 */
   }
 
   body {
@@ -194,7 +199,7 @@ h1, h2, h3, h4 {
   border-radius: var(--r-input, 10px);
   color: var(--c-text-1);
   font-family: inherit;
-  font-size: 1rem;
+  font-size: var(--fs-callout);
   transition: all 0.2s ease;
 }
 

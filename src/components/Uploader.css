@@ -51,15 +51,15 @@
 }
 
 .upload-title {
-  font-family: 'Outfit', sans-serif;
-  font-size: 1rem;
+  font-family: var(--font-display);
+  font-size: var(--fs-callout);
   font-weight: 500;
   color: #f3f4f6;
   margin-bottom: 0.25rem;
 }
 
 .upload-subtitle {
-  font-size: 0.8rem;
+  font-size: var(--fs-footnote);
   color: #9ca3af;
 }
 
@@ -69,7 +69,7 @@
   margin-top: 0.75rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--border-color);
-  font-size: 0.78rem;
+  font-size: var(--fs-footnote);
   color: #9ca3af;
 }
 
@@ -131,7 +131,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.9rem;
+  font-size: var(--fs-base);
 }
 
 .error-icon {
@@ -148,7 +148,7 @@
   border: none;
   color: inherit;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--fs-callout);
   line-height: 1;
   padding: 2px 4px;
   opacity: 0.7;

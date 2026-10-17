@@ -25,13 +25,14 @@
   border-right: 1px solid var(--c-border);
 }
 .rate-num {
-  font-family: var(--font-mono), 'Outfit', sans-serif;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 2.6rem;
+  font-size: var(--fs-large-title);
   line-height: 1;
   color: var(--c-accent);
 }
-.rate-num small { font-size: 1.1rem; font-weight: 600; }
+.rate-num small { font-size: var(--fs-lg); font-weight: 600; }
 .hero-rate[data-ok='true'] .rate-num { color: var(--c-success); }
 .rate-label { font-size: var(--fs-xs); color: var(--c-text-3); margin-top: 6px; }
 
@@ -123,7 +124,7 @@
   background: var(--c-accent-weak);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
-.party-icon { font-size: 1.4rem; flex-shrink: 0; }
+.party-icon { font-size: var(--fs-title-2); flex-shrink: 0; }
 .party-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .party-label { font-size: var(--fs-sm); font-weight: 650; color: var(--c-text-1); }
 .party-desc { font-size: var(--fs-xs); color: var(--c-text-3); }
@@ -192,7 +193,7 @@
     min-width: 0; padding-right: 0; padding-bottom: var(--sp-3);
     border-right: none; border-bottom: 1px solid var(--c-border);
   }
-  .rate-num { font-size: 2rem; }
+  .rate-num { font-size: var(--fs-title-1); }
   .dash-next { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
   .next-cta { justify-content: center; }
 }

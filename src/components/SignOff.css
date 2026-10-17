@@ -25,8 +25,9 @@
 }
 
 .status-percentage {
-  font-family: var(--font-mono), 'Outfit', sans-serif;
-  font-size: 1.4rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-title-2);
   font-weight: 700;
   color: var(--c-text-1);
 }
@@ -70,7 +71,7 @@
 
 .sign-header {
   padding: 0.75rem 1rem;
-  font-size: 0.92rem;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--c-text-1);
   display: flex;
@@ -94,7 +95,7 @@
 }
 
 .badge-role {
-  font-size: 0.68rem;
+  font-size: var(--fs-caption);
   padding: 2px 6px;
   background: rgba(0, 0, 0, 0.04);
   border-radius: 4px;
@@ -113,7 +114,7 @@
 }
 
 .sign-terms {
-  font-size: 0.76rem;
+  font-size: var(--fs-caption);
   color: #6b7280;
   line-height: 1.4;
   border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -140,19 +141,19 @@
 }
 
 .warning-emoji, .success-emoji {
-  font-size: 1.5rem;
+  font-size: var(--fs-title-1);
   flex-shrink: 0;
 }
 
 .warning-title {
   font-weight: 600;
   color: var(--warning-color);
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   margin-bottom: 4px;
 }
 
 .warning-detail, .success-detail {
-  font-size: 0.85rem;
+  font-size: var(--fs-base);
   color: #4b5563;
   line-height: 1.5;
 }
@@ -160,7 +161,7 @@
 .success-title {
   font-weight: 600;
   color: var(--success-color);
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   margin-bottom: 4px;
 }
 
@@ -172,7 +173,7 @@
 
 .btn-large {
   padding: 1rem 2.5rem;
-  font-size: 1.05rem;
+  font-size: var(--fs-headline);
   border-radius: 12px;
 }
 
@@ -236,7 +237,7 @@
 }
 
 .signature-empty-text {
-  font-size: 0.75rem;
+  font-size: var(--fs-caption);
   color: #6b7280;
 }
 
@@ -261,7 +262,7 @@
   .signature-btn-row .btn {
     min-height: 44px;
     padding: 0 14px;
-    font-size: 14px;
+    font-size: var(--fs-base);
     border-radius: var(--r-ios-btn, 12px);
   }
 
@@ -271,7 +272,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.05rem !important;
+    font-size: var(--fs-headline) !important;
     border-radius: var(--r-ios-btn, 12px);
   }
 }
@@ -291,17 +292,17 @@
   border-radius: var(--r-md, 8px);
 }
 .reject-banner-main { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
-.reject-icon { font-size: 1.5rem; line-height: 1.2; flex-shrink: 0; }
-.reject-title { font-weight: 700; color: var(--c-error, #dc2626); font-size: 0.98rem; }
-.reject-reason { color: var(--c-text-1, #1a1d21); font-size: 0.9rem; margin-top: 3px; white-space: pre-wrap; }
-.reject-meta { color: var(--c-text-3, #889099); font-size: 0.78rem; margin-top: 3px; }
+.reject-icon { font-size: var(--fs-title-2); line-height: 1.2; flex-shrink: 0; }
+.reject-title { font-weight: 700; color: var(--c-error, #dc2626); font-size: var(--fs-md); }
+.reject-reason { color: var(--c-text-1, #1a1d21); font-size: var(--fs-base); margin-top: 3px; white-space: pre-wrap; }
+.reject-meta { color: var(--c-text-3, #889099); font-size: var(--fs-footnote); margin-top: 3px; }
 .reject-resubmit { flex-shrink: 0; }
 
 /* QA 退件控制:常駐的「退件原因」欄位 */
 .qa-reject-control { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--c-border, #e6e8ec); }
-.reject-label { display: block; margin-bottom: 6px; font-size: 0.8rem; color: var(--c-text-2, #565d68); }
+.reject-label { display: block; margin-bottom: 6px; font-size: var(--fs-footnote); color: var(--c-text-2, #565d68); }
 .reject-label .req { color: var(--c-error, #dc2626); }
-.reject-textarea { font-size: 0.85rem; }
+.reject-textarea { font-size: var(--fs-base); }
 .reject-form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 .reject-confirm {
   background: var(--c-error, #dc2626) !important;
@@ -335,14 +336,14 @@
 .final-approval-kicker {
   display: block;
   color: #047857;
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   font-weight: 700;
   margin-bottom: 4px;
 }
 
 .final-approval-copy p {
   color: #374151;
-  font-size: 0.86rem;
+  font-size: var(--fs-base);
   line-height: 1.5;
 }
 
@@ -361,7 +362,7 @@
   height: 48px;
   border-radius: var(--r-btn, 12px);
   white-space: nowrap;
-  font-size: 15px;
+  font-size: var(--fs-subhead);
   font-weight: 600;
   padding: 0 20px;
 }
