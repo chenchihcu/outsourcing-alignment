@@ -1441,15 +1441,15 @@ export default function App() {
       >
         {/* E1/E2/U10 — 雲端同步或儲存錯誤橫幅 */}
         {syncError && (
-          <div style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', borderRadius: '6px', padding: '8px 14px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.85rem', color: '#fbbf24', gap: '12px' }}>
+          <div className="system-alert-banner system-alert-warning" role="alert">
             <span>⚠️ {syncError}</span>
-            <button type="button" onClick={() => setSyncError(null)} style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', fontSize: '1.1rem', lineHeight: 1, minWidth: '44px', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }} aria-label="關閉">✕</button>
+            <button type="button" onClick={() => setSyncError(null)} className="system-alert-close" aria-label="關閉">✕</button>
           </div>
         )}
 
         {/* D-157: 閒置登出倒數 2 分鐘橫幅 */}
         {idleWarningSeconds !== null && (
-          <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: '6px', padding: '10px 16px', margin: '8px 16px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem', color: '#ef4444', gap: '12px' }}>
+          <div className="system-alert-banner system-alert-danger" role="alert">
             <span>⏳ 由於長時間未操作，系統將於 <strong>{idleWarningSeconds}</strong> 秒後自動登出以保護資料安全。</span>
             <button type="button" className="btn btn-primary btn-xs" onClick={resetActivity}>繼續使用</button>
           </div>

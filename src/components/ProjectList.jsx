@@ -41,6 +41,22 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
+  // 全域快捷鍵：按 / 鍵聚焦搜尋框 (自動避開正在輸入其他輸入框的情境)
+  useEffect(() => {
+    const onGlobalKeyDown = (e) => {
+      if (e.isComposing) return;
+      const target = e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+      if (e.key === '/') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input.search-input');
+        searchInput?.focus();
+      }
+    };
+    window.addEventListener('keydown', onGlobalKeyDown);
+    return () => window.removeEventListener('keydown', onGlobalKeyDown);
+  }, []);
+
   // 點擊空白處關閉選單
   useEffect(() => {
     if (!showMobileAddMenu && !activeActionMenuId) return;
@@ -154,10 +170,11 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
 
   return (
     <div className="project-list-container animate-fade-in">
-      {/* 桌機版 Header */}
+      {/* 桌機版 Header (SQE DailyWork 工業級工作台風格) */}
       <div className="project-list-header glass-card hide-on-mobile">
         <div className="header-info">
           <h2>機種管理中心</h2>
+          <p className="header-desc">新機種委外加工需求對齊、製程管制與三方簽核作業工作台</p>
         </div>
         {currentUser?.role !== 'qa' && (
           <div className="header-actions">
@@ -216,118 +233,196 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
         )}
       </div>
 
-      {/* 搜尋篩選器 */}
-      {projects.length > 0 && (
-        <div className="project-search-container glass-card">
-          <span className="search-icon"><uiIcons.search size={18} /></span>
-          <input 
-            type="text" 
-            className="search-input" 
-            placeholder="搜尋機種名稱..." name="search" 
-            value={searchTerm} 
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} 
-          />
-          {searchTerm && (
-            <button type="button" 
-              className="search-clear-btn" 
-              onClick={() => { setSearchTerm(''); setCurrentPage(1); }} 
-              title="清除搜尋內容"
-              aria-label="清除搜尋內容"
-            >
-              <uiIcons.close size={14} />
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* 桌機版工具列 */}
-      <div className="project-list-toolbar glass-card hide-on-mobile">
-        <div className="toolbar-tabs">
-          <button type="button" 
-            className={`tab-filter-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
-            onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
-          >
-            ⏳ 進行中 ({countInProgress})
-          </button>
-          <button type="button" 
-            className={`tab-filter-btn ${filterMode === 'completed' ? 'active' : ''}`}
-            onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
-          >
-            ✅ 已完成 ({countCompleted})
-          </button>
-          <button type="button" 
-            className={`tab-filter-btn ${filterMode === 'rejected' ? 'active' : ''}`}
-            onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
-            style={{ color: filterMode === 'rejected' ? '#e11d48' : undefined }}
-          >
-            ⛔ 已退件 ({countRejected})
-          </button>
-          <button type="button" 
-            className={`tab-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
-            onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
-          >
-            📁 全部 ({countAll})
-          </button>
+      {/* 4 欄式互動 KPI 統計卡 (對齊 SQE DailyWork 首頁 4-Column Metric Cards) */}
+      <div className="project-kpi-grid">
+        <div
+          onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
+          className={`kpi-card ${filterMode === 'in-progress' ? 'active' : ''}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('in-progress'); setCurrentPage(1); } }}
+          title="點擊篩選進行中機種"
+        >
+          <div className="kpi-header">
+            <span className="kpi-title">進行中機種</span>
+            <span className="kpi-icon kpi-icon-amber" aria-hidden="true">⏳</span>
+          </div>
+          <div className="kpi-value font-mono">{countInProgress}</div>
+          <p className="kpi-hint">點擊篩選進行中案件</p>
         </div>
 
-        <div className="toolbar-settings">
-          <div className="control-group">
-            <span className="control-label">字體大小:</span>
-            <div className="btn-toggle-group">
-              <button type="button" className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`} onClick={() => setFontSize('small')} title="12px">小</button>
-              <button type="button" className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`} onClick={() => setFontSize('medium')} title="14px">中</button>
-              <button type="button" className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`} onClick={() => setFontSize('large')} title="16px">大</button>
-            </div>
+        <div
+          onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
+          className={`kpi-card ${filterMode === 'completed' ? 'active' : ''}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('completed'); setCurrentPage(1); } }}
+          title="點擊篩選已完成簽核機種"
+        >
+          <div className="kpi-header">
+            <span className="kpi-title">已完成簽核</span>
+            <span className="kpi-icon kpi-icon-emerald" aria-hidden="true">✅</span>
           </div>
-          <div className="control-group">
-            <span className="control-label">表格間距:</span>
-            <div className="btn-toggle-group">
-              <button type="button" className={`toggle-btn ${rowSpacing === 'compact' ? 'active' : ''}`} onClick={() => setRowSpacing('compact')} title="緊湊間距">緊湊</button>
-              <button type="button" className={`toggle-btn ${rowSpacing === 'normal' ? 'active' : ''}`} onClick={() => setRowSpacing('normal')} title="標準間距">標準</button>
-              <button type="button" className={`toggle-btn ${rowSpacing === 'relaxed' ? 'active' : ''}`} onClick={() => setRowSpacing('relaxed')} title="寬鬆間距">寬鬆</button>
-            </div>
+          <div className="kpi-value font-mono kpi-value-emerald">{countCompleted}</div>
+          <p className="kpi-hint">三方簽章已完成核准</p>
+        </div>
+
+        <div
+          onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
+          className={`kpi-card ${filterMode === 'rejected' ? 'active' : ''}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('rejected'); setCurrentPage(1); } }}
+          title="點擊篩選品保退件案件"
+        >
+          <div className="kpi-header">
+            <span className="kpi-title">已退件待修正</span>
+            <span className="kpi-icon kpi-icon-red" aria-hidden="true">⛔</span>
           </div>
+          <div className="kpi-value font-mono kpi-value-red">{countRejected}</div>
+          <p className="kpi-hint">需工程或研發重審</p>
+        </div>
+
+        <div
+          onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
+          className={`kpi-card ${filterMode === 'all' ? 'active' : ''}`}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('all'); setCurrentPage(1); } }}
+          title="點擊檢視全部機種"
+        >
+          <div className="kpi-header">
+            <span className="kpi-title">全部機種清冊</span>
+            <span className="kpi-icon kpi-icon-blue" aria-hidden="true">📁</span>
+          </div>
+          <div className="kpi-value font-mono">{countAll}</div>
+          <p className="kpi-hint">全量機種總數</p>
         </div>
       </div>
 
-      {/* 手機版單列 Segmented Control（進行中／已完成／退件／全部，每段 ≥44 高） */}
-      <div className="mobile-segmented-control show-on-mobile" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filterMode === 'in-progress'}
-          className={`mobile-segment-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
-          onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
-        >
-          進行中 ({countInProgress})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filterMode === 'completed'}
-          className={`mobile-segment-btn ${filterMode === 'completed' ? 'active' : ''}`}
-          onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
-        >
-          已完成 ({countCompleted})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filterMode === 'rejected'}
-          className={`mobile-segment-btn ${filterMode === 'rejected' ? 'active' : ''}`}
-          onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
-        >
-          退件 ({countRejected})
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={filterMode === 'all'}
-          className={`mobile-segment-btn ${filterMode === 'all' ? 'active' : ''}`}
-          onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
-        >
-          全部 ({countAll})
-        </button>
+      {/* 整合式工作台卡片：搜尋、篩選膠囊與字級排版控制 */}
+      <div className="project-workbench-card glass-card">
+        <div className="workbench-top-row">
+          {/* 搜尋列 */}
+          <div className="project-search-container">
+            <span className="search-icon"><uiIcons.search size={18} /></span>
+            <input 
+              type="text" 
+              className="search-input" 
+              placeholder="搜尋機種名稱... (按 / 鍵聚焦)" 
+              name="search" 
+              value={searchTerm} 
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} 
+              title="按 / 鍵可快速搜尋"
+            />
+            {searchTerm && (
+              <button type="button" 
+                className="search-clear-btn" 
+                onClick={() => { setSearchTerm(''); setCurrentPage(1); }} 
+                title="清除搜尋內容"
+                aria-label="清除搜尋內容"
+              >
+                <uiIcons.close size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* 桌機版工具列篩選與顯示選項 */}
+          <div className="project-list-toolbar hide-on-mobile">
+            <div className="toolbar-tabs">
+              <button type="button" 
+                className={`tab-filter-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
+                onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
+              >
+                ⏳ 進行中 ({countInProgress})
+              </button>
+              <button type="button" 
+                className={`tab-filter-btn ${filterMode === 'completed' ? 'active' : ''}`}
+                onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
+              >
+                ✅ 已完成 ({countCompleted})
+              </button>
+              <button type="button" 
+                className={`tab-filter-btn ${filterMode === 'rejected' ? 'active' : ''}`}
+                onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
+                style={{ color: filterMode === 'rejected' ? '#e11d48' : undefined }}
+              >
+                ⛔ 已退件 ({countRejected})
+              </button>
+              <button type="button" 
+                className={`tab-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
+                onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
+              >
+                📁 全部 ({countAll})
+              </button>
+            </div>
+
+            <div className="toolbar-settings">
+              <div className="control-group">
+                <span className="control-label">字體大小:</span>
+                <div className="btn-toggle-group">
+                  <button type="button" className={`toggle-btn ${fontSize === 'small' ? 'active' : ''}`} onClick={() => setFontSize('small')} title="12px">小</button>
+                  <button type="button" className={`toggle-btn ${fontSize === 'medium' ? 'active' : ''}`} onClick={() => setFontSize('medium')} title="14px">中</button>
+                  <button type="button" className={`toggle-btn ${fontSize === 'large' ? 'active' : ''}`} onClick={() => setFontSize('large')} title="16px">大</button>
+                </div>
+              </div>
+              <div className="control-group">
+                <span className="control-label">表格間距:</span>
+                <div className="btn-toggle-group">
+                  <button type="button" className={`toggle-btn ${rowSpacing === 'compact' ? 'active' : ''}`} onClick={() => setRowSpacing('compact')} title="緊湊間距">緊湊</button>
+                  <button type="button" className={`toggle-btn ${rowSpacing === 'normal' ? 'active' : ''}`} onClick={() => setRowSpacing('normal')} title="標準間距">標準</button>
+                  <button type="button" className={`toggle-btn ${rowSpacing === 'relaxed' ? 'active' : ''}`} onClick={() => setRowSpacing('relaxed')} title="寬鬆間距">寬鬆</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 手機版單列 Segmented Control（進行中／已完成／退件／全部，每段 ≥44 高） */}
+        <div className="mobile-segmented-control show-on-mobile" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filterMode === 'in-progress'}
+            className={`mobile-segment-btn ${filterMode === 'in-progress' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('in-progress'); setCurrentPage(1); }}
+          >
+            進行中 ({countInProgress})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filterMode === 'completed'}
+            className={`mobile-segment-btn ${filterMode === 'completed' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('completed'); setCurrentPage(1); }}
+          >
+            已完成 ({countCompleted})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filterMode === 'rejected'}
+            className={`mobile-segment-btn ${filterMode === 'rejected' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('rejected'); setCurrentPage(1); }}
+          >
+            退件 ({countRejected})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filterMode === 'all'}
+            className={`mobile-segment-btn ${filterMode === 'all' ? 'active' : ''}`}
+            onClick={() => { setFilterMode('all'); setCurrentPage(1); }}
+          >
+            全部 ({countAll})
+          </button>
+        </div>
+
+        {/* 工具列底部分隔線後的統計列 (對齊 SQE DailyWork) */}
+        <div className="workbench-meta-bar">
+          <span className="meta-item">共 <strong className="font-mono text-slate-800">{filteredProjects.length}</strong> 筆機種單據</span>
+          <span className="meta-item">第 <strong className="font-mono text-slate-800">{validCurrentPage}</strong> / <strong className="font-mono text-slate-800">{totalPages}</strong> 頁</span>
+        </div>
       </div>
 
       {/* 機種一覽表 (表格視圖) */}
@@ -437,7 +532,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                             style={{ width: `${projRate}%` }}
                           ></div>
                         </div>
-                        <span className={`table-progress-rate ${projRate === 100 ? 'aligned' : ''}`}>
+                        <span className={`table-progress-rate font-mono ${projRate === 100 ? 'aligned' : ''}`}>
                           {projRate}%
                         </span>
                       </div>
@@ -447,7 +542,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                         {projStatus.label}
                       </span>
                     </td>
-                    <td className="table-date-cell">
+                    <td className="table-date-cell font-mono">
                       <span className="mobile-date-label show-on-mobile">🕒 更新時間：</span>
                       {dateDisplay}
                     </td>

@@ -238,8 +238,22 @@ export default function AppShell({
             </button>
           )}
 
-          <div className="topbar-title" title={inProject ? projectName : '機種管理中心'}>
-            {inProject ? projectName : '機種管理中心'}
+          <div className="topbar-title" title={inProject ? `${projectName} · ${currentStep?.label || (activeTab === 'dashboard' ? '儀表板' : activeTab)}` : '機種管理中心'}>
+            {inProject ? (
+              <div className="topbar-breadcrumbs">
+                <button type="button" className="breadcrumb-link" onClick={onBackToList} title="回機種管理中心">
+                  機種管理中心
+                </button>
+                <span className="breadcrumb-sep" aria-hidden="true">/</span>
+                <span className="breadcrumb-proj" title={projectName}>{projectName}</span>
+                <span className="breadcrumb-sep" aria-hidden="true">/</span>
+                <span className="breadcrumb-current">
+                  {currentStep ? currentStep.label : activeTab === 'dashboard' ? '儀表板' : activeTab === 'settings' ? '設定' : activeTab === 'account' ? '個人帳號' : '檢視'}
+                </span>
+              </div>
+            ) : (
+              '機種管理中心'
+            )}
           </div>
 
           <div className="topbar-right">

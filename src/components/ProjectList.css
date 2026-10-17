@@ -14,22 +14,25 @@
   padding: 24px;
   flex-wrap: wrap;
   gap: 16px;
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-lg, 12px);
+  box-shadow: var(--sh-1);
 }
 
 .project-list-header h2 {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #1f2937;
-  background: linear-gradient(135deg, #1f2937 0%, #4f46e5 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin: 0 0 4px 0;
+  color: var(--c-text-1, #0f172a);
+  letter-spacing: -0.02em;
 }
 
-.project-list-header p {
+.project-list-header p,
+.project-list-header .header-desc {
   margin: 0;
-  font-size: 14px;
-  color: #4b5563;
+  font-size: 0.875rem;
+  color: var(--c-text-3, #64748b);
 }
 
 .header-actions {
@@ -37,53 +40,148 @@
   gap: 12px;
 }
 
+/* 4 欄式互動 KPI 統計卡 (對齊 SQE DailyWork 首頁 4-Column Metric Cards) */
+.project-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 1024px) {
+  .project-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+@media (max-width: 480px) {
+  .project-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kpi-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-lg, 12px);
+  padding: 16px;
+  box-shadow: var(--sh-1);
+  cursor: pointer;
+  transition: all var(--dur) var(--ease);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+.kpi-card:hover {
+  border-color: var(--c-accent-border, #bfdbfe);
+  box-shadow: var(--sh-2);
+}
+.kpi-card.active {
+  border-color: var(--c-accent, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+.kpi-title {
+  font-weight: 600;
+  color: var(--c-text-1, #0f172a);
+}
+.kpi-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.kpi-value {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--c-text-1, #0f172a);
+  margin-top: 8px;
+  line-height: 1.2;
+}
+.kpi-value-emerald { color: var(--c-success, #059669); }
+.kpi-value-red { color: var(--c-error, #dc2626); }
+.kpi-hint {
+  font-size: 0.75rem;
+  color: var(--c-text-3, #64748b);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 整合式工作台卡片：包含搜尋、篩選與統計列 */
+.project-workbench-card {
+  background: var(--c-surface, #ffffff);
+  border: 1px solid var(--c-border, #e2e8f0);
+  border-radius: var(--r-lg, 12px);
+  padding: 16px;
+  box-shadow: var(--sh-1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workbench-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
 /* 搜尋區塊 */
 .project-search-container {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.95);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  border-radius: 12px;
+  gap: 10px;
+  padding: 0 14px;
+  min-height: 40px;
+  border: 1px solid var(--c-border-strong, #cbd5e1);
+  background: var(--c-surface-2, #f8fafc);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  border-radius: var(--r-md, 8px);
+  flex: 1 1 280px;
+  max-width: 360px;
 }
 
 .project-search-container:focus-within {
-  border-color: rgba(99, 102, 241, 0.4);
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.15);
+  background: #ffffff;
+  border-color: var(--c-accent, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
 }
 
 .search-icon {
-  font-size: 18px;
-  color: #94a3b8;
+  font-size: 16px;
+  color: var(--c-text-3, #64748b);
+  display: inline-flex;
 }
 
 .search-input {
   flex: 1;
   border: none;
   background: transparent;
-  color: #1f2937;
-  font-size: 15px;
+  color: var(--c-text-1, #0f172a);
+  font-size: 14px;
   outline: none;
-  min-height: 44px;
-  padding: 8px 0;
+  height: 38px;
+  padding: 0;
   box-sizing: border-box;
 }
 
 .search-input::placeholder {
-  color: #9ca3af;
+  color: var(--c-text-3, #94a3b8);
 }
 
 .search-clear-btn {
   background: transparent;
   border: none;
-  color: #64748b;
+  color: var(--c-text-3, #64748b);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 16px;
   padding: 0 4px;
-  min-width: 36px;
-  min-height: 36px;
+  min-width: 32px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +189,7 @@
 }
 
 .search-clear-btn:hover {
-  color: #374151;
+  color: var(--c-text-1, #0f172a);
 }
 
 /* 工具列與檢視模式設定 */
@@ -99,10 +197,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 0;
   flex-wrap: wrap;
   gap: 16px;
-  background: rgba(0, 0, 0, 0.02);
+  background: transparent;
 }
 
 .toolbar-tabs {
@@ -111,30 +209,46 @@
 }
 
 .tab-filter-btn {
-  background: transparent;
-  border: none;
-  color: #4b5563;
-  padding: 8px 14px;
-  border-radius: 6px;
+  background: var(--c-surface-2, #f1f5f9);
+  border: 1px solid transparent;
+  color: var(--c-text-2, #475569);
+  padding: 6px 14px;
+  border-radius: var(--r-md, 8px);
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 600;
   cursor: pointer;
   min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all var(--dur) var(--ease);
 }
 
 .tab-filter-btn:hover {
-  color: #1f2937;
-  background: rgba(0, 0, 0, 0.04);
+  color: var(--c-text-1, #0f172a);
+  background: var(--c-surface-3, #e2e8f0);
 }
 
 .tab-filter-btn.active {
-  color: #4f46e5;
-  background: rgba(79, 70, 229, 0.08);
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  color: #ffffff !important;
+  background: var(--c-accent, #2563eb) !important;
+  border-color: var(--c-accent, #2563eb);
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+/* 工作台工具列底部分隔線後的統計列 */
+.workbench-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid var(--c-border-subtle, #f1f5f9);
+  font-size: 0.8125rem;
+  color: var(--c-text-3, #64748b);
+  font-weight: 500;
+}
+.workbench-meta-bar .meta-item strong {
+  color: var(--c-text-1, #0f172a);
 }
 
 .toolbar-settings {
@@ -214,37 +328,44 @@
   }
 }
 
-/* 一覽表 (表格視圖) */
+/* 一覽表 (表格視圖) - SQE DailyWork 工業級工作台風格 */
 .project-table-wrapper {
   overflow-x: auto;
-  border: 1px solid var(--border-color);
-  background: var(--bg-secondary);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  background: var(--c-surface-1);
+  box-shadow: var(--sh-1);
 }
 
 .project-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
 }
 
 .project-table th {
-  background: rgba(0, 0, 0, 0.02);
-  color: #4b5563;
+  background: var(--c-surface-2);
+  color: var(--c-text-2);
   font-weight: 600;
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--c-border);
 }
 
 .project-table td {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: #374151;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--c-border);
+  color: var(--c-text-1);
+  transition: background-color 0.15s ease;
 }
 
 .project-table tbody tr:hover td {
-  background: rgba(0, 0, 0, 0.01);
+  background: rgba(239, 246, 255, 0.55);
+}
+
+.project-table tbody tr:hover .proj-name-text {
+  color: var(--c-accent);
 }
 
 .project-table tbody tr:last-child td {
@@ -262,7 +383,7 @@
 
 .proj-folder-icon {
   font-size: 16px;
-  color: #4f46e5;
+  color: var(--c-accent);
 }
 
 .proj-name-text {
@@ -305,6 +426,7 @@
   color: #f59e0b;
   width: 36px;
   text-align: right;
+  font-family: var(--font-mono);
 }
 
 .table-progress-rate.aligned {
@@ -313,7 +435,8 @@
 
 .table-date-cell {
   font-size: 13px;
-  color: #6b7280;
+  color: var(--c-text-3);
+  font-family: var(--font-mono);
 }
 
 .table-actions-cell {
@@ -329,16 +452,18 @@
 }
 
 .btn-edit {
-  background: rgba(79, 70, 229, 0.08);
-  color: #4f46e5;
-  border: 1px solid rgba(79, 70, 229, 0.2);
+  background: rgba(37, 99, 235, 0.08);
+  color: var(--c-accent);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  font-weight: 550;
+  border-radius: var(--r-md);
 }
 
 .btn-edit:hover {
-  background: var(--accent-color);
+  background: var(--c-accent);
   color: #fff;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
+  border-color: var(--c-accent);
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
 }
 
 /* 空白狀態 */

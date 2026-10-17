@@ -5,7 +5,7 @@
 .section-title {
   font-family: 'Outfit', sans-serif;
   font-size: 1.3rem;
-  color: #000000;
+  color: var(--c-text-1);
   margin-bottom: 0.25rem;
   border-bottom: 2px solid var(--accent-color);
   padding-bottom: 0.35rem;
@@ -14,7 +14,7 @@
 
 .section-subtitle {
   font-size: 0.88rem;
-  color: #111111;
+  color: var(--c-text-2);
   margin-bottom: 1.25rem;
 }
 
@@ -69,7 +69,7 @@
 .sub-section-title {
   font-family: 'Outfit', sans-serif;
   font-size: 1.05rem;
-  color: #000000;
+  color: var(--c-text-1);
   margin: 1rem 0 0.75rem;
   display: flex;
   align-items: center;
@@ -78,7 +78,7 @@
 
 .description-text {
   font-size: 0.85rem;
-  color: #111111;
+  color: var(--c-text-2);
   margin-bottom: 0.75rem;
 }
 
@@ -171,7 +171,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.9rem;
-  color: #000000;
+  color: var(--c-text-1);
   cursor: pointer;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
@@ -180,7 +180,7 @@
 
 .checkbox-label:hover:not([disabled]), .radio-label:hover:not([disabled]) {
   background: rgba(0, 0, 0, 0.04);
-  color: #000000;
+  color: var(--c-text-1);
 }
 
 .checkbox-label input[type="checkbox"], .radio-label input[type="radio"] {
@@ -303,7 +303,7 @@ input:checked + .slider:before {
 .tool-name {
   font-size: 0.9rem;
   font-weight: 550;
-  color: #000000;
+  color: var(--c-text-1);
   min-width: 120px;
 }
 
@@ -313,19 +313,19 @@ input:checked + .slider:before {
 
 /* Edit active VS Readonly styling */
 .form-input.edit-active {
-  border-color: rgba(79, 70, 229, 0.3);
-  background: rgba(79, 70, 229, 0.02);
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(37, 99, 235, 0.02);
 }
 
 .form-input.edit-active:focus {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 10px rgba(79, 70, 229, 0.15);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .form-input.readonly {
-  background: rgba(255, 255, 255, 0.02);
-  color: #9ca3af;
-  border-color: rgba(255, 255, 255, 0.03);
+  background: var(--c-surface-2);
+  color: var(--c-text-3);
+  border-color: var(--c-border);
   cursor: not-allowed;
 }
 
@@ -337,10 +337,10 @@ input:checked + .slider:before {
 .form-textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: #000000;
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-1);
   font-family: inherit;
   font-size: 0.95rem;
   resize: vertical;
@@ -349,18 +349,18 @@ input:checked + .slider:before {
 
 .form-textarea:focus {
   outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 /* Highlights for missing / required fields */
 .required-highlight .form-label {
-  color: #000000;
+  color: var(--c-text-1);
   font-weight: 600;
 }
 
 .req {
-  color: var(--error-color);
+  color: var(--c-error);
   margin-left: 2px;
 }
 
@@ -368,6 +368,8 @@ input:checked + .slider:before {
 .temp-points-table-wrapper {
   overflow-x: auto;
   margin-top: 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
 }
 
 .form-table {
@@ -379,26 +381,28 @@ input:checked + .slider:before {
 
 .form-table th, .form-table td {
   padding: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  border-bottom: 1px solid var(--c-border);
 }
 
 .form-table th {
-  color: #000000;
-  font-weight: 500;
-  background: rgba(0, 0, 0, 0.05);
+  color: var(--c-text-2);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  background: var(--c-surface-2);
 }
 
 .form-table td {
-  color: #000000;
+  color: var(--c-text-1);
 }
 
 .table-input {
   width: 100%;
   padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  color: #000000;
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  color: var(--c-text-1);
   font-size: 0.85rem;
   transition: all 0.2s ease;
 }
@@ -455,7 +459,7 @@ input:checked + .slider:before {
 .record-name {
   font-size: 0.88rem;
   line-height: 1.4;
-  color: #000000;
+  color: var(--c-text-1);
 }
 
 .date-input-wrapper {
@@ -475,7 +479,7 @@ input:checked + .slider:before {
   padding: 0.75rem 1.5rem;
   font-size: 0.95rem;
   border-radius: 10px;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
 }
 
 /* Anim */
@@ -500,10 +504,10 @@ input:checked + .slider:before {
   flex-wrap: wrap;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.95);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  color: #000000;
+  background: var(--c-surface-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  color: var(--c-text-1);
   font-size: 0.95rem;
   line-height: 1.5;
   gap: 6px;
@@ -513,10 +517,10 @@ input:checked + .slider:before {
   width: 58px;
   text-align: center;
   border: none;
-  border-bottom: 2px solid var(--accent-color);
-  background: rgba(255, 255, 255, 0.95);
-  color: #000000;
-  font-family: inherit;
+  border-bottom: 2px solid var(--c-accent);
+  background: var(--c-surface-1);
+  color: var(--c-text-1);
+  font-family: var(--font-mono);
   font-size: 0.95rem;
   font-weight: 600;
   outline: none;

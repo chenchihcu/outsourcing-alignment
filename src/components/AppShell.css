@@ -36,26 +36,28 @@
 
 .brand-mark {
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--r-md);
   background: var(--c-accent);
   color: #fff;
   font-family: 'Outfit', sans-serif;
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.15rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
 }
 
 .brand-text { display: flex; flex-direction: column; min-width: 0; }
 .brand-title {
   font-family: 'Outfit', sans-serif;
-  font-weight: 650;
+  font-weight: 700;
   font-size: var(--fs-base);
   color: var(--c-text-1);
   white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 .brand-sub { font-size: var(--fs-xs); color: var(--c-text-3); white-space: nowrap; }
 
@@ -109,14 +111,13 @@
   transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
 }
 .nav-item:hover { background: var(--c-surface-2); color: var(--c-text-1); }
-.nav-item.active { background: var(--c-accent-weak); color: var(--c-accent-hover); font-weight: 650; }
+.nav-item.active { background: var(--c-accent-weak); color: var(--c-accent-hover); font-weight: 700; }
 .nav-item.active::before {
   content: '';
   position: absolute;
-  left: 0; top: 50%;
-  transform: translateY(-50%);
-  width: 3px; height: 18px;
-  border-radius: 0 3px 3px 0;
+  left: 0; top: 8px; bottom: 8px;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
   background: var(--c-accent);
 }
 
@@ -177,6 +178,7 @@
   gap: var(--sp-2);
   padding: var(--sp-3) var(--sp-4);
   border-top: 1px solid var(--c-border);
+  background: rgba(248, 250, 252, 0.75);
 }
 .user-avatar { font-size: 1.2rem; flex-shrink: 0; }
 .user-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -197,7 +199,7 @@
   justify-content: center;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.user-logout:hover { background: var(--c-error-weak); border-color: var(--c-error); }
+.user-logout:hover { background: var(--c-error-weak); border-color: var(--c-error-border); }
 
 /* 收合按鈕(僅桌機) */
 .rail-collapse {
@@ -246,7 +248,9 @@
   gap: var(--sp-3);
   height: var(--shell-topbar-h);
   padding: 0 var(--sp-5);
-  background: var(--c-surface);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--c-border);
 }
 .topbar-burger {
@@ -271,6 +275,50 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* 頂欄階層麵包屑 (SQE DailyWork 工作台風格) */
+.topbar-breadcrumbs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-sm);
+  color: var(--c-text-3);
+  min-width: 0;
+  max-width: 100%;
+}
+.breadcrumb-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 550;
+  color: var(--c-text-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--dur) var(--ease);
+}
+.breadcrumb-link:hover {
+  color: var(--c-accent);
+}
+.breadcrumb-sep {
+  color: var(--c-border-strong);
+  font-size: 0.85em;
+  user-select: none;
+}
+.breadcrumb-proj {
+  color: var(--c-text-2);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+.breadcrumb-current {
+  color: var(--c-text-1);
+  font-weight: 700;
+  white-space: nowrap;
 }
 .topbar-mobile-back {
   display: none;
@@ -547,6 +595,16 @@
     font-weight: 600;
     text-align: center;
     line-height: 1.2;
+  }
+
+  .topbar-breadcrumbs {
+    display: inline-flex;
+    justify-content: center;
+  }
+  .topbar-breadcrumbs .breadcrumb-link,
+  .topbar-breadcrumbs .breadcrumb-sep,
+  .topbar-breadcrumbs .breadcrumb-proj {
+    display: none !important;
   }
 
   .topbar-right {

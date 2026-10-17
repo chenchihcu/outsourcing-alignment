@@ -14,33 +14,37 @@ html {
 }
 
 :root {
-  /* ---- 中性色階(canvas / surface / 文字 / 邊框) ---- */
-  --c-bg: #f6f7f9;
-  --c-app: #f6f7f9;          /* 整體底色 */
+  /* ---- 中性色階 (Slate 企業工作台風格) ---- */
+  --c-bg: #f8fafc;           /* slate-50 整體底色 */
+  --c-app: #f8fafc;          /* slate-50 整體底色 */
   --c-surface: #ffffff;      /* 卡片 / 面板 */
-  --c-surface-2: #f1f3f5;    /* 次級面板 / hover 底 */
-  --c-surface-3: #e9ecef;    /* 更深的襯底 */
+  --c-surface-2: #f1f5f9;    /* slate-100 次級面板 / hover 底 */
+  --c-surface-3: #e2e8f0;    /* slate-200 更深的襯底 */
 
-  --c-text-1: #1a1d21;       /* 主要文字 */
-  --c-text-2: #565d68;       /* 次要文字 */
-  --c-text-3: #6b7280;       /* 輔助 / 提示 (對比度 ≥ 4.5:1 合格) */
+  --c-text-1: #0f172a;       /* slate-900 主要文字 */
+  --c-text-2: #475569;       /* slate-600 次要文字 */
+  --c-text-3: #64748b;       /* slate-500 輔助說明 (對比度 ≥ 4.5:1 合格) */
   --c-text-on-accent: #ffffff;
   --c-on-accent: #ffffff;
 
-  --c-border: #e6e8ec;       /* 標準邊框 */
-  --c-border-strong: #d2d7de;/* 強調邊框 / hover */
+  --c-border: #e2e8f0;       /* slate-200 標準邊框 */
+  --c-border-subtle: #f1f5f9;/* slate-100 次級邊框 */
+  --c-border-strong: #cbd5e1;/* slate-300 強調邊框 / hover */
 
-  /* ---- 品牌 / 強調色(克制使用) ---- */
-  --c-accent: #4f46e5;
-  --c-accent-hover: #4338ca;
-  --c-accent-weak: #eef0fe;  /* 選中/標籤底 */
-  --c-accent-border: #c7cbf7;
+  /* ---- 品牌 / 強調色 (Royal Blue 皇家工程藍) ---- */
+  --c-accent: #2563eb;       /* blue-600 */
+  --c-accent-hover: #1d4ed8; /* blue-700 */
+  --c-accent-weak: #eff6ff;  /* blue-50 選中/標籤底 */
+  --c-accent-border: #bfdbfe;/* blue-200 */
 
-  /* ---- 語意色 + 弱底 ---- */
-  --c-success: #15803d;  --c-success-weak: #e7f6ec;
-  --c-warning: #b45309;  --c-warning-weak: #fdf2e3;
-  --c-error:   #dc2626;  --c-error-weak:   #fdeaea;
-  --c-info:    #2563eb;  --c-info-weak:    #e8f0fe;
+  /* ---- 語意色 + 弱底 + 邊框 (Emerald / Amber / Red / Blue) ---- */
+  --c-success: #059669;  --c-success-weak: #ecfdf5;  --c-success-border: #a7f3d0;
+  --c-warning: #d97706;  --c-warning-weak: #fffbeb;  --c-warning-border: #fde68a;
+  --c-error:   #dc2626;  --c-error-weak:   #fef2f2;  --c-error-border:   #fecaca;
+  --c-info:    #2563eb;  --c-info-weak:    #eff6ff;  --c-info-border:    #bfdbfe;
+
+  /* ---- 字體族群 (含等寬數據字體) ---- */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 
   /* ---- 陰影(扁平、克制) ---- */
   --sh-1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);

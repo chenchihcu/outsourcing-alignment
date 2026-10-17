@@ -93,8 +93,8 @@
   gap: var(--sp-3, 12px);
   padding: 10px 16px;
   margin-bottom: 12px;
-  background: var(--c-info-weak, #e8f0fe);
-  border: 1px solid var(--c-info, #2563eb);
+  background: var(--c-info-weak, #eff6ff);
+  border: 1px solid var(--c-info-border, #bfdbfe);
   border-radius: var(--r-md, 8px);
   color: var(--c-info, #2563eb);
   font-size: 0.85rem;
@@ -105,9 +105,51 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--c-text-2, #565d68);
+  color: var(--c-text-2, #475569);
   font-size: 0.82rem;
   text-decoration: underline;
+}
+
+/* 全域系統告警橫幅 (對齊 SQE DailyWork Toast / Banner) */
+.system-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3, 12px);
+  padding: 10px 16px;
+  margin: 10px 16px 0;
+  border-radius: var(--r-md, 8px);
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: var(--sh-1);
+}
+.system-alert-warning {
+  background: var(--c-warning-weak);
+  border: 1px solid var(--c-warning-border);
+  color: var(--c-warning);
+}
+.system-alert-danger {
+  background: var(--c-error-weak);
+  border: 1px solid var(--c-error-border);
+  color: var(--c-error);
+}
+.system-alert-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: opacity 0.2s;
+}
+.system-alert-close:hover {
+  opacity: 0.7;
 }
 
 /* App Main Welcome Layout */

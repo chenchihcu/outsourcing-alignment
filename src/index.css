@@ -34,6 +34,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+::selection {
+  background-color: var(--c-accent);
+  color: var(--c-text-on-accent);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -47,16 +52,20 @@ body {
   overflow-x: hidden;
 }
 
+.font-mono {
+  font-family: var(--font-mono);
+}
+
 h1, h2, h3, h4 {
   font-family: 'Outfit', 'Inter', sans-serif;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
 
-/* Card surface(企業風:實色面板、扁平陰影、無浮起動畫) */
+/* Card surface (Slate 工作台風格: 實色面板、細邊框、扁平陰影) */
 .glass-card {
   background: var(--c-surface);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   box-shadow: var(--sh-1);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
@@ -191,8 +200,8 @@ h1, h2, h3, h4 {
 
 .form-input:focus {
   outline: none;
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
 }
 
 /* 下拉選單 (Select) 與選項 (Option) 樣式修正：
