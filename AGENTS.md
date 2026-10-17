@@ -43,9 +43,17 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
 - **端對端測試建置時效與雲端會話 Mock 守衛**:
   Playwright 仰賴 `vite preview` 靜態伺服器，執行測試前若有修改原始碼，必須先執行 `npm run build` 更新 `dist/`，防範測試執行於舊版快取；且在啟用 Supabase 連線時，端對端測試須於 `beforeEach` 中 Mock 驗證 API（`**/auth/v1/user`、`**/rest/v1/profiles*`）並注入相容之 `ag_sb_auth` Token，避免受保護頁面被安全守衛踢回登入頁。
 - **全站字體族群與字級階層治理 (Typography & Font Consistency Guardrail)**:
-  1. 各元件樣式嚴禁散落硬編碼未載入的 Webfont（如 `'Outfit'`、`'Inter'`）或隨機 px/rem（如 `0.88rem`, `0.95rem`, `1.05rem`, `13px`, `14px` 等），必須統一以 `src/styles/tokens.css` 的 `--font-sans`、`--font-display`、`--font-mono` 與 `--fs-*`（`--fs-caption` 至 `--fs-large-title`）為唯一事實來源（SSOT）。
+  規則：全站介面字型與字級必須統一以 `src/styles/tokens.css` 的 `--font-sans`、`--font-display`、`--font-mono` 與 `--fs-*`（`--fs-caption` 至 `--fs-large-title`）為唯一事實來源（SSOT），嚴禁散落硬編碼未載入的 Webfont（如 `'Outfit'`、`'Inter'`）或隨機 px/rem（如 `0.88rem`, `0.95rem`, `1.05rem`, `13px`, `14px` 等）：
+  1. 治理範圍嚴格涵蓋全站 `.css` 檔案以及所有 JSX 元件內的行內樣式（`style={{ fontSize: ... }}`）。嚴禁於 JSX 行內直接書寫裸露數值，必須引用 `var(--fs-...)` 或改以 CSS class 控管。
   2. 繁體中文系統字體堆疊必須兼顧 macOS/iOS (`PingFang TC`)、Windows (`Segoe UI` + `微軟正黑體`) 與 Linux (`Noto Sans TC`)，確保在廠區離線無外網環境下不依賴外部 Webfont CDN 亦具備清晰排版。
   3. 全域維持 `button, input, select, textarea { font-family: inherit; }` 防範原生表單控制項字型脫鉤；動態數值、百分比與 KPI 必須宣告 `font-variant-numeric: tabular-nums` 防止數值跳動導致排版抖動。
+  4. 字級上限天花板與微階層：全站文字大小上限嚴格受限於 14px (`0.875rem`)，由 `src/styles/tokens.css` 統一管理（大標題與主視覺 14px、次標題 13.5px、正文與按鈕 13px、註腳 12px、標籤/徽章 11px）。元件 CSS 與 JSX 行內樣式嚴禁寫死任何 >14px 之字級或 fallback；僅行動視口下針對表單輸入框依 iOS HIG 保留 16px 聚焦防縮放防護，以及實體紙本列印（`PrintReport.css` 採 `pt` 印刷點數）。
+  檢查：執行 `npm run qa:offline` 全數通過，且全局搜尋 `fontSize:\s*['"][0-9]` 0 命中，全站無非列印/非防縮放之 >14px 硬編碼。
+  出處：typography_audit 2026-10-17、tokens.css 2026-10-17；重複：1 專案（架構紅線）。
+- **React 元件檔案導出與 Fast Refresh 紀律 (React Component Export Guardrail)**:
+  規則：`.jsx` 元件檔案嚴禁同時 export 非元件常數或輔助工具函數（例如格式化轉換函數），避免破壞 Vite HMR Fast Refresh 並引發 `react-refresh/only-export-components` 造成 CI `npm run lint` 阻斷。純計算或文字格式化邏輯應獨立抽取至 `src/utils/`，或在必要共用時顯式標註 `// eslint-disable-next-line react-refresh/only-export-components`。
+  檢查：執行 `npm run lint` 必須 0 errors, 0 warnings。
+  出處：TrialReportSection.jsx 2026-10-17；重複：1 專案。
 - **SMT/PCBA 電子製造語意與專業名詞標準 (Terminology & Domain Semantics SSOT)**:
   規則：全站介面、驗證提示與報表文案必須嚴格對照 IPC-A-610、IPC J-STD-001、IPC-7525、IPC-7530、IPC-1601 與業界 EMS 規範，嚴禁倒退回口語俗稱或歧義詞彙：
   1. 焊點冶金：一律使用「潤濕性 / 沾錫性 (Solder Wetting)」，嚴禁使用「濕潤性」。
