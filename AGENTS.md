@@ -38,6 +38,10 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   專案全面託管於 Cloudflare Pages / Workers，統一以根目錄（`base: '/'`）為單一事實來源（SSOT），不使用動態子路徑；內建之自動化巡檢靜態伺服器（如 `scripts/buttonAudit.mjs`）必須具備子路徑前綴剝除容錯能力，防範資產路徑前綴導致 404 與 MIME 類型錯誤。
 - **雲端連線憑證解耦與離線測試防死鎖**:
   前端客戶端（`src/data/supabaseClient.js`）嚴禁硬編碼預設連線金鑰，必須完全由環境變數（`VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY`）動態決定 `isSupabaseEnabled`。未提供環境變數時一律退回純離線優先模式，避免無頭自動化測試遭遇遠端網路限流或連線超時死鎖。
+- **iOS 行動端人因工程與 HIG 規範守衛**:
+  行動端互動元件（按鈕、選單、標籤切換）點擊熱區最小必須為 `≥44×44 pt`（主要送出動作 `≥48~50 pt`）；表單輸入元件（`input`/`select`/`textarea`）在行動視口強制設定 `font-size: 16px` 以防範 iOS Safari 聚焦時觸發自動縮放；主題變數採 `@media (prefers-color-scheme: dark)` 與 `[data-theme="dark"]` 雙軌適配，直橫向視口皆須動態注入 `env(safe-area-inset-*)` 避讓靈動島與圓角裁切。
+- **端對端測試建置時效與雲端會話 Mock 守衛**:
+  Playwright 仰賴 `vite preview` 靜態伺服器，執行測試前若有修改原始碼，必須先執行 `npm run build` 更新 `dist/`，防範測試執行於舊版快取；且在啟用 Supabase 連線時，端對端測試須於 `beforeEach` 中 Mock 驗證 API（`**/auth/v1/user`、`**/rest/v1/profiles*`）並注入相容之 `ag_sb_auth` Token，避免受保護頁面被安全守衛踢回登入頁。
 
 ## 驗收 gate
 
