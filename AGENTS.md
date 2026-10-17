@@ -42,6 +42,10 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
   行動端互動元件（按鈕、選單、標籤切換）點擊熱區最小必須為 `≥44×44 pt`（主要送出動作 `≥48~50 pt`）；表單輸入元件（`input`/`select`/`textarea`）在行動視口強制設定 `font-size: 16px` 以防範 iOS Safari 聚焦時觸發自動縮放；主題變數採 `@media (prefers-color-scheme: dark)` 與 `[data-theme="dark"]` 雙軌適配，直橫向視口皆須動態注入 `env(safe-area-inset-*)` 避讓靈動島與圓角裁切。
 - **端對端測試建置時效與雲端會話 Mock 守衛**:
   Playwright 仰賴 `vite preview` 靜態伺服器，執行測試前若有修改原始碼，必須先執行 `npm run build` 更新 `dist/`，防範測試執行於舊版快取；且在啟用 Supabase 連線時，端對端測試須於 `beforeEach` 中 Mock 驗證 API（`**/auth/v1/user`、`**/rest/v1/profiles*`）並注入相容之 `ag_sb_auth` Token，避免受保護頁面被安全守衛踢回登入頁。
+- **全站字體族群與字級階層治理 (Typography & Font Consistency Guardrail)**:
+  1. 各元件樣式嚴禁散落硬編碼未載入的 Webfont（如 `'Outfit'`、`'Inter'`）或隨機 px/rem（如 `0.88rem`, `0.95rem`, `1.05rem`, `13px`, `14px` 等），必須統一以 `src/styles/tokens.css` 的 `--font-sans`、`--font-display`、`--font-mono` 與 `--fs-*`（`--fs-caption` 至 `--fs-large-title`）為唯一事實來源（SSOT）。
+  2. 繁體中文系統字體堆疊必須兼顧 macOS/iOS (`PingFang TC`)、Windows (`Segoe UI` + `微軟正黑體`) 與 Linux (`Noto Sans TC`)，確保在廠區離線無外網環境下不依賴外部 Webfont CDN 亦具備清晰排版。
+  3. 全域維持 `button, input, select, textarea { font-family: inherit; }` 防範原生表單控制項字型脫鉤；動態數值、百分比與 KPI 必須宣告 `font-variant-numeric: tabular-nums` 防止數值跳動導致排版抖動。
 
 ## 驗收 gate
 
