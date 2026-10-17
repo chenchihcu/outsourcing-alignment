@@ -20,7 +20,7 @@ export default function AccountSettings({ currentUser, onUpdateAccountSignature,
 
   return (
     <div className="account-settings-container animate-fade-in" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '1.4rem', fontWeight: 600, color: 'var(--c-text-1, #0f172a)', marginBottom: '8px' }}>
+      <h2 style={{ fontSize: 'var(--fs-title-3, 1.25rem)', fontWeight: 600, color: 'var(--c-text-1, #0f172a)', marginBottom: '8px' }}>
         👤 個人帳號與電子簽章設定
       </h2>
       <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: '0.9rem', marginBottom: '24px' }}>

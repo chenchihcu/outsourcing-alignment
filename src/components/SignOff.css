@@ -141,7 +141,7 @@
 }
 
 .warning-emoji, .success-emoji {
-  font-size: var(--fs-title-1);
+  font-size: var(--fs-title-2);
   flex-shrink: 0;
 }
 

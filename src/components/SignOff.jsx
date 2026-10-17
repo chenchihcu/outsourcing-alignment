@@ -736,7 +736,7 @@ export default function SignOff({
       {exportSuccess && (
         <div className="export-success-card glass-card animate-fade-in" role="status" style={{ marginTop: '20px', padding: '24px', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center', background: 'rgba(16, 185, 129, 0.05)' }}>
           <span style={{ fontSize: '2rem', color: '#10b981', display: 'block', marginBottom: '8px' }}>✓</span>
-          <h3 style={{ margin: '0 0 8px 0', fontSize: '1.4rem' }}>Excel 已匯出</h3>
+          <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--fs-title-3, 1.25rem)' }}>Excel 已匯出</h3>
           <p style={{ margin: '0 0 16px 0', color: 'var(--c-text-2, #64748b)' }}>簽核版文件已完成下載（{fileName}_對齊簽核版.xlsx）。</p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
             <button type="button" className="btn btn-primary" onClick={() => setExportSuccess(false)}>

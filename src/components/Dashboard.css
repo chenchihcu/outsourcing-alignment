@@ -28,7 +28,7 @@
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: var(--fs-large-title);
+  font-size: var(--fs-title-1);
   line-height: 1;
   color: var(--c-accent);
 }
@@ -193,7 +193,7 @@
     min-width: 0; padding-right: 0; padding-bottom: var(--sp-3);
     border-right: none; border-bottom: 1px solid var(--c-border);
   }
-  .rate-num { font-size: var(--fs-title-1); }
+  .rate-num { font-size: var(--fs-title-2); }
   .dash-next { flex-direction: column; align-items: stretch; gap: var(--sp-3); }
   .next-cta { justify-content: center; }
 }
