@@ -201,10 +201,25 @@ test.describe('F19: iOS Safari iPhone 16 Pro Max 行動版 UI 與 HIG 規格驗�
       const position = await tabbar.evaluate(el => window.getComputedStyle(el).position);
       expect(position).toBe('fixed');
 
-      // 進入步驟頁時，隱藏 MobileTabBar 避免遮擋 >120px
+      // 進入步驟頁時，MobileTabBar 保持常駐可見，且完整顯示 5 個捷徑圖示（機種 / 儀表板 / 流程 / 待辦 / 帳號）
       await page.goto(`/#/projects/${projectId}/basicInfo`);
       await page.waitForLoadState('networkidle');
-      await expect(tabbar).toBeHidden();
+      await expect(tabbar).toBeVisible();
+
+      const items = tabbar.locator('.mobile-tab-item');
+      await expect(items).toHaveCount(5);
+
+      const workflowTab = tabbar.locator('.mobile-tab-item', { hasText: '流程' });
+      await expect(workflowTab).toHaveClass(/active/);
+
+      // 驗證 StepActionBar 與 MobileTabBar 上下疊構無重疊
+      const actionBar = page.locator('.step-action-bar');
+      await expect(actionBar).toBeVisible();
+      const [actionBox, tabBox] = await Promise.all([
+        actionBar.boundingBox(),
+        tabbar.boundingBox(),
+      ]);
+      expect(actionBox.y + actionBox.height).toBeLessThanOrEqual(tabBox.y + 1);
     } else if (w >= 768) {
       await page.goto('/#/projects');
       await page.waitForLoadState('networkidle');

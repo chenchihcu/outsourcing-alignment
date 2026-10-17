@@ -90,6 +90,7 @@ export default function AppShell({
   const [collapsed, setCollapsed] = useState(false); // 桌機:側欄收合成 rail
   const [drawerOpen, setDrawerOpen] = useState(false); // 平板:抽屜開啟
   const [stepSheetOpen, setStepSheetOpen] = useState(false); // 手機:全部步驟 BottomSheet
+  const [todoFocused, setTodoFocused] = useState(false); // 手機底欄:區分儀表板與待辦焦點
   const railRef = useRef(null);
   const activePillRef = useRef(null);
 
@@ -110,7 +111,8 @@ export default function AppShell({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [drawerOpen]);
 
-  const go = (tab) => {
+  const go = (tab, focusTodo = false) => {
+    setTodoFocused(Boolean(focusTodo));
     onTabChange(tab);
     setDrawerOpen(false);
     setStepSheetOpen(false);
@@ -384,98 +386,107 @@ export default function AppShell({
           {children}
         </main>
 
-        {/* 手機底部分頁列 (≤767px，在非表單步驟頁常駐，表單步驟頁則讓位給 StepActionBar) */}
-        {!isStepTab && (
-          <nav className="mobile-tab-bar" role="navigation" aria-label="底部分頁導覽列">
-            {inProject ? (
-              <>
+        {/* 手機底部分頁列 (≤767px 全域常駐，表單步驟頁與 StepActionBar 上下疊構不重疊) */}
+        <nav className="mobile-tab-bar" role="navigation" aria-label="底部分頁導覽列">
+          {inProject ? (
+            <>
+              <button
+                type="button"
+                className="mobile-tab-item"
+                onClick={onBackToList}
+                aria-label="回機種列表"
+              >
+                <uiIcons.folder size={24} />
+                <span className="mobile-tab-label">機種</span>
+              </button>
+              <button
+                type="button"
+                className={`mobile-tab-item ${activeTab === 'dashboard' && !todoFocused ? 'active' : ''}`}
+                onClick={() => {
+                  go('dashboard', false);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                aria-current={activeTab === 'dashboard' && !todoFocused ? 'page' : undefined}
+              >
+                <uiIcons.dashboard size={24} />
+                <span className="mobile-tab-label">儀表板</span>
+              </button>
+              <button
+                type="button"
+                className={`mobile-tab-item ${isStepTab ? 'active' : ''}`}
+                onClick={() => {
+                  if (isStepTab) {
+                    setStepSheetOpen((prev) => !prev);
+                  } else {
+                    go(workflowTargetTab, false);
+                  }
+                }}
+                aria-label="進行中流程步驟"
+                aria-current={isStepTab ? 'page' : undefined}
+              >
+                <uiIcons.workflow size={24} />
+                <span className="mobile-tab-label">流程</span>
+              </button>
+              <button
+                type="button"
+                className={`mobile-tab-item ${activeTab === 'dashboard' && todoFocused ? 'active' : ''}`}
+                onClick={() => {
+                  go('dashboard', true);
+                  setTimeout(() => {
+                    const todoElem = document.querySelector('.dashboard-pending-card, .dashboard-todos, .dashboard-summary-grid');
+                    if (todoElem) todoElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 100);
+                }}
+                aria-label="待辦事項"
+                aria-current={activeTab === 'dashboard' && todoFocused ? 'page' : undefined}
+              >
+                <uiIcons.todo size={24} />
+                <span className="mobile-tab-label">待辦</span>
+              </button>
+              <button
+                type="button"
+                className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
+                onClick={() => go('account', false)}
+                aria-current={activeTab === 'account' ? 'page' : undefined}
+              >
+                <uiIcons.account size={24} />
+                <span className="mobile-tab-label">帳號</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`mobile-tab-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`}
+                onClick={onBackToList}
+                aria-current={activeTab !== 'account' && activeTab !== 'settings' ? 'page' : undefined}
+              >
+                <uiIcons.folder size={24} />
+                <span className="mobile-tab-label">機種</span>
+              </button>
+              <button
+                type="button"
+                className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
+                onClick={() => go('account', false)}
+                aria-current={activeTab === 'account' ? 'page' : undefined}
+              >
+                <uiIcons.account size={24} />
+                <span className="mobile-tab-label">帳號</span>
+              </button>
+              {currentUser?.role === 'admin' && (
                 <button
                   type="button"
-                  className="mobile-tab-item"
-                  onClick={onBackToList}
-                  aria-label="回機種列表"
+                  className={`mobile-tab-item ${activeTab === 'settings' ? 'active' : ''}`}
+                  onClick={() => go('settings', false)}
+                  aria-current={activeTab === 'settings' ? 'page' : undefined}
                 >
-                  <uiIcons.folder size={24} />
-                  <span className="mobile-tab-label">機種</span>
+                  <uiIcons.settings size={24} />
+                  <span className="mobile-tab-label">設定</span>
                 </button>
-                <button
-                  type="button"
-                  className={`mobile-tab-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                  onClick={() => go('dashboard')}
-                  aria-current={activeTab === 'dashboard' ? 'page' : undefined}
-                >
-                  <uiIcons.dashboard size={24} />
-                  <span className="mobile-tab-label">儀表板</span>
-                </button>
-                <button
-                  type="button"
-                  className="mobile-tab-item"
-                  onClick={() => go(workflowTargetTab)}
-                  aria-label="進行中流程步驟"
-                >
-                  <uiIcons.workflow size={24} />
-                  <span className="mobile-tab-label">流程</span>
-                </button>
-                <button
-                  type="button"
-                  className="mobile-tab-item"
-                  onClick={() => {
-                    go('dashboard');
-                    setTimeout(() => {
-                      const todoElem = document.querySelector('.dashboard-pending-card, .dashboard-todos, .dashboard-summary-grid');
-                      if (todoElem) todoElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                  }}
-                  aria-label="待辦事項"
-                >
-                  <uiIcons.todo size={24} />
-                  <span className="mobile-tab-label">待辦</span>
-                </button>
-                <button
-                  type="button"
-                  className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
-                  onClick={() => go('account')}
-                  aria-current={activeTab === 'account' ? 'page' : undefined}
-                >
-                  <uiIcons.account size={24} />
-                  <span className="mobile-tab-label">帳號</span>
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className={`mobile-tab-item ${activeTab !== 'account' && activeTab !== 'settings' ? 'active' : ''}`}
-                  onClick={onBackToList}
-                  aria-current={activeTab !== 'account' && activeTab !== 'settings' ? 'page' : undefined}
-                >
-                  <uiIcons.folder size={24} />
-                  <span className="mobile-tab-label">機種</span>
-                </button>
-                <button
-                  type="button"
-                  className={`mobile-tab-item ${activeTab === 'account' ? 'active' : ''}`}
-                  onClick={() => go('account')}
-                  aria-current={activeTab === 'account' ? 'page' : undefined}
-                >
-                  <uiIcons.account size={24} />
-                  <span className="mobile-tab-label">帳號</span>
-                </button>
-                {currentUser?.role === 'admin' && (
-                  <button
-                    type="button"
-                    className={`mobile-tab-item ${activeTab === 'settings' ? 'active' : ''}`}
-                    onClick={() => go('settings')}
-                    aria-current={activeTab === 'settings' ? 'page' : undefined}
-                  >
-                    <uiIcons.settings size={24} />
-                    <span className="mobile-tab-label">設定</span>
-                  </button>
-                )}
-              </>
-            )}
-          </nav>
-        )}
+              )}
+            </>
+          )}
+        </nav>
       </div>
 
       {/* 手機端全部步驟 BottomSheet */}

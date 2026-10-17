@@ -304,7 +304,7 @@
 }
 .breadcrumb-sep {
   color: var(--c-border-strong);
-  font-size: 0.85em;
+  font-size: var(--fs-caption, 12px);
   user-select: none;
 }
 .breadcrumb-proj {
@@ -699,7 +699,7 @@
   }
 
   .shell-content.with-action-bar {
-    padding-bottom: calc(var(--actionbar-h, 66px) + var(--safe-b, 0px) + 24px);
+    padding-bottom: calc(var(--tabbar-h, 49px) + var(--actionbar-h, 66px) + var(--safe-b, 0px) + 24px);
   }
 
   /* 底部分頁列 (MobileTabBar) */

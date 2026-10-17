@@ -41,8 +41,8 @@
 /* ===== 手機專屬樣式 (≤767px) ===== */
 @media (max-width: 767px) {
   .step-action-bar {
-    position: sticky;
-    bottom: 0;
+    position: fixed;
+    bottom: calc(var(--tabbar-h, 49px) + var(--safe-b, 0px));
     left: 0;
     right: 0;
     z-index: 30;
@@ -50,8 +50,8 @@
     backdrop-filter: var(--c-blur-bg);
     -webkit-backdrop-filter: var(--c-blur-bg);
     border-top: 0.5px solid var(--c-hairline);
-    margin: 24px calc(-1 * max(var(--sp-4), var(--safe-r, 0px))) calc(-1 * max(var(--sp-4), var(--safe-b, 0px))) calc(-1 * max(var(--sp-4), var(--safe-l, 0px)));
-    padding: 8px max(var(--sp-4), var(--safe-r, 0px)) calc(8px + var(--safe-b, 0px)) max(var(--sp-4), var(--safe-l, 0px));
+    margin: 0;
+    padding: 8px max(var(--sp-4), var(--safe-r, 0px));
     box-sizing: border-box;
     transition: position 0.2s ease, margin 0.2s ease;
   }

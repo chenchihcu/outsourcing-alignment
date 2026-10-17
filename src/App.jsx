@@ -1119,12 +1119,15 @@ export default function App() {
     setActiveTab(tab);
     if (!currentProjectIdRef.current) {
       if (tab === 'settings') navigateTo('/settings/factories');
+      else if (tab === 'account') navigateTo('/account');
       return;
     }
     if (tab === 'dashboard') {
       navigateTo('/projects/' + currentProjectIdRef.current);
     } else if (tab === 'settings') {
       navigateTo('/settings/factories');
+    } else if (tab === 'account') {
+      navigateTo('/account');
     } else if (TAB_TO_STEP_KEY[tab]) {
       navigateTo('/projects/' + currentProjectIdRef.current + '/' + TAB_TO_STEP_KEY[tab]);
     }
@@ -1233,6 +1236,8 @@ export default function App() {
         }
       } else if (current.route === 'settings-factories' || current.route === 'settings-users') {
         setActiveTab('settings');
+      } else if (current.route === 'account') {
+        setActiveTab('account');
       }
     };
 
