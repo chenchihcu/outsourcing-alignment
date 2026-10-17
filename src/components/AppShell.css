@@ -656,6 +656,8 @@
     z-index: 40;
     height: calc(var(--tabbar-h, 49px) + var(--safe-b, 0px));
     padding-bottom: var(--safe-b, 0px);
+    padding-left: max(0px, var(--safe-l, 0px));
+    padding-right: max(0px, var(--safe-r, 0px));
     background: var(--c-bar);
     backdrop-filter: var(--c-blur-bg);
     -webkit-backdrop-filter: var(--c-blur-bg);

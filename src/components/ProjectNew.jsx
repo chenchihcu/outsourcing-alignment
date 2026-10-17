@@ -206,8 +206,10 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   border: '1px solid var(--c-border, #cbd5e1)',
                   color: 'var(--c-text-2, #475569)',
                   borderRadius: '10px',
-                  height: '42px',
-                  padding: '0 18px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 20px',
+                  fontSize: '1rem',
                 }}
                 onClick={() => navigateTo('/projects')}
               >
@@ -218,8 +220,10 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                 className="btn btn-primary"
                 style={{
                   borderRadius: '10px',
-                  height: '42px',
-                  padding: '0 20px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 24px',
+                  fontSize: '1rem',
                   fontWeight: 600,
                   boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
                 }}
@@ -280,8 +284,10 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   border: '1px solid var(--c-border, #cbd5e1)',
                   color: 'var(--c-text-2, #475569)',
                   borderRadius: '10px',
-                  height: '42px',
-                  padding: '0 18px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 20px',
+                  fontSize: '1rem',
                 }}
                 onClick={() => navigateTo('/projects')}
               >
@@ -292,8 +298,10 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                 className="btn btn-primary"
                 style={{
                   borderRadius: '10px',
-                  height: '42px',
-                  padding: '0 20px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 24px',
+                  fontSize: '1rem',
                   fontWeight: 600,
                   boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
                 }}

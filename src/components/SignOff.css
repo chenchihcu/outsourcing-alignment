@@ -355,9 +355,13 @@
 
 .final-exit-btn,
 .final-center-btn {
-  min-height: 42px;
-  border-radius: 8px;
+  min-height: 48px;
+  height: 48px;
+  border-radius: var(--r-btn, 12px);
   white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 20px;
 }
 
 .final-exit-btn {

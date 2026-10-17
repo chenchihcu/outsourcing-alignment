@@ -7,6 +7,48 @@ test.describe('F19: iOS Safari iPhone 16 Pro Max 行動版 UI 與 HIG 規格驗�
   let projectId;
 
   test.beforeEach(async ({ page }) => {
+    // 攔截並 mock 雲端 Supabase Auth 請求，避免無頭測試未登入踢回 /login
+    await page.route('**/auth/v1/user', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: '11111111-1111-1111-1111-111111111111',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'admin@mitcorp.local',
+          user_metadata: {
+            username: 'admin',
+            role: 'admin',
+            unit: '管理處',
+            level: 'Administrator',
+          },
+        }),
+      });
+    });
+
+    await page.route('**/rest/v1/profiles*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{
+          id: '11111111-1111-1111-1111-111111111111',
+          username: 'admin',
+          role: 'admin',
+          unit: '管理處',
+          level: 'Administrator',
+        }]),
+      });
+    });
+
+    await page.route('**/rest/v1/projects*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([]),
+      });
+    });
+
     await page.goto('/');
     await page.evaluate(() => {
       localStorage.clear();
@@ -23,7 +65,27 @@ test.describe('F19: iOS Safari iPhone 16 Pro Max 行動版 UI 與 HIG 規格驗�
         unit: '管理處',
         level: 'Administrator',
       }));
+      localStorage.setItem('ag_sb_auth', JSON.stringify({
+        access_token: 'mock-audit-token',
+        token_type: 'bearer',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        refresh_token: 'mock-audit-refresh',
+        user: {
+          id: '11111111-1111-1111-1111-111111111111',
+          aud: 'authenticated',
+          role: 'authenticated',
+          email: 'admin@mitcorp.local',
+          user_metadata: {
+            username: 'admin',
+            role: 'admin',
+            unit: '管理處',
+            level: 'Administrator',
+          },
+        },
+      }));
     });
+    await page.reload();
     projectId = await seedProject(page, fullFixture, { roles: ['admin'] });
   });
 

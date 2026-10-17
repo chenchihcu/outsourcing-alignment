@@ -828,7 +828,7 @@ input:checked + .slider:before {
 }
 
 /* ===== iPhone 16 Pro Max 與行動裝置專屬 Apple HIG 人因工學最佳化 ===== */
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .sections-container {
     padding-bottom: max(32px, env(safe-area-inset-bottom));
   }
