@@ -16,7 +16,7 @@
 ## Stack
 
 React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
-指令:`npm run dev` / `build` / `lint`;驗收 `npm run qa:gate`(= build + qa:offline + qa:buttons),
+指令:`npm run dev` / `build` / `lint` / `deploy`;驗收 `npm run qa:gate`(= build + qa:offline + qa:buttons),
 雲端安全 `npm run qa:cloud-security`(需 `.env`)。
 
 ## Guardrails(取自風險帳)
@@ -56,6 +56,6 @@ React 19 + Vite + SheetJS(Excel 匯入/匯出)+ 選用 Supabase(雲端多人)。
 ## Coexistence
 
 - Trunk-based:直接上 `main`,不開 feature branch。
-- 自動同步：任務所有驗收 gate 全數通過後，自動執行 commit 與 push 同步至 main 分支並觸發 Cloudflare Pages 部署。
+- 自動同步（雲端系統）：任務所有驗收 gate 全數通過後，自動執行 commit 與 push 同步至 `main` 分支，並因本專案屬於雲端系統（配置 `wrangler.jsonc`），必須一併自動執行 `npm run deploy`（`npm run build && npx wrangler deploy`）將最新版本同步部署至 Cloudflare 線上環境（`https://outsourcing-alignment.chihfu-chen-tw.workers.dev`），並回報線上網址與 Version ID。
 - Cursor 以 `.cursor/rules/agents_gateway.mdc` always-on 路由至本檔。
 - 各 AI 工具視本檔為本專案權威規則;與全域 baseline 衝突時,以更嚴者為準。
