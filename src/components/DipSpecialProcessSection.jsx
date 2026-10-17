@@ -22,14 +22,14 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
         <>
           {dipApplicable && (
             <div className={`form-section-card glass-card ${getFieldHighlightClass(highlightField, 'dipFirstPiece')}`} data-accent="cyan">
-              <div className="card-header"><span className="card-icon-circle">{sectionSvg.microscope}</span>DIP 首件管制</div>
+              <div className="card-header"><span className="card-icon-circle">{sectionSvg.microscope}</span>DIP 通孔插裝首件管制 (THT FAI)</div>
               <div className="card-body">
                 <div className="form-group required-highlight">
                   <label className="checkbox-label">
                     <input type="checkbox" checked={data.processControl?.dipFirstPiece?.cutLead || false}
                       onChange={(e) => setField('processControl.dipFirstPiece', { ...(data.processControl?.dipFirstPiece || {}), cutLead: e.target.checked })}
                       disabled={isFieldDisabled(data, currentUser, 'processControl.dipFirstPiece.cutLead')} />
-                    <span>剪腳前置作業（切腳、折腳、預成型）<span className="req"> *</span></span>
+                    <span>引腳預成型與剪腳作業（切腳、折腳、預成型 Lead Forming & Trimming）<span className="req"> *</span></span>
                   </label>
                   <textarea className="form-input edit-active compact" placeholder="DIP 注意事項（限 50 字）" name="processControl.dipFirstPiece.memo" maxLength={50}
                     value={data.processControl?.dipFirstPiece?.memo || ''}
@@ -41,10 +41,10 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
                   <div className="radio-group">
                     <label className="radio-label"><input type="radio" name="dipOrder" checked={data.processControl?.dipOrder?.bToT || false}
                       onChange={() => setField('processControl.dipOrder', { bToT: true, tToB: false })}
-                      disabled={isFieldDisabled(data, currentUser, 'processControl.dipOrder.bToT')} /><span>先焊底面 (B→T)</span></label>
+                      disabled={isFieldDisabled(data, currentUser, 'processControl.dipOrder.bToT')} /><span>先焊背面 (Bottom 面優先: B→T)</span></label>
                     <label className="radio-label"><input type="radio" name="dipOrder" checked={data.processControl?.dipOrder?.tToB || false}
                       onChange={() => setField('processControl.dipOrder', { bToT: false, tToB: true })}
-                      disabled={isFieldDisabled(data, currentUser, 'processControl.dipOrder.tToB')} /><span>先焊頂面 (T→B)</span></label>
+                      disabled={isFieldDisabled(data, currentUser, 'processControl.dipOrder.tToB')} /><span>先焊正面 (Top 面優先: T→B)</span></label>
                   </div>
                 </fieldset>
               </div>
@@ -53,11 +53,11 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
 
           {underfillApplicable && (
             <div className="form-section-card glass-card" data-accent="amber">
-              <div className="card-header"><span className="card-icon-circle">{sectionSvg.gear}</span>Underfill 製程條件</div>
+              <div className="card-header"><span className="card-icon-circle">{sectionSvg.gear}</span>Underfill 底部填膠製程條件 (Thermal Curing)</div>
               <div className="card-body">
                 <div className="form-row-grid-3">
                   <div className="form-group required-highlight">
-                    <label htmlFor="underfill-bakeTemp" className="form-label">後烘烤溫度 <span className="req">*</span></label>
+                    <label htmlFor="underfill-bakeTemp" className="form-label">熱固化溫度 (Curing Temp) <span className="req">*</span></label>
                     <div className="inline-control-row">
                       <input id="underfill-bakeTemp" type="text" className="form-input edit-active compact" placeholder="溫度" name="processControl.underfill.bakeTemp" value={data.processControl?.underfill?.bakeTemp || ''}
                         onChange={(e) => setField('processControl.underfill', { ...(data.processControl.underfill || {}), bakeTemp: e.target.value })}
@@ -66,7 +66,7 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
                     </div>
                   </div>
                   <div className="form-group required-highlight">
-                    <label htmlFor="underfill-bakeTime" className="form-label">後烘烤時間 <span className="req">*</span></label>
+                    <label htmlFor="underfill-bakeTime" className="form-label">熱固化時間 (Curing Time) <span className="req">*</span></label>
                     <div className="inline-control-row">
                       <input id="underfill-bakeTime" type="text" className="form-input edit-active compact" placeholder="時間" name="processControl.underfill.bakeTime" value={data.processControl?.underfill?.bakeTime || ''}
                         onChange={(e) => setField('processControl.underfill', { ...(data.processControl.underfill || {}), bakeTime: e.target.value })}
@@ -75,7 +75,7 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
                     </div>
                   </div>
                   <div className="form-group required-highlight">
-                    <label htmlFor="underfill-glueModel" className="form-label">膠材型號 <span className="req">*</span></label>
+                    <label htmlFor="underfill-glueModel" className="form-label">膠材型號 (Epoxy Model) <span className="req">*</span></label>
                     <input id="underfill-glueModel" type="text" className="form-input edit-active" placeholder="例如: Loctite 3513" name="processControl.underfill.glueModel" value={data.processControl?.underfill?.glueModel || ''}
                       onChange={(e) => setField('processControl.underfill', { ...(data.processControl.underfill || {}), glueModel: e.target.value })}
                       disabled={isFieldDisabled(data, currentUser, 'processControl.underfill.glueModel')} />
@@ -86,8 +86,8 @@ export default function DipSpecialProcessSection({ data, onChange, currentUser, 
           )}
 
           <div className="form-group">
-            <label htmlFor="special-process-memo" className="form-label">特殊製程備註（選填）</label>
-            <textarea id="special-process-memo" className="form-textarea edit-active" rows={3} placeholder="如有特殊焊接、清洗、塗覆要求，請在此填寫..." name="processControl.specialProcessMemo"
+            <label htmlFor="special-process-memo" className="form-label">特殊製程備註 (Special Soldering, Cleaning, Conformal Coating)</label>
+            <textarea id="special-process-memo" className="form-textarea edit-active" rows={3} placeholder="如有特殊焊接、超音波清洗、三防漆塗覆要求，請在此填寫..." name="processControl.specialProcessMemo"
               value={data.processControl?.specialProcessMemo || ''}
               onChange={(e) => setField('processControl.specialProcessMemo', e.target.value)}
               disabled={isFieldDisabled(data, currentUser, 'processControl.specialProcessMemo')} />

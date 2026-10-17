@@ -132,7 +132,7 @@ export default function PrintReport({ data }) {
       <div className="print-checkbox-grid">
         {renderCheck(packagingData?.staticBag, '靜電袋')}
         {renderCheck(packagingData?.honeycomb, '蜂巢式抗靜電隔板')}
-        {renderCheck(packagingData?.tray, 'Tray 抗靜電脆盤')}
+        {renderCheck(packagingData?.tray, 'Tray 抗靜電托盤 (ESD Tray)')}
         {renderCheck(packagingData?.sensorCover, 'Sensor 保護貼')}
         {renderCheck(packagingData?.cameraCover, 'Camera 保護貼')}
       </div>
@@ -161,15 +161,15 @@ export default function PrintReport({ data }) {
               <td className="cell-value">{bi.productDesc || '(未填寫)'}</td>
               <td className="cell-label">產品階段</td>
               <td className="cell-value">
-                {renderCheck(bi.stage?.evt, 'EVT')}
-                {renderCheck(bi.stage?.dvt, 'DVT')}
-                {renderCheck(bi.stage?.pvt, 'PVT')}
-                {renderCheck(bi.stage?.politRun, 'Pilot-run')}
-                {renderCheck(bi.stage?.mp, 'MP')}
+                {renderCheck(bi.stage?.evt, 'EVT (工程驗證)')}
+                {renderCheck(bi.stage?.dvt, 'DVT (設計驗證)')}
+                {renderCheck(bi.stage?.pvt, 'PVT (生產驗證)')}
+                {renderCheck(bi.stage?.politRun, '試產 (Pilot Run)')}
+                {renderCheck(bi.stage?.mp, '量產 (MP)')}
                 {bi.ecnChange?.has && (
                   <span className="print-checkbox-item is-checked">
                     <span className="checkbox-square">✓</span>
-                    <span className="print-checkbox-label">工程變更</span>
+                    <span className="print-checkbox-label">工程變更 (ECN)</span>
                   </span>
                 )}
                 {bi.ecnChange?.has && bi.ecnChange?.verificationItem && (
@@ -189,21 +189,21 @@ export default function PrintReport({ data }) {
             <tr>
               <td className="cell-label" style={{ width: '20%' }}>品質水準要求</td>
               <td className="cell-value" style={{ width: '30%' }}>
-                {renderCheck(bi.qualityLevel?.class2, 'Class 2')}
-                {renderCheck(bi.qualityLevel?.class3, 'Class 3')}
+                {renderCheck(bi.qualityLevel?.class2, 'Class 2 (一般電子)')}
+                {renderCheck(bi.qualityLevel?.class3, 'Class 3 (高可靠度)')}
               </td>
               <td className="cell-label" style={{ width: '20%' }}>IPC 驗收標準</td>
               <td className="cell-value" style={{ width: '30%' }}>
-                {renderCheck(bi.ipcStandard?.ipcA610, 'IPC-A-610')}
-                {renderCheck(bi.ipcStandard?.jStd001, 'J-STD-001')}
+                {renderCheck(bi.ipcStandard?.ipcA610, 'IPC-A-610 (外觀驗收)')}
+                {renderCheck(bi.ipcStandard?.jStd001, 'J-STD-001 (焊接製造)')}
               </td>
             </tr>
             <tr>
               <td className="cell-label">製程管制需求</td>
               <td className="cell-value" colSpan={3}>
-                {renderCheck(bi.glue, '需要點膠')}
-                {renderCheck(bi.qrCode?.need, '需要 QR Code 掃描')}
-                {renderCheck(bi.snControl?.need, '需要序號管控')}
+                {renderCheck(bi.glue, '點膠防護')}
+                {renderCheck(bi.qrCode?.need, 'QR Code 二維條碼掃描')}
+                {renderCheck(bi.snControl?.need, '單板序號管控 (S/N Traceability)')}
                 {renderCheck(bi.aoi?.top, 'AOI Top (頂面)')}
                 {renderCheck(bi.aoi?.bottom, 'AOI Bottom (底面)')}
               </td>
@@ -212,17 +212,17 @@ export default function PrintReport({ data }) {
               <td className="cell-label">主要加工項目</td>
               <td className="cell-value" colSpan={3}>
                 <div className="print-checkbox-grid">
-                  {renderCheck(bi.processItems?.smt, 'SMT')}
-                  {renderCheck(bi.processItems?.dip, 'DIP')}
-                  {renderCheck(bi.processItems?.ict, 'In-Circuit Test')}
-                  {renderCheck(bi.processItems?.assembly, '組裝')}
-                  {renderCheck(bi.processItems?.coating, '三防膠塗覆')}
-                  {renderCheck(bi.processItems?.packing, '包裝')}
+                  {renderCheck(bi.processItems?.smt, 'SMT 表面黏著')}
+                  {renderCheck(bi.processItems?.dip, 'DIP 通孔插裝')}
+                  {renderCheck(bi.processItems?.ict, 'ICT 線路測試 (In-Circuit Test)')}
+                  {renderCheck(bi.processItems?.assembly, '組裝 (Assembly)')}
+                  {renderCheck(bi.processItems?.coating, 'Conformal Coating 防潮絕緣塗覆')}
+                  {renderCheck(bi.processItems?.packing, '包裝 (Packing)')}
                   {renderCheck(bi.processItems?.fct, 'FCT 功能測試')}
-                  {renderCheck(bi.processItems?.flyingProbe, '飛針測試')}
-                  {renderCheck(bi.processItems?.underfillGlue, 'Underfill 塗膠')}
-                  {renderCheck(bi.processItems?.semiFinishedTest, '半成品測試')}
-                  {renderCheck(bi.processItems?.finalTest, '成品測試')}
+                  {renderCheck(bi.processItems?.flyingProbe, '飛針測試 (Flying Probe)')}
+                  {renderCheck(bi.processItems?.underfillGlue, 'Underfill 底部填膠')}
+                  {renderCheck(bi.processItems?.semiFinishedTest, '半成品功能測試')}
+                  {renderCheck(bi.processItems?.finalTest, '成品全功能測試')}
                   {renderCheck(bi.processItems?.otherProcess, `其他: ${bi.processItems?.otherProcessText || ''}`)}
                 </div>
               </td>
@@ -238,20 +238,20 @@ export default function PrintReport({ data }) {
             <tr>
               <td className="cell-label" style={{ width: '20%' }}>樣品提供確認</td>
               <td className="cell-value" colSpan={3}>
-                {renderCheck(pc.sampleProvided?.trialBoard, '試錫板')}
-                {renderCheck(pc.sampleProvided?.tempBoard, '測溫板')}
-                {renderCheck(pc.sampleProvided?.standardPart, '標準件')}
+                {renderCheck(pc.sampleProvided?.trialBoard, '試錫空板 (Dummy Board)')}
+                {renderCheck(pc.sampleProvided?.tempBoard, '測溫板 (Thermal Profile Board)')}
+                {renderCheck(pc.sampleProvided?.standardPart, '標準件 / 黃金樣板 (Golden Sample)')}
               </td>
             </tr>
             <tr>
-              <td className="cell-label">PCB / FPCA 烘烤需求</td>
+              <td className="cell-label">PCB / FPC 裸板預烘烤去濕需求</td>
               <td className="cell-value" colSpan={3}>
-                {renderCheck(pc.bakeRequired?.need, '需要烘烤')}
+                {renderCheck(pc.bakeRequired?.need, '需要預烘烤')}
                 {renderCheck(pc.bakeRequired?.noNeed, '不需要')}
                 {pc.bakeRequired?.need && (
                   <div className="print-field-note">
-                    PCB 烘烤條件: {pc.bakeRequired?.pcbBakeCond || '(未填寫)'}<br />
-                    FPCA 烘烤條件: {pc.bakeRequired?.fpcaBakeCond || '(未填寫)'}
+                    PCB 裸板烘烤條件: {pc.bakeRequired?.pcbBakeCond || '(未填寫)'}<br />
+                    FPC 裸板烘烤條件: {pc.bakeRequired?.fpcaBakeCond || '(未填寫)'}
                   </div>
                 )}
               </td>
@@ -261,7 +261,7 @@ export default function PrintReport({ data }) {
       </section>
 
       <section className="print-section print-flow-section">
-        <h2 className="print-section-title">C. 鋼板與治工具確認</h2>
+        <h2 className="print-section-title">C. 鋼網與治工具確認</h2>
         <table className="print-table">
           <thead>
             <tr>
@@ -273,53 +273,53 @@ export default function PrintReport({ data }) {
           <tbody>
             {bi.processItems?.smt && (
               <tr>
-                <td className="cell-bold">SMT 鋼板</td>
+                <td className="cell-bold">SMT 鋼網 (Stencil)</td>
                 <td>
-                  {renderCheck(true, '鋼板規格 (100% 需要)')}
+                  {renderCheck(true, '鋼網規格 (100% 需要)')}
                   <div className="print-field-note">
                     厚度: <strong>{formatWithUnit(tooling.stencil?.thickness, 'mm')}</strong> |
-                    樣式: <strong>{tooling.stencil?.style === 'step' ? '階梯鋼板' : '一般鋼板'}</strong>
-                    {tooling.stencil?.nanoCoating && <span className="nano-coating-badge">表面奈米塗層</span>}
+                    樣式: <strong>{tooling.stencil?.style === 'step' ? '階梯鋼網 (Step Stencil)' : '一般平整鋼網'}</strong>
+                    {tooling.stencil?.nanoCoating && <span className="nano-coating-badge">表面奈米塗層 (Nano Coating)</span>}
                   </div>
                 </td>
                 <td>—</td>
               </tr>
             )}
             <tr>
-              <td className="cell-bold">Routing 治具</td>
+              <td className="cell-bold">分板治具 (Router Fixture)</td>
               <td>{renderCheck(tooling.routingFixture?.need, '需要')}{renderCheck(tooling.routingFixture?.noNeed, '不需要')}</td>
               <td>{renderFixtureQty(tooling.routingFixture)}</td>
             </tr>
             <tr>
-              <td className="cell-bold">塗膠治具</td>
+              <td className="cell-bold">點膠 / 塗膠治具</td>
               <td>{renderCheck(tooling.glueFixture?.need, '需要')}{renderCheck(tooling.glueFixture?.noNeed, '不需要')}</td>
               <td>{renderFixtureQty(tooling.glueFixture)}</td>
             </tr>
             <tr>
-              <td className="cell-bold">測試治具</td>
+              <td className="cell-bold">測試治具 (ICT / FCT)</td>
               <td>{renderCheck(tooling.testFixture?.need, '需要')}{renderCheck(tooling.testFixture?.noNeed, '不需要')}</td>
               <td>{renderFixtureQty(tooling.testFixture)}</td>
             </tr>
             <tr>
-              <td className="cell-bold">組裝治具</td>
+              <td className="cell-bold">組裝治具 (Assembly Fixture)</td>
               <td>{renderCheck(tooling.assemblyFixture?.need, '需要')}{renderCheck(tooling.assemblyFixture?.noNeed, '不需要')}</td>
               <td>{renderFixtureQty(tooling.assemblyFixture)}</td>
             </tr>
             <tr>
-              <td className="cell-bold">SMT刷錫載具</td>
+              <td className="cell-bold">SMT 印刷 / 回焊載具 (Carrier)</td>
               <td>
                 {renderCheck(tooling.smtCarrier?.need, '需要')}
                 {renderCheck(tooling.smtCarrier?.noNeed, '不需要')}
                 {tooling.smtCarrier?.need && (
                   <div className="print-field-note">
-                    選項: {renderCheck(tooling.smtCarrier?.upper, '上載板')}{renderCheck(tooling.smtCarrier?.lower, '下載板')}
+                    選項: {renderCheck(tooling.smtCarrier?.upper, '頂層上載具 (Top Carrier)')}{renderCheck(tooling.smtCarrier?.lower, '底層下載具 (Bottom Carrier)')}
                   </div>
                 )}
               </td>
               <td>{tooling.smtCarrier?.need ? '需要' : (tooling.smtCarrier?.noNeed ? '不需要' : '(未填寫)')}</td>
             </tr>
             <tr>
-              <td className="cell-bold">其他治具</td>
+              <td className="cell-bold">其他特殊治具</td>
               <td>
                 {renderCheck(tooling.otherFixture?.need, '需要')}
                 {renderCheck(tooling.otherFixture?.noNeed, '不需要')}
@@ -351,21 +351,21 @@ export default function PrintReport({ data }) {
                   {renderCheck(pc.smtOrder?.tToB, '先焊頂面 (T→B)')}
                 </div>
               </td>
-              <td className="cell-label">鋼板開孔比例</td>
+              <td className="cell-label">鋼網開孔縮放比例</td>
               <td className="cell-value">{stencilApertureRatio ? `${stencilApertureRatio}%` : '(未填寫)'}</td>
             </tr>
             <tr>
               <td className="cell-label">SMT 首件檢查項目</td>
               <td className="cell-value" colSpan={3}>
                 <div className="print-checkbox-grid">
-                  {renderCheck(pc.smtFirstPiece?.polarity, '極性方向檢查')}
-                  {renderCheck(pc.smtFirstPiece?.measureLcr, '量測 LCR (電容/電阻/電感)')}
-                  {renderCheck(pc.smtFirstPiece?.spi, 'SPI 錫膏厚度測試')}
-                  {renderCheck(pc.smtFirstPiece?.steelTension, '鋼板張力量測')}
-                  {renderCheck(pc.smtFirstPiece?.ledTest === 'yes', 'LED點亮測試: 有')}
-                  {renderCheck(pc.smtFirstPiece?.ledTest === 'no', 'LED點亮測試: 無 (不適用)')}
-                  {renderCheck(pc.smtFirstPiece?.pcbReflow, 'PCB外觀檢查 (reflow)')}
-                  {renderCheck(pc.smtFirstPiece?.solderability, '濕潤性檢查 (試錫板)')}
+                  {renderCheck(pc.smtFirstPiece?.polarity, '元件極性與方向檢查 (Polarity & Orientation)')}
+                  {renderCheck(pc.smtFirstPiece?.measureLcr, '首件 LCR 電氣參數確認')}
+                  {renderCheck(pc.smtFirstPiece?.spi, 'SPI 錫膏檢查 (厚度/面積/體積)')}
+                  {renderCheck(pc.smtFirstPiece?.steelTension, '鋼網張力量測 (Stencil Tension)')}
+                  {renderCheck(pc.smtFirstPiece?.ledTest === 'yes', 'LED 點亮與發光檢查: 有')}
+                  {renderCheck(pc.smtFirstPiece?.ledTest === 'no', 'LED 點亮與發光檢查: 無 (不適用)')}
+                  {renderCheck(pc.smtFirstPiece?.pcbReflow, '迴焊後外觀檢查 (Post-Reflow)')}
+                  {renderCheck(pc.smtFirstPiece?.solderability, '潤濕性 / 沾錫性檢查 (Solder Wetting)')}
                 </div>
               </td>
             </tr>
@@ -373,7 +373,7 @@ export default function PrintReport({ data }) {
               <>
                 <tr>
                   <td className="cell-label">DIP 首件檢查項目</td>
-                  <td className="cell-value">{renderCheck(pc.dipFirstPiece?.cutLead, '剪腳前置作業')}</td>
+                  <td className="cell-value">{renderCheck(pc.dipFirstPiece?.cutLead, '引腳預成型與剪腳作業 (Lead Forming & Trimming)')}</td>
                   <td className="cell-label">DIP 焊接順序</td>
                   <td className="cell-value">
                     <div className="print-checkbox-vertical">
@@ -429,7 +429,7 @@ export default function PrintReport({ data }) {
         <table className="print-table">
           <tbody>
             <tr>
-              <td className="cell-label" style={{ width: '20%' }}>Underfill 後烘烤</td>
+              <td className="cell-label" style={{ width: '20%' }}>Underfill 熱固化條件 (Thermal Curing)</td>
               <td className="cell-value" style={{ width: '30%' }}>
                 {(pc.underfill?.bakeTemp && pc.underfill?.bakeTime)
                   ? `${pc.underfill?.bakeTemp} °C x ${pc.underfill?.bakeTime} min`
@@ -556,7 +556,7 @@ export default function PrintReport({ data }) {
                 )}
               </div>
               <div className="print-sign-date">系統紀錄簽名日期: {sign.engineeringReviewSignature ? formatSignDate(sign.engineeringReviewSignedAt) : '未簽章'}</div>
-              <div className="print-sign-terms">確認生產治工具規格、鋼板開口以及製程工程參數已審查通過。</div>
+              <div className="print-sign-terms">確認生產治工具規格、鋼網開孔以及製程工程參數已審查通過。</div>
             </div>
           </div>
 

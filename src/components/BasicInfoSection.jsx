@@ -43,40 +43,49 @@ export default function BasicInfoSection({ data, onChange, currentUser, factorie
           </div>
           <div className="form-row-grid-2">
             <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'stage')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
-              <legend className="form-label">產品階段 <span className="req">*</span></legend>
+              <legend className="form-label">產品階段 (NPI Stage) <span className="req">*</span></legend>
               <div className="checkbox-flex">
-                {Object.keys(data.basicInfo.stage || {}).filter((key) => key !== 'ecn').map((key) => (
-                  <label key={key} className="checkbox-label">
-                    <input type="checkbox" checked={data.basicInfo.stage[key] || false}
-                      onChange={(e) => setField(`basicInfo.stage.${key}`, e.target.checked)}
-                      disabled={isFieldDisabled(data, currentUser, `basicInfo.stage.${key}`)} />
-                    <span>{key === 'politRun' ? 'Pilot-run' : key === 'mp' ? 'MP' : key.toUpperCase()}</span>
-                  </label>
-                ))}
+                {Object.keys(data.basicInfo.stage || {}).filter((key) => key !== 'ecn').map((key) => {
+                  const stageLabels = {
+                    evt: 'EVT (工程驗證)',
+                    dvt: 'DVT (設計驗證)',
+                    pvt: 'PVT (生產驗證)',
+                    politRun: '試產 (Pilot Run)',
+                    mp: 'MP (量產)'
+                  };
+                  return (
+                    <label key={key} className="checkbox-label">
+                      <input type="checkbox" checked={data.basicInfo.stage[key] || false}
+                        onChange={(e) => setField(`basicInfo.stage.${key}`, e.target.checked)}
+                        disabled={isFieldDisabled(data, currentUser, `basicInfo.stage.${key}`)} />
+                      <span>{stageLabels[key] || key.toUpperCase()}</span>
+                    </label>
+                  );
+                })}
                 {!Object.keys(data.basicInfo.stage || {}).includes('mp') && (
                   <label key="mp" className="checkbox-label">
                     <input type="checkbox" checked={data.basicInfo.stage?.mp || false}
                       onChange={(e) => setField('basicInfo.stage.mp', e.target.checked)}
                       disabled={isFieldDisabled(data, currentUser, 'basicInfo.stage.mp')} />
-                    <span>MP</span>
+                    <span>MP (量產)</span>
                   </label>
                 )}
               </div>
             </fieldset>
             <fieldset className={`form-group required-highlight ${getFieldHighlightClass(highlightField, 'ecnChange')}`} style={{ border: 'none', padding: 0, margin: 0 }}>
-              <legend className="form-label">工程變更 <span className="req">*</span></legend>
+              <legend className="form-label">工程變更 (ECN 改版) <span className="req">*</span></legend>
               <div className="radio-group">
                 <label className="radio-label">
                   <input type="radio" name="ecnChange" checked={data.basicInfo.ecnChange?.has || false}
                     onChange={() => setField('basicInfo.ecnChange', { ...(data.basicInfo.ecnChange || {}), has: true, no: false })}
                     disabled={isFieldDisabled(data, currentUser, 'basicInfo.ecnChange.has')} />
-                  <span>有</span>
+                  <span>有 (ECN 變更)</span>
                 </label>
                 <label className="radio-label">
                   <input type="radio" name="ecnChange" checked={data.basicInfo.ecnChange?.no || false}
                     onChange={() => setField('basicInfo.ecnChange', { has: false, no: true, verificationItem: '' })}
                     disabled={isFieldDisabled(data, currentUser, 'basicInfo.ecnChange.no')} />
-                  <span>沒有</span>
+                  <span>無 / 否</span>
                 </label>
               </div>
               {data.basicInfo.ecnChange?.has && (

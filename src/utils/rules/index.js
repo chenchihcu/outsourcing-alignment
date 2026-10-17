@@ -77,21 +77,21 @@ export const RULES = [
     validate: (data) => {
       const s = data?.basicInfo?.stage || {};
       const hasStage = Boolean(s.evt || s.dvt || s.pvt || s.politRun || s.mp);
-      return hasStage ? true : '未勾選「產品階段」（EVT / DVT / PVT / Pilot-run / MP）';
+      return hasStage ? true : '未勾選「產品階段」（EVT / DVT / PVT / 試產 Pilot Run / MP）';
     },
   },
   {
     id: 'basicInfo.ecnChange',
     stepKey: 'basicInfo',
     fieldKey: 'ecnChange',
-    label: 'ECN 改版',
+    label: '工程變更 (ECN 改版)',
     owner: 'rd',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const ecn = data?.basicInfo?.ecnChange;
       const answered = Boolean(ecn && (ecn.has === true || ecn.no === true || ecn.need === true || ecn.noNeed === true));
-      return answered ? true : '請選擇本次是否為 ECN 改版';
+      return answered ? true : '請選擇本次是否為 ECN 改版（有 / 無）';
     },
   },
   {
@@ -113,28 +113,28 @@ export const RULES = [
     id: 'qualityProcess.qualityLevel',
     stepKey: 'qualityProcess',
     fieldKey: 'qualityLevel',
-    label: '品質水準',
+    label: '品質水準 (IPC Class)',
     owner: 'rd',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const q = data?.basicInfo?.qualityLevel;
       const valid = Boolean(q && (q.class2 || q.class3 || q === 'class2' || q === 'class3'));
-      return valid ? true : '請選擇品質水準（Class 2 或 Class 3）';
+      return valid ? true : '請選擇品質水準（IPC Class 2 或 Class 3）';
     },
   },
   {
     id: 'qualityProcess.ipcStandard',
     stepKey: 'qualityProcess',
     fieldKey: 'ipcStandard',
-    label: 'IPC 允收標準',
+    label: 'IPC 允收規範',
     owner: 'rd',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const ipc = data?.basicInfo?.ipcStandard || {};
       const valid = Boolean(ipc.ipc610 || ipc.jstd001 || ipc['ipc-a-610'] || ipc['j-std-001']);
-      return valid ? true : '請至少選擇一項 IPC 允收標準';
+      return valid ? true : '請至少選擇一項 IPC 允收規範（IPC-A-610 / J-STD-001）';
     },
   },
   {
@@ -175,7 +175,7 @@ export const RULES = [
     validate: (data) => {
       const g = data?.basicInfo?.glue;
       const answered = Boolean(g && (g.need || g.noNeed || typeof g === 'boolean'));
-      return answered ? true : '請選擇是否需要點膠';
+      return answered ? true : '請選擇是否需要 SMD 點膠固定';
     },
   },
   {
@@ -191,7 +191,7 @@ export const RULES = [
       if (!a) return '請選擇是否需要 AOI 自動光學檢查';
       if (a.noNeed === true) return true;
       if (a.need === true || a.top || a.bottom) {
-        if (!a.top && !a.bottom) return 'AOI 需要時請選擇檢測面（Top / Bottom）';
+        if (!a.top && !a.bottom) return 'AOI 需要時請選擇檢測面（Top 正面 / Bottom 背面）';
         return true;
       }
       return '請選擇是否需要 AOI 自動光學檢查';
@@ -201,60 +201,60 @@ export const RULES = [
     id: 'qualityProcess.qrCode',
     stepKey: 'qualityProcess',
     fieldKey: 'qrCode',
-    label: 'QR Code 管控',
+    label: '二維條碼 / QR Code 管控',
     owner: 'rd',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const q = data?.basicInfo?.qrCode;
       const answered = Boolean(q && (q.need || q.noNeed));
-      return answered ? true : '請選擇是否需要 QR Code 管控';
+      return answered ? true : '請選擇是否需要二維條碼 / QR Code 掃描追溯';
     },
   },
   {
     id: 'qualityProcess.snControl',
     stepKey: 'qualityProcess',
     fieldKey: 'snControl',
-    label: '序號管控',
+    label: '單板生產序號管控',
     owner: 'rd',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const s = data?.basicInfo?.snControl;
       const answered = Boolean(s && (s.need || s.noNeed));
-      return answered ? true : '請選擇是否需要序號管控';
+      return answered ? true : '請選擇是否需要單板生產序號管控';
     },
   },
 
-  // ── 步驟 3: 鋼板與治工具 (tooling) ──
+  // ── 步驟 3: 鋼網與治工具 (tooling) ──
   {
     id: 'tooling.stencilStyle',
     stepKey: 'tooling',
     fieldKey: 'stencil.style',
-    label: '鋼板樣式',
+    label: '鋼網樣式',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
     validate: (data) => {
       const style = data?.basicInfo?.tooling?.stencil?.style;
       const valid = style === 'general' || style === 'step';
-      return valid ? true : '有 SMT 加工時請選擇鋼板樣式（一般鋼板 / 階梯鋼板）';
+      return valid ? true : '有 SMT 加工時請選擇鋼網樣式（一般標準鋼網 / 階梯鋼網）';
     },
   },
   {
     id: 'tooling.stencilThickness',
     stepKey: 'tooling',
     fieldKey: 'stencil.thickness',
-    label: '鋼板厚度',
+    label: '鋼網厚度',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
     validate: (data) => {
       const t = data?.basicInfo?.tooling?.stencil?.thickness;
-      if (!hasText(t)) return '未填寫鋼板「厚度」';
+      if (!hasText(t)) return '未填寫鋼網「厚度」';
       const num = Number(t);
       if (Number.isNaN(num) || num < 0.05 || num > 0.30) {
-        return '鋼板厚度要介於 0.05～0.30 mm，例如 0.12';
+        return '鋼網厚度要介於 0.05～0.30 mm，例如 0.12';
       }
       return true;
     },
@@ -263,7 +263,7 @@ export const RULES = [
     id: 'tooling.stencilNano',
     stepKey: 'tooling',
     fieldKey: 'stencil.nanoCoating',
-    label: '鋼板表面奈米塗層',
+    label: '鋼網表面奈米塗層',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
@@ -272,21 +272,21 @@ export const RULES = [
       const answered = nano !== undefined && nano !== null && (
         nano === true || nano === false || nano?.has || nano?.none
       );
-      return answered ? true : '請選擇是否需要表面奈米塗層';
+      return answered ? true : '請選擇是否需要表面奈米塗層 (Nano-Coating)';
     },
   },
   {
     id: 'tooling.routingFixture',
     stepKey: 'tooling',
     fieldKey: 'routingFixture',
-    label: 'Routing 治具',
+    label: '分板治具',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.router || data?.basicInfo?.processItems?.smt || data?.basicInfo?.processItems?.dip),
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.routingFixture;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「Routing 治具」是否需要';
-      if (f.need && !hasText(f.qty)) return '已確認需要「Routing 治具」，但未填寫數量';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「分板治具 (Router Fixture)」是否需要';
+      if (f.need && !hasText(f.qty)) return '已確認需要「分板治具 (Router Fixture)」，但未填寫數量';
       return true;
     },
   },
@@ -294,14 +294,14 @@ export const RULES = [
     id: 'tooling.glueFixture',
     stepKey: 'tooling',
     fieldKey: 'glueFixture',
-    label: '塗膠治具',
+    label: '點膠/塗膠治具',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.glue || data?.basicInfo?.glue?.need),
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.glueFixture;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「塗膠治具」是否需要';
-      if (f.need && !hasText(f.qty)) return '已確認需要「塗膠治具」，但未填寫數量';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「點膠/塗膠治具」是否需要';
+      if (f.need && !hasText(f.qty)) return '已確認需要「點膠/塗膠治具」，但未填寫數量';
       return true;
     },
   },
@@ -315,8 +315,8 @@ export const RULES = [
     when: (data) => Boolean(data?.basicInfo?.processItems?.test || data?.basicInfo?.processItems?.smt || data?.basicInfo?.processItems?.dip),
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.testFixture;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「測試治具」是否需要';
-      if (f.need && !hasText(f.qty)) return '已確認需要「測試治具」，但未填寫數量';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「測試治具 (ICT/FCT)」是否需要';
+      if (f.need && !hasText(f.qty)) return '已確認需要「測試治具 (ICT/FCT)」，但未填寫數量';
       return true;
     },
   },
@@ -330,8 +330,8 @@ export const RULES = [
     when: (data) => Boolean(data?.basicInfo?.processItems?.assembly),
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.assemblyFixture;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「組裝治具」是否需要';
-      if (f.need && !hasText(f.qty)) return '已確認需要「組裝治具」，但未填寫數量';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「組裝治具 (Assembly Jig)」是否需要';
+      if (f.need && !hasText(f.qty)) return '已確認需要「組裝治具 (Assembly Jig)」，但未填寫數量';
       return true;
     },
   },
@@ -339,14 +339,14 @@ export const RULES = [
     id: 'tooling.smtCarrier',
     stepKey: 'tooling',
     fieldKey: 'smtCarrier',
-    label: 'SMT 刷錫載具',
+    label: 'SMT 印刷/過爐載具',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.smtCarrier;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「SMT 刷錫載具」是否需要';
-      if (f.need && !f.upper && !f.lower) return '已勾選需要「SMT 刷錫載具」，但未選擇「上載板」或「下載板」';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「SMT 印刷/過爐載具」是否需要';
+      if (f.need && !f.upper && !f.lower) return '已勾選需要「SMT 印刷/過爐載具」，但未選擇「Top 面載具 (正面)」或「Bottom 面載具 (背面)」';
       return true;
     },
   },
@@ -354,16 +354,16 @@ export const RULES = [
     id: 'tooling.otherFixture',
     stepKey: 'tooling',
     fieldKey: 'otherFixture',
-    label: '其他治具',
+    label: '其他專案治具',
     owner: 'eng',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const f = data?.basicInfo?.tooling?.otherFixture;
-      if (!f || (!f.need && !f.noNeed)) return '未確認「其他治具」是否需要';
+      if (!f || (!f.need && !f.noNeed)) return '未確認「其他專案治具」是否需要';
       if (f.need) {
-        if (!hasText(f.name)) return '已勾選需要「其他治具」，但未填寫治具名稱';
-        if (!hasText(f.qty)) return '已勾選需要「其他治具」，但未填寫治具數量';
+        if (!hasText(f.name)) return '已勾選需要「其他專案治具」，但未填寫治具名稱';
+        if (!hasText(f.qty)) return '已勾選需要「其他專案治具」，但未填寫治具數量';
       }
       return true;
     },
@@ -381,35 +381,35 @@ export const RULES = [
     validate: (data) => {
       const s = data?.processControl?.sampleProvided;
       const valid = Boolean(s && (s.trialBoard || s.tempBoard || s.standardPart || s.noSample || s.none));
-      return valid ? true : '請選擇提供的樣品種類（試錫板 / 測溫板 / 標準件），或勾選不提供';
+      return valid ? true : '請選擇提供的樣品種類（試錫空板 / 測溫板 / 黃金樣板），或勾選不提供';
     },
   },
   {
     id: 'preparation.bakeRequired',
     stepKey: 'preparation',
     fieldKey: 'bakeRequired',
-    label: 'PCB / FPCA 烘烤確認',
+    label: 'PCB / FPC 裸板預烘烤確認',
     owner: 'eng',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const b = data?.processControl?.bakeRequired;
       const answered = Boolean(b && (b.need || b.noNeed));
-      return answered ? true : '未確認是否需要「PCB / FPCA 烘烤」';
+      return answered ? true : '未確認是否需要「PCB / FPC 裸板預烘烤去濕」';
     },
   },
   {
     id: 'preparation.pcbBake',
     stepKey: 'preparation',
     fieldKey: 'bakeRequired.pcb',
-    label: 'PCB 烘烤條件',
+    label: 'PCB 裸板烘烤條件',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.processControl?.bakeRequired?.need),
     validate: (data) => {
       const b = data?.processControl?.bakeRequired;
       if (!hasText(b?.pcbBakeTemp) || !hasText(b?.pcbBakeTol) || !hasText(b?.pcbBakeHr)) {
-        return '已勾選需要烘烤，但未填妥「PCB 烘烤條件」數值（溫度 / 容差 / 時間）';
+        return '已勾選需要烘烤，但未填妥「PCB 裸板烘烤條件」數值（溫度 / 容差 / 時間）';
       }
       const temp = Number(b.pcbBakeTemp);
       if (Number.isNaN(temp) || temp < 90 || temp > 150) {
@@ -426,22 +426,22 @@ export const RULES = [
     id: 'preparation.fpcaBake',
     stepKey: 'preparation',
     fieldKey: 'bakeRequired.fpca',
-    label: 'FPCA 烘烤條件',
+    label: 'FPC 軟板烘烤條件',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.processControl?.bakeRequired?.need),
     validate: (data) => {
       const b = data?.processControl?.bakeRequired;
       if (!hasText(b?.fpcaBakeTemp) || !hasText(b?.fpcaBakeHr)) {
-        return '已勾選需要烘烤，但未填妥「FPCA 烘烤條件」數值（溫度 / 時間）';
+        return '已勾選需要烘烤，但未填妥「FPC 軟板烘烤條件」數值（溫度 / 時間）';
       }
       const temp = Number(b.fpcaBakeTemp);
       if (Number.isNaN(temp) || temp < 50 || temp > 110) {
-        return 'FPCA 烘烤溫度要介於 50～110 °C';
+        return 'FPC 軟板烘烤溫度要介於 50～110 °C';
       }
       const hr = Number(b.fpcaBakeHr);
       if (Number.isNaN(hr) || hr < 0.5 || hr > 24) {
-        return 'FPCA 烘烤時間要介於 0.5～24 小時';
+        return 'FPC 軟板烘烤時間要介於 0.5～24 小時';
       }
       return true;
     },
@@ -457,7 +457,7 @@ export const RULES = [
     validate: (data) => {
       const t = data?.processControl?.packagingType;
       const valid = t === 'pcba' || t === 'fpca';
-      return valid ? true : '未選擇「包材種類」（PCBA 包材 / FPCA 包材）';
+      return valid ? true : '未選擇「包材種類」（PCBA 出貨包材 / FPCA 軟板出貨包材）';
     },
   },
   {
@@ -483,21 +483,21 @@ export const RULES = [
     id: 'thermalProfile.keyParts',
     stepKey: 'thermalProfile',
     fieldKey: 'keyParts',
-    label: '關鍵零件確認',
+    label: '關鍵熱敏感元件確認',
     owner: 'eng',
     severity: 'error',
     when: () => true,
     validate: (data) => {
       const kp = data?.processControl?.keyParts;
       const answered = Boolean(kp && (kp.has || kp.none));
-      return answered ? true : '請選擇是否有關鍵零件';
+      return answered ? true : '請選擇是否有關鍵熱敏感 / 大熱容量元件';
     },
   },
   {
     id: 'thermalProfile.tempPoints',
     stepKey: 'thermalProfile',
     fieldKey: 'tempPoints',
-    label: '測溫點位置',
+    label: '測溫點位置 (RefDes)',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.processControl?.keyParts?.has),
@@ -521,7 +521,7 @@ export const RULES = [
     id: 'smtControl.firstPieceChecks',
     stepKey: 'smtControl',
     fieldKey: 'smtFirstPiece',
-    label: 'SMT 首件檢查項目',
+    label: 'SMT 首件檢驗項目',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
@@ -531,7 +531,7 @@ export const RULES = [
         smt.polarity || smt.measureLcr || smt.spi || smt.steelTension ||
         smt.pcbReflow || smt.solderability
       );
-      return hasChecks ? true : '未確認「SMT 首件檢查」項目（極性方向 / LCR量測 / SPI / 鋼板張力量測 / PCB外觀 / 濕潤性）';
+      return hasChecks ? true : '未確認「SMT 首件檢驗管制」項目（極性方向 / LCR量測 / SPI錫膏檢查 / 鋼網張力量測 / 迴焊後外觀 / 潤濕性）';
     },
   },
   {
@@ -552,16 +552,16 @@ export const RULES = [
     id: 'smtControl.stencilApertureRatio',
     stepKey: 'smtControl',
     fieldKey: 'stencilApertureRatio',
-    label: '鋼板開孔比例',
+    label: '鋼網開孔縮放比',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
     validate: (data) => {
       const ratio = normalizeApertureRatio(data?.processControl?.smtFirstPiece?.stencilApertureRatio || '');
-      if (!ratio) return '未填寫「鋼板開孔比例（錫膏印刷）」';
+      if (!ratio) return '未填寫「鋼網開孔縮放比（Aperture-to-Pad Ratio）」';
       const num = Number(ratio);
       if (Number.isNaN(num) || num < 50 || num > 120) {
-        return '鋼板開孔比例需介於 50% 至 120% 之間';
+        return '鋼網開孔縮放比需介於 50% 至 120% 之間';
       }
       return true;
     },
@@ -570,14 +570,14 @@ export const RULES = [
     id: 'smtControl.smtOrder',
     stepKey: 'smtControl',
     fieldKey: 'smtOrder',
-    label: 'SMT 焊接順序',
+    label: 'SMT 焊接過爐順序',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.smt),
     validate: (data) => {
       const o = data?.processControl?.smtOrder || {};
       const valid = Boolean(o.bToT || o.tToB);
-      return valid ? true : '未確認「SMT 焊接順序」（先焊底面 / 先焊頂面）';
+      return valid ? true : '未確認「SMT 焊接過爐順序」（先焊正面 / 先焊背面）';
     },
   },
 
@@ -586,13 +586,13 @@ export const RULES = [
     id: 'dipSpecialProcess.cutLead',
     stepKey: 'dipSpecialProcess',
     fieldKey: 'dipFirstPiece.cutLead',
-    label: 'DIP 剪腳前置作業',
+    label: 'DIP 引腳預成型與剪腳作業',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.dip),
     validate: (data) => {
       const cut = data?.processControl?.dipFirstPiece?.cutLead;
-      return cut ? true : '未勾選 DIP 首件「剪腳前置作業」';
+      return cut ? true : '未勾選 DIP 首件「引腳預成型與剪腳作業」';
     },
   },
   {
@@ -613,14 +613,14 @@ export const RULES = [
     id: 'dipSpecialProcess.underfill',
     stepKey: 'dipSpecialProcess',
     fieldKey: 'underfill',
-    label: 'Underfill 烘烤與型號',
+    label: 'Underfill 熱固化條件與膠材型號',
     owner: 'eng',
     severity: 'error',
     when: (data) => Boolean(data?.basicInfo?.processItems?.underfillGlue),
     validate: (data) => {
       const u = data?.processControl?.underfill || {};
       if (!hasText(u.bakeTemp) || !hasText(u.bakeTime) || !hasText(u.glueModel)) {
-        return '已勾選 Underfill 塗膠，但未填妥烘烤溫度、時間或膠水型號';
+        return '已勾選 Underfill 底部填膠，但未填妥熱固化溫度、時間或膠材型號';
       }
       return true;
     },

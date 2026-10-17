@@ -931,5 +931,31 @@ input:checked + .slider:before {
   }
 }
 
+/* 微圖示輔助樣式 (Visual Micro-Icon Badges) */
+.item-micro-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--r-sm, 6px);
+  background: var(--c-surface-3, rgba(99, 102, 241, 0.08));
+  color: var(--c-accent, #6366f1);
+  margin-right: 6px;
+  flex-shrink: 0;
+  vertical-align: middle;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.item-micro-icon svg {
+  display: block;
+}
+
+.checkbox-label:hover .item-micro-icon,
+.radio-label:hover .item-micro-icon {
+  background: var(--c-accent-weak, rgba(99, 102, 241, 0.18));
+  color: var(--c-accent-strong, #4f46e5);
+}
+
 
 

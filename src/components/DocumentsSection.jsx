@@ -14,14 +14,14 @@ export default function DocumentsSection({ data, onChange, currentUser, onNext, 
 
       <div className="documents-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px', marginTop: '20px' }}>
         {[
-          ['bom', '材料清單 BOM', '主要電子零組件與電路板規格清單'],
-          ['gerber', 'Gerber file / CAD', '電路板佈線與鋼網製造必要檔案'],
-          ['coordinate', '元件座標檔', 'SMT 貼片機高速貼裝座標配置圖'],
-          ['placement', '零件位置圖 (Placement)', '用以核對零件方向與極性參考圖面'],
-          ['materialSpec', '原物料規格書', '特殊零件或連接器等規格說明書'],
-          ['reflowProfile', 'Reflow 建議曲線圖', '零件耐熱極限與錫膏焊接建議溫度控制曲線'],
-          ['assemblyPackingSop', '組裝(包裝)作業標準書 (SOP)', '指導生產線作業人員進行組裝與包裝的標準程序'],
-          ['testSop', '測試作業標準書 (SOP)', '定義測試工位與測試軟硬體的標準操作']
+          ['bom', '材料清單 (BOM, Bill of Materials)', '主要電子零組件與電路板規格清單 (含廠牌/料號/封裝)'],
+          ['gerber', 'Gerber / ODB++ / CAD 圖面', '電路板各層佈線、阻焊與鋼網製造必要檔案'],
+          ['coordinate', 'SMT 元件座標檔 (Pick & Place)', '貼片機高速貼裝座標配置圖 (XY Centroid Coordinates)'],
+          ['placement', '零件位置圖 (Placement / Assembly)', '用以核對零件方向與極性參考之裝配圖面'],
+          ['materialSpec', '零組件規格書 (Datasheet / Spec)', '特殊敏感元件、連接器或客製機構之原廠規格書'],
+          ['reflowProfile', '建議回焊溫度曲線 (Reflow Profile)', '零件耐熱極限與錫膏焊接建議之溫控曲線圖'],
+          ['assemblyPackingSop', '組裝與包裝標準作業程序 (SOP)', '指導生產線作業人員進行組裝與防護包裝的標準程序'],
+          ['testSop', '測試標準作業程序 (Testing SOP)', '定義測試工位、治具操作與軟硬體判定之標準作業']
         ].map(([key, label, desc]) => {
           const checked = data.basicInfo.documents?.[key] || false;
           return (
