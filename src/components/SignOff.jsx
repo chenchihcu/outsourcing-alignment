@@ -255,7 +255,7 @@ export default function SignOff({
       {hasBlockingErrors && (
         <div className="blocking-warning-banner pokayoke-summary pokayoke-bar" style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', color: '#991b1b' }}>
           <strong>⚠️ 尚有 {blockingErrorsCount} 項必填檢查未完成</strong>
-          <p style={{ margin: '4px 0 0 0', fontSize: '0.85rem' }}>必須先至前面步驟完成所有防呆必填項目，方可套用簽章或匯出正式需求表。</p>
+          <p style={{ margin: '4px 0 0 0', fontSize: 'var(--fs-base)' }}>必須先至前面步驟完成所有防呆必填項目，方可套用簽章或匯出正式需求表。</p>
         </div>
       )}
 
@@ -280,7 +280,7 @@ export default function SignOff({
                 rows={2}
                 style={{ width: '100%', marginTop: '8px', resize: 'vertical' }}
               />
-              <label className="resubmit-ack-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', fontSize: '0.85rem', cursor: 'pointer' }}>
+              <label className="resubmit-ack-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', fontSize: 'var(--fs-base)', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={rejectionRead}
@@ -290,7 +290,7 @@ export default function SignOff({
                 已閱讀退件原因並完成修正
               </label>
               {resubmitError && (
-                <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>
+                <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-base)', marginTop: '6px' }}>
                   ⚠️ {resubmitError}
                 </div>
               )}
@@ -430,7 +430,7 @@ export default function SignOff({
               {(currentUser.role === 'eng' || currentUser.role === 'admin') && !isRejected && (
                 <div className="signature-btn-row">
                   {!data.basicInfo.signOff?.rdSignature && currentUser.role !== 'admin' ? (
-                    <span style={{ fontSize: '0.8rem', color: '#b45309' }}>⚠️ 需研發 (RD) 先行完成簽章後方可審核</span>
+                    <span style={{ fontSize: 'var(--fs-footnote)', color: '#b45309' }}>⚠️ 需研發 (RD) 先行完成簽章後方可審核</span>
                   ) : (
                     <>
                       {currentUser.signature && (
@@ -516,7 +516,7 @@ export default function SignOff({
               {(currentUser.role === 'qa' || currentUser.role === 'admin') && !isRejected && (
                 <div className="signature-btn-row">
                   {!data.basicInfo.signOff?.engineeringReviewSignature && currentUser.role !== 'admin' ? (
-                    <span style={{ fontSize: '0.8rem', color: '#b45309' }}>⚠️ 需工程 (PE) 先行完成簽章後方可簽核</span>
+                    <span style={{ fontSize: 'var(--fs-footnote)', color: '#b45309' }}>⚠️ 需工程 (PE) 先行完成簽章後方可簽核</span>
                   ) : (
                     <>
                       {currentUser.signature && (
@@ -598,7 +598,7 @@ export default function SignOff({
                   onChange={(e) => setRejectReason(e.target.value)}
                 />
                 {rejectError && (
-                  <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '6px' }}>
+                  <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-base)', marginTop: '6px' }}>
                     ⚠️ {rejectError}
                   </div>
                 )}
@@ -668,7 +668,7 @@ export default function SignOff({
           <div style={{ fontWeight: 600, color: '#b45309', marginBottom: '6px' }}>
             ⏳ 尚未完成最終簽核：
           </div>
-          <ul style={{ margin: 0, paddingLeft: '20px', color: '#92400e', fontSize: '0.88rem' }}>
+          <ul style={{ margin: 0, paddingLeft: '20px', color: '#92400e', fontSize: 'var(--fs-base)' }}>
             {missingItems.map((item, idx) => (
               <li key={idx}>{item}</li>
             ))}
@@ -716,26 +716,26 @@ export default function SignOff({
           </button>
         </div>
         {hasBlockingErrors && (
-          <div style={{ color: '#ef4444', fontSize: '0.88rem', textAlign: 'center' }}>
+          <div style={{ color: '#ef4444', fontSize: 'var(--fs-base)', textAlign: 'center' }}>
             ⚠️ 尚有 {blockingErrorsCount} 項必填防呆未完成，完成後方可匯出 Excel 與列印報表。
           </div>
         )}
       </div>
 
       {exportError && (
-        <div role="alert" style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: '14px', textAlign: 'center' }}>
+        <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-md)', marginTop: '14px', textAlign: 'center' }}>
           ⚠️ {exportError}
         </div>
       )}
       {printError && (
-        <div role="alert" style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: '14px', textAlign: 'center' }}>
+        <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-md)', marginTop: '14px', textAlign: 'center' }}>
           ⚠️ {printError}
         </div>
       )}
 
       {exportSuccess && (
         <div className="export-success-card glass-card animate-fade-in" role="status" style={{ marginTop: '20px', padding: '24px', border: '1px solid #10b981', borderRadius: '12px', textAlign: 'center', background: 'rgba(16, 185, 129, 0.05)' }}>
-          <span style={{ fontSize: '2rem', color: '#10b981', display: 'block', marginBottom: '8px' }}>✓</span>
+          <span style={{ fontSize: 'var(--fs-title-1)', color: '#10b981', display: 'block', marginBottom: '8px' }}>✓</span>
           <h3 style={{ margin: '0 0 8px 0', fontSize: 'var(--fs-title-3, 1.25rem)' }}>Excel 已匯出</h3>
           <p style={{ margin: '0 0 16px 0', color: 'var(--c-text-2, #64748b)' }}>簽核版文件已完成下載（{fileName}_對齊簽核版.xlsx）。</p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
@@ -752,13 +752,13 @@ export default function SignOff({
       {/* D-109: 簽核與審查退件歷程記錄時間軸 */}
       {Array.isArray(signOff.signOffHistory) && signOff.signOffHistory.length > 0 && (
         <div className="signoff-history-card" style={{ marginTop: '24px', padding: '16px', background: 'rgba(248, 250, 252, 0.9)', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: '1rem', fontWeight: 600, color: '#334155' }}>📋 簽核與審查歷程記錄</h3>
+          <h3 style={{ margin: '0 0 12px 0', fontSize: 'var(--fs-callout)', fontWeight: 600, color: '#334155' }}>📋 簽核與審查歷程記錄</h3>
           <div className="history-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {signOff.signOffHistory.map((item, idx) => (
-              <div key={idx} style={{ padding: '8px 12px', background: item.type === 'reject' ? '#fff1f2' : '#f0fdf4', borderLeft: `4px solid ${item.type === 'reject' ? '#e11d48' : '#16a34a'}`, borderRadius: '4px', fontSize: '0.88rem' }}>
+              <div key={idx} style={{ padding: '8px 12px', background: item.type === 'reject' ? '#fff1f2' : '#f0fdf4', borderLeft: `4px solid ${item.type === 'reject' ? '#e11d48' : '#16a34a'}`, borderRadius: '4px', fontSize: 'var(--fs-base)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: item.type === 'reject' ? '#9f1239' : '#166534' }}>
                   <span>{item.type === 'reject' ? '⛔ 品保退件' : '↩️ 重新送審'} ({item.byUnit ? `${item.byUnit} · ` : ''}{item.by})</span>
-                  <span style={{ fontSize: '0.78rem', color: '#64748b' }}>{fmtDateTime(item.at)}</span>
+                  <span style={{ fontSize: 'var(--fs-footnote)', color: '#64748b' }}>{fmtDateTime(item.at)}</span>
                 </div>
                 <div style={{ marginTop: '4px', color: '#334155' }}>
                   {item.type === 'reject' ? `原因：${item.reason}` : `修正說明：${item.note}`}

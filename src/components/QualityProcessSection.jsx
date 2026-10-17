@@ -139,7 +139,7 @@ export default function QualityProcessSection({ data, onChange, currentUser, hig
                   value={data.basicInfo.processItems?.otherProcessText || ''}
                   onChange={(e) => setField('basicInfo.processItems.otherProcessText', e.target.value)}
                   disabled={!data.basicInfo.processItems?.otherProcess || isFieldDisabled(data, currentUser, 'basicInfo.processItems.otherProcessText')}
-                  style={{ width: '160px', maxWidth: '100%', padding: '4px 8px', fontSize: '0.82rem' }} />
+                  style={{ width: '160px', maxWidth: '100%', padding: '4px 8px', fontSize: 'var(--fs-footnote)' }} />
               </div>
             </div>
           </fieldset>

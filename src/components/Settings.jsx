@@ -73,7 +73,7 @@ function CloudUserManagement({ currentUser }) {
       </p>
 
       {roleError && (
-        <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>
+        <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-base)', marginTop: '8px' }}>
           ⚠️ {roleError}
         </div>
       )}
@@ -106,12 +106,12 @@ function CloudUserManagement({ currentUser }) {
         </div>
       </form>
 
-      {msg && <p style={{ marginTop: '10px', fontSize: '0.85rem', color: msg.startsWith('✅') ? '#4ade80' : '#f87171' }}>{msg}</p>}
+      {msg && <p style={{ marginTop: '10px', fontSize: 'var(--fs-base)', color: msg.startsWith('✅') ? '#4ade80' : '#f87171' }}>{msg}</p>}
 
       {/* 使用者清單 */}
       <h4 style={{ marginTop: '24px', marginBottom: '8px' }}>現有使用者（{profiles.length}）</h4>
       {loading ? (
-        <p style={{ color: '#9ca3af', fontSize: '0.85rem' }}>載入中…</p>
+        <p style={{ color: '#9ca3af', fontSize: 'var(--fs-base)' }}>載入中…</p>
       ) : (
         <div className="accounts-table-container">
           <table className="settings-table">
@@ -142,11 +142,11 @@ function CloudUserManagement({ currentUser }) {
                       ))}
                     </select>
                   </td>
-                  <td style={{ fontSize: '0.78rem', color: '#9ca3af' }}>
+                  <td style={{ fontSize: 'var(--fs-footnote)', color: '#9ca3af' }}>
                     {p.created_at ? new Date(p.created_at).toLocaleDateString('zh-TW') : '—'}
                   </td>
                   <td>
-                    <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                    <span style={{ fontSize: 'var(--fs-caption)', color: '#6b7280' }}>
                       {currentUser.id === p.id ? '（當前登入）' : '可於 Supabase Dashboard 停用'}
                     </span>
                   </td>
@@ -280,7 +280,7 @@ export default function Settings({
               {currentUser.signature ? (
                 <img src={currentUser.signature} alt="我的簽章" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
               ) : (
-                <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>尚未設定電子簽章</span>
+                <span style={{ fontSize: 'var(--fs-footnote)', color: '#6b7280' }}>尚未設定電子簽章</span>
               )}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -331,11 +331,11 @@ export default function Settings({
                 )}
               </div>
               {sigError && (
-                <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '4px' }}>
+                <div style={{ color: '#ef4444', fontSize: 'var(--fs-base)', marginTop: '4px' }}>
                   ⚠️ {sigError}
                 </div>
               )}
-              <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>僅支援 JPG/PNG 格式，檔案大小建議小於 500KB</span>
+              <span style={{ fontSize: 'var(--fs-caption)', color: '#9ca3af' }}>僅支援 JPG/PNG 格式，檔案大小建議小於 500KB</span>
             </div>
           </div>
         </div>
@@ -445,12 +445,12 @@ export default function Settings({
               </div>
 
               {userFormError && (
-                <div role="alert" style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '8px' }}>
+                <div role="alert" style={{ color: '#ef4444', fontSize: 'var(--fs-base)', marginTop: '8px' }}>
                   ⚠️ {userFormError}
                 </div>
               )}
               {userFormSuccess && (
-                <div role="status" style={{ color: '#10b981', fontSize: '0.85rem', marginTop: '8px' }}>
+                <div role="status" style={{ color: '#10b981', fontSize: 'var(--fs-base)', marginTop: '8px' }}>
                   ✓ {userFormSuccess}
                 </div>
               )}

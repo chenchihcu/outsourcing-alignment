@@ -104,12 +104,12 @@ export default function TrialReportSection({ data, onChange, currentUser, highli
                 <div className="xray-parts-inputs animate-fade-in" style={{ display: 'flex', gap: '8px', marginLeft: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
                   {[0, 1, 2, 3].map((pIdx) => (
                     <div key={pIdx} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{pIdx + 1}:</span>
+                      <span style={{ fontSize: 'var(--fs-footnote)', color: '#6b7280' }}>{pIdx + 1}:</span>
                       <input type="text" className="form-input edit-active compact" placeholder={pIdx === 0 ? '預設空白' : `U${pIdx + 1}`} name={`xrayPart_${idx}_${pIdx}`}
                         value={cleanXrayPart(rec.parts?.[pIdx])}
                         onChange={(e) => handleXrayPartChange(idx, pIdx, e.target.value)}
                         disabled={isFieldDisabled(data, currentUser, `trialReport.photoRecords.${idx}.parts.${pIdx}`)}
-                        style={{ width: '70px', padding: '2px 4px', fontSize: '0.8rem' }} />
+                        style={{ width: '70px', padding: '2px 4px', fontSize: 'var(--fs-footnote)' }} />
                     </div>
                   ))}
                 </div>

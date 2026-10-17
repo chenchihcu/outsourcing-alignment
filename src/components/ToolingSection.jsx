@@ -57,7 +57,7 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
                         <input type="checkbox" checked={data.basicInfo.tooling?.stencil?.nanoCoating || false}
                           onChange={(e) => setField('basicInfo.tooling.stencil.nanoCoating', e.target.checked)}
                           disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.stencil.nanoCoating')} />
-                        <span style={{ fontSize: '0.85rem', color: '#4f46e5', fontWeight: '600' }}>表面奈米塗層 (Nano-Coating, 可複選)</span>
+                        <span style={{ fontSize: 'var(--fs-base)', color: '#4f46e5', fontWeight: '600' }}>表面奈米塗層 (Nano-Coating, 可複選)</span>
                       </label>
                     </div>
                   </div>
@@ -91,10 +91,10 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
                   </div>
                   {item.need && (
                     <div className="fixture-qty-input animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '6px', maxWidth: '140px' }}>
-                      <span style={{ fontSize: '0.78rem', color: '#6b7280', whiteSpace: 'nowrap' }}>數量:</span>
+                      <span style={{ fontSize: 'var(--fs-footnote)', color: '#6b7280', whiteSpace: 'nowrap' }}>數量:</span>
                       <input type="text" className="form-input edit-active compact" placeholder="例: 2 SETs" name={`basicInfo.tooling.${key}.qty`} value={item.qty || ''}
                         onChange={(e) => setField(`basicInfo.tooling.${key}.qty`, e.target.value)}
-                        disabled={isFieldDisabled(data, currentUser, `basicInfo.tooling.${key}.qty`)} style={{ padding: '4px 6px', fontSize: '0.8rem' }} />
+                        disabled={isFieldDisabled(data, currentUser, `basicInfo.tooling.${key}.qty`)} style={{ padding: '4px 6px', fontSize: 'var(--fs-footnote)' }} />
                     </div>
                   )}
                 </div>
@@ -121,13 +121,13 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
                     <input type="checkbox" checked={data.basicInfo.tooling?.smtCarrier?.upper || false}
                       onChange={(e) => setField('basicInfo.tooling.smtCarrier.upper', e.target.checked)}
                       disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.smtCarrier.upper')} />
-                    <span style={{ fontSize: '0.8rem' }}>Top 面載具 (正面)</span>
+                    <span style={{ fontSize: 'var(--fs-footnote)' }}>Top 面載具 (正面)</span>
                   </label>
                   <label className="checkbox-label" style={{ margin: 0, padding: 0 }}>
                     <input type="checkbox" checked={data.basicInfo.tooling?.smtCarrier?.lower || false}
                       onChange={(e) => setField('basicInfo.tooling.smtCarrier.lower', e.target.checked)}
                       disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.smtCarrier.lower')} />
-                    <span style={{ fontSize: '0.8rem' }}>Bottom 面載具 (背面)</span>
+                    <span style={{ fontSize: 'var(--fs-footnote)' }}>Bottom 面載具 (背面)</span>
                   </label>
                 </div>
               )}
@@ -149,10 +149,10 @@ export default function ToolingSection({ data, onChange, currentUser, highlightF
                 <div className="fixture-qty-input animate-fade-in" style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, maxWidth: '200px' }}>
                   <input type="text" className="form-input edit-active compact" placeholder="治具名稱" name="basicInfo.tooling.otherFixture.name" value={data.basicInfo.tooling?.otherFixture?.name || ''}
                     onChange={(e) => setField('basicInfo.tooling.otherFixture.name', e.target.value)}
-                    disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.otherFixture.name')} style={{ flex: 2, padding: '4px 6px', fontSize: '0.8rem' }} />
+                    disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.otherFixture.name')} style={{ flex: 2, padding: '4px 6px', fontSize: 'var(--fs-footnote)' }} />
                   <input type="text" className="form-input edit-active compact" placeholder="數量" name="basicInfo.tooling.otherFixture.qty" value={data.basicInfo.tooling?.otherFixture?.qty || ''}
                     onChange={(e) => setField('basicInfo.tooling.otherFixture.qty', e.target.value)}
-                    disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.otherFixture.qty')} style={{ flex: 1, padding: '4px 6px', fontSize: '0.8rem' }} />
+                    disabled={isFieldDisabled(data, currentUser, 'basicInfo.tooling.otherFixture.qty')} style={{ flex: 1, padding: '4px 6px', fontSize: 'var(--fs-footnote)' }} />
                 </div>
               )}
             </div>

@@ -1394,9 +1394,9 @@ export default function App() {
     return (
       <div className="auth-loading-screen" role="status" aria-live="polite" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--c-bg, #f8fafc)', padding: '24px' }}>
         <div className="auth-card glass-card animate-fade-in" style={{ padding: '32px', textAlign: 'center', maxWidth: '400px', width: '100%' }}>
-          <span className="login-logo-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>🔐</span>
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '8px' }}>正在驗證工作階段…</h2>
-          <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: '0.9rem' }}>請稍候，系統正在確認雲端登入狀態。</p>
+          <span className="login-logo-icon" style={{ fontSize: 'var(--fs-large-title)', display: 'block', marginBottom: '12px' }}>🔐</span>
+          <h2 style={{ fontSize: 'var(--fs-title-3)', marginBottom: '8px' }}>正在驗證工作階段…</h2>
+          <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: 'var(--fs-md)' }}>請稍候，系統正在確認雲端登入狀態。</p>
         </div>
       </div>
     );

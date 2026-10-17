@@ -480,7 +480,7 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
                           <div className="mobile-row-popover glass-card">
                             {confirmDeleteProjectId === proj.id ? (
                               <div className="mobile-delete-confirm-box">
-                                <span style={{ fontSize: '13px', color: 'var(--c-error)', fontWeight: 600 }}>確定刪除此機種？</span>
+                                <span style={{ fontSize: 'var(--fs-footnote)', color: 'var(--c-error)', fontWeight: 600 }}>確定刪除此機種？</span>
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                                   <button
                                     type="button"

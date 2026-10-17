@@ -18,8 +18,8 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
     return (
       <div className="create-project-page project-new-container" style={{ padding: '32px', maxWidth: '600px', margin: '40px auto', textAlign: 'center' }}>
         <div className="banner-error" role="alert" style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid #ef4444', padding: '24px', borderRadius: '12px' }}>
-          <h2 style={{ fontSize: '1.25rem', color: '#ef4444', marginBottom: '8px' }}>權限不足</h2>
-          <p style={{ color: 'var(--c-text-1, #1e293b)', fontSize: '0.95rem', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: 'var(--fs-title-3)', color: '#ef4444', marginBottom: '8px' }}>權限不足</h2>
+          <p style={{ color: 'var(--c-text-1, #1e293b)', fontSize: 'var(--fs-md)', marginBottom: '20px' }}>
             審核單位（品保處）為覆核角色，不能建立或匯入新機種。
           </p>
           <button type="button" className="btn btn-primary" onClick={() => navigateTo('/projects')}>
@@ -120,7 +120,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         <h1 style={{ fontSize: 'var(--fs-title-3, 1.25rem)', fontWeight: 700, marginBottom: '8px' }}>
           ➕ 建立新機種
         </h1>
-        <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: '0.9rem', marginBottom: '24px' }}>
+        <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: 'var(--fs-md)', marginBottom: '24px' }}>
           您可以從標準空白範本建立全新機種，或是匯入現有的 Excel 需求表進行對齊與簽核。
         </p>
 
@@ -165,7 +165,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         </div>
 
         {error && (
-          <div role="alert" className="field-error banner-error" style={{ color: '#dc2626', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: '0.9rem' }}>
+          <div role="alert" className="field-error banner-error" style={{ color: '#dc2626', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: 'var(--fs-md)' }}>
             ⚠️ {error}
           </div>
         )}
@@ -187,7 +187,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   width: '100%',
                   height: '44px',
                   padding: '0 14px',
-                  fontSize: '1rem',
+                  fontSize: 'var(--fs-callout)',
                   borderRadius: '10px',
                   border: '1.5px solid var(--c-border, #e2e8f0)',
                   background: 'var(--c-surface, #ffffff)',
@@ -209,7 +209,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   minHeight: '48px',
                   height: '48px',
                   padding: '0 20px',
-                  fontSize: '1rem',
+                  fontSize: 'var(--fs-callout)',
                 }}
                 onClick={() => navigateTo('/projects')}
               >
@@ -223,7 +223,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   minHeight: '48px',
                   height: '48px',
                   padding: '0 24px',
-                  fontSize: '1rem',
+                  fontSize: 'var(--fs-callout)',
                   fontWeight: 600,
                   boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
                 }}
@@ -243,7 +243,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
               />
-              <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '12px' }}>📂</span>
+              <span style={{ fontSize: 'var(--fs-large-title)', display: 'block', marginBottom: '12px' }}>📂</span>
               <p style={{ marginBottom: '16px', color: 'var(--c-text-2, #64748b)' }}>
                 請點擊選擇本公司範本格式之新機種委外加工需求一覽表 (.xlsx)
               </p>
@@ -258,7 +258,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
 
             {importPreview && (
               <div style={{ marginBottom: '20px', padding: '16px', background: 'var(--c-surface-2, #f8fafc)', borderRadius: '8px', border: '1px solid var(--c-border, #e2e8f0)' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '12px' }}>檔案預覽確認</h3>
+                <h3 style={{ fontSize: 'var(--fs-callout)', fontWeight: 600, marginBottom: '12px' }}>檔案預覽確認</h3>
                 <div className="form-group">
                   <label htmlFor="importProjectName" className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                     匯入後機種名稱：
@@ -287,7 +287,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   minHeight: '48px',
                   height: '48px',
                   padding: '0 20px',
-                  fontSize: '1rem',
+                  fontSize: 'var(--fs-callout)',
                 }}
                 onClick={() => navigateTo('/projects')}
               >
@@ -301,7 +301,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   minHeight: '48px',
                   height: '48px',
                   padding: '0 24px',
-                  fontSize: '1rem',
+                  fontSize: 'var(--fs-callout)',
                   fontWeight: 600,
                   boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
                 }}
