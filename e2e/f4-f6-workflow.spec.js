@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { seedProject } from './helpers/seedProject.js';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,41 +12,10 @@ test.describe('F4～F6: 十步驟流轉、防呆規則、簽核狀態機與匯�
   });
 
   test.beforeEach(async ({ page }) => {
+    await setupAuthMock(page);
     await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'password',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }, {
-        username: 'rd_user',
-        password: 'password',
-        role: 'rd',
-        unit: '研發單位',
-        level: 'Standard',
-      }, {
-        username: 'pe_user',
-        password: 'password',
-        role: 'eng',
-        unit: '工程單位',
-        level: 'Standard',
-      }, {
-        username: 'qa_user',
-        password: 'password',
-        role: 'qa',
-        unit: '審核單位（品保處）',
-        level: 'Reviewer',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await page.evaluate(() => localStorage.clear());
+    await injectAuthSession(page, MOCK_USERS.admin);
     await page.reload();
   });
 

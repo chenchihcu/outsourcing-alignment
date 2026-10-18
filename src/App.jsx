@@ -643,6 +643,7 @@ export default function App() {
       if (import.meta.env.DEV) console.error('[auth] 本機 session 清除失敗', err);
     } finally {
       localStorage.removeItem('ag_last_activity');
+      localStorage.removeItem('ag_sb_auth');
       removeKey('current_user');
       currentUserRef.current = null;
       setCurrentUser(null);

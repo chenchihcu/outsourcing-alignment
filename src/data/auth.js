@@ -33,12 +33,20 @@ export async function signIn(account, password) {
 
 export async function signOut() {
   if (!isSupabaseEnabled) return { remoteRevoked: true };
-  const { error } = await supabase.auth.signOut();
-  if (!error) return { remoteRevoked: true };
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (!error) return { remoteRevoked: true };
 
-  const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
-  if (localError) throw localError;
-  return { remoteRevoked: false, error };
+    const { error: localError } = await supabase.auth.signOut({ scope: 'local' });
+    if (localError) throw localError;
+    return { remoteRevoked: false, error };
+  } finally {
+    try {
+      localStorage.removeItem('ag_sb_auth');
+    } catch {
+      /* 忽略 storage 例外 */
+    }
+  }
 }
 
 /** 從現有 session 還原 currentUser(無 session 回傳 null) */

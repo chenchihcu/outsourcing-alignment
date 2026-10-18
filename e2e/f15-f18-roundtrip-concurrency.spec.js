@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { seedProject } from './helpers/seedProject.js';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -11,23 +12,10 @@ test.describe('F15 & F18: 往返保真度驗收、跨分頁防覆蓋與簽章去
   });
 
   test.beforeEach(async ({ page }) => {
+    await setupAuthMock(page);
     await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'password',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await page.evaluate(() => localStorage.clear());
+    await injectAuthSession(page, MOCK_USERS.admin);
     await page.reload();
   });
 
@@ -42,19 +30,13 @@ test.describe('F15 & F18: 往返保真度驗收、跨分頁防覆蓋與簽章去
   });
 
   test('F18-8: 跨分頁協調機制保障雙分頁儲存不覆蓋彼此資料 (D-153)', async ({ context }) => {
+    await setupAuthMock(context);
     const pageA = await context.newPage();
     const pageB = await context.newPage();
 
     // 登入
-    await pageA.goto('/#/projects');
-    await pageA.evaluate(() => {
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await pageA.goto('/');
+    await injectAuthSession(pageA, MOCK_USERS.admin);
 
     const projAId = await seedProject(pageA, fullFixture);
     await pageA.goto(`/#/projects/${projAId}/basic-info`);

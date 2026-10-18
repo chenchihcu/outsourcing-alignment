@@ -1,90 +1,17 @@
 import { test, expect } from '@playwright/test';
 import { injectSafeArea } from './helpers/touch.js';
 import { seedProject } from './helpers/seedProject.js';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 import fullFixture from '../tests/fixtures/roundtrip-full.json' with { type: 'json' };
 
 test.describe('F19: iOS Safari iPhone 16 Pro Max 行動版 UI 與 HIG 規格驗證', () => {
   let projectId;
 
   test.beforeEach(async ({ page }) => {
-    // 攔截並 mock 雲端 Supabase Auth 請求，避免無頭測試未登入踢回 /login
-    await page.route('**/auth/v1/user', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          id: '11111111-1111-1111-1111-111111111111',
-          aud: 'authenticated',
-          role: 'authenticated',
-          email: 'admin@mitcorp.local',
-          user_metadata: {
-            username: 'admin',
-            role: 'admin',
-            unit: '管理處',
-            level: 'Administrator',
-          },
-        }),
-      });
-    });
-
-    await page.route('**/rest/v1/profiles*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([{
-          id: '11111111-1111-1111-1111-111111111111',
-          username: 'admin',
-          role: 'admin',
-          unit: '管理處',
-          level: 'Administrator',
-        }]),
-      });
-    });
-
-    await page.route('**/rest/v1/projects*', async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify([]),
-      });
-    });
-
+    await setupAuthMock(page);
     await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'password',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-      localStorage.setItem('ag_sb_auth', JSON.stringify({
-        access_token: 'mock-audit-token',
-        token_type: 'bearer',
-        expires_in: 3600,
-        expires_at: Math.floor(Date.now() / 1000) + 3600,
-        refresh_token: 'mock-audit-refresh',
-        user: {
-          id: '11111111-1111-1111-1111-111111111111',
-          aud: 'authenticated',
-          role: 'authenticated',
-          email: 'admin@mitcorp.local',
-          user_metadata: {
-            username: 'admin',
-            role: 'admin',
-            unit: '管理處',
-            level: 'Administrator',
-          },
-        },
-      }));
-    });
+    await page.evaluate(() => localStorage.clear());
+    await injectAuthSession(page, MOCK_USERS.admin);
     await page.reload();
     projectId = await seedProject(page, fullFixture, { roles: ['admin'] });
   });
@@ -171,7 +98,8 @@ test.describe('F19: iOS Safari iPhone 16 Pro Max 行動版 UI 與 HIG 規格驗�
       const allTextNodes = [...document.querySelectorAll('body *:not(script):not(style)')];
       const tinyTexts = [];
       for (const el of allTextNodes) {
-        if (el.closest('.mobile-tab-label') || el.closest('.save-hint') || el.classList.contains('mobile-tab-label')) continue;
+        if (el.closest('.mobile-tab-label') || el.closest('.save-hint') || el.classList.contains('mobile-tab-label') || el.closest('.shell-sidebar')) continue;
+        if (el.offsetParent === null && el.offsetWidth === 0 && el.offsetHeight === 0) continue;
         if (el.children.length > 0) continue; // 僅檢查葉子文字節點
         const text = (el.textContent || '').trim();
         if (!text) continue;

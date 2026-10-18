@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 
 test.describe('F1: 登入、登出與未登入保護流程', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthMock(page);
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
   });
@@ -63,21 +65,7 @@ test.describe('F1: 登入、登出與未登入保護流程', () => {
   });
 
   test('F1-7: 登出後清除 session 並回到登入頁，上一頁無法回到機種內容', async ({ page }) => {
-    await page.evaluate(() => {
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'adminpassword',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await injectAuthSession(page, MOCK_USERS.admin);
 
     await page.goto('/#/projects');
     await page.reload();

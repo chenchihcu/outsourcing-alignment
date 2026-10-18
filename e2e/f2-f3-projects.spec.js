@@ -1,30 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 
 test.describe('F2 & F3: 機種清單與建立/匯入流程', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthMock(page);
     await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'password',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }, {
-        username: 'qa_user',
-        password: 'password',
-        role: 'qa',
-        unit: '審核單位（品保處）',
-        level: 'Reviewer',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await page.evaluate(() => localStorage.clear());
+    await injectAuthSession(page, MOCK_USERS.admin);
     await page.reload();
   });
 
@@ -38,15 +20,7 @@ test.describe('F2 & F3: 機種清單與建立/匯入流程', () => {
   });
 
   test('F2-8 & F3-8: QA 角色登入無法建立機種且清單不顯示新增/匯入按鈕', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
-    await page.evaluate(() => {
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'qa_user',
-        role: 'qa',
-        unit: '審核單位（品保處）',
-        level: 'Reviewer',
-      }));
-    });
+    await injectAuthSession(page, MOCK_USERS.qa);
     await page.goto('/#/projects');
     await page.reload();
     await page.waitForLoadState('networkidle');

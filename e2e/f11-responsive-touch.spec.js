@@ -1,25 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { measureTouchTargets, injectSafeArea } from './helpers/touch.js';
+import { setupAuthMock, injectAuthSession, MOCK_USERS } from './helpers/authMock.js';
 
 test.describe('F11: 多裝置響應式架構、觸控規格與安全區域', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthMock(page);
     await page.goto('/');
-    await page.evaluate(() => {
-      localStorage.clear();
-      localStorage.setItem('ag_accounts', JSON.stringify([{
-        username: 'admin',
-        password: 'password',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }]));
-      localStorage.setItem('ag_current_user', JSON.stringify({
-        username: 'admin',
-        role: 'admin',
-        unit: '管理處',
-        level: 'Administrator',
-      }));
-    });
+    await page.evaluate(() => localStorage.clear());
+    await injectAuthSession(page, MOCK_USERS.admin);
     await page.reload();
   });
 
