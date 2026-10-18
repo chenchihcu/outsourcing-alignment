@@ -109,6 +109,82 @@ check(
   'LoginModal uses PBKDF2 hash verification and sanitizes user session',
 );
 
+function walkFiles(dir, extFilter) {
+  let files = [];
+  const absDir = path.join(root, dir);
+  if (!fs.existsSync(absDir)) return files;
+  for (const item of fs.readdirSync(absDir)) {
+    const full = path.join(dir, item);
+    const abs = path.join(root, full);
+    if (fs.statSync(abs).isDirectory()) {
+      files = files.concat(walkFiles(full, extFilter));
+    } else if (!extFilter || extFilter.test(full)) {
+      files.push(full);
+    }
+  }
+  return files;
+}
+
+// F0-2: label-has-associated-control 註解歸零
+const srcJsxFiles = walkFiles('src', /\.(jsx?)$/);
+const labelDisables = srcJsxFiles.filter(f => read(f).includes('label-has-associated-control'));
+check(labelDisables.length === 0, 'F0-2: label-has-associated-control eslint-disable comments count is 0');
+
+// F0-5: 原生 alert/confirm/prompt 與彈窗遮罩 class 徹底歸零
+const srcCodeFiles = walkFiles('src', /\.(jsx?|css)$/);
+const dialogHits = [];
+const modalClassHits = [];
+for (const f of srcCodeFiles) {
+  const c = read(f);
+  for (const token of ['alert(', 'confirm(', 'prompt(']) {
+    if (c.includes(token)) dialogHits.push(`${f}: ${token}`);
+  }
+  for (const token of ['modal-backdrop', 'success-overlay', 'login-overlay', 'shell-backdrop']) {
+    if (c.includes(token)) modalClassHits.push(`${f}: ${token}`);
+  }
+}
+check(dialogHits.length === 0, 'F0-5: native alert/confirm/prompt in src count is 0');
+check(modalClassHits.length === 0, 'F0-5: deprecated modal overlay class names count is 0');
+
+// F0-7: HEAD 中已徹底移除擬真簽名圖資產
+check(!fs.existsSync(path.join(root, 'docs/簽名檔(擬真)')), 'F0-7: fake signature assets directory does not exist');
+
+// F0-9: 安全標頭包含 CSP 與 HSTS 且無外部 Google Fonts 依賴
+const headersContent = read('public/_headers');
+check(
+  headersContent.includes('Content-Security-Policy') && headersContent.includes('Strict-Transport-Security'),
+  'F0-9: security headers contain CSP and HSTS',
+);
+const indexHtmlContent = read('index.html');
+check(
+  !indexHtmlContent.includes('fonts.googleapis.com') && !indexHtmlContent.includes('fonts.gstatic.com'),
+  'F0-9: index.html has no external Google Fonts dependency',
+);
+
+// F0-17: 元件層無 getElementById
+const compFiles = walkFiles('src/components', /\.(jsx?)$/);
+const getElemHits = compFiles.filter(f => read(f).includes('getElementById('));
+check(getElemHits.length === 0, 'F0-17: components layer has zero getElementById calls');
+
+// AGENTS.md Terminology SSOT: 元件層無違規俗稱
+const termHits = [];
+for (const f of compFiles) {
+  const c = read(f);
+  for (const term of ['脆盤', '濕潤性', '後烘烤']) {
+    if (c.includes(term)) termHits.push(`${f}: ${term}`);
+  }
+}
+check(termHits.length === 0, 'Terminology SSOT: components layer has zero banned informal terms');
+
+// AGENTS.md Typography SSOT: JSX 行內樣式無裸露 fontSize 數值
+const fontSizeHits = [];
+for (const f of srcJsxFiles) {
+  const c = read(f);
+  if (/fontSize:\s*['"][0-9]/.test(c)) fontSizeHits.push(f);
+}
+check(fontSizeHits.length === 0, 'Typography SSOT: JSX inline styles have zero hardcoded fontSize values');
+
 console.log(`\nSecurity contract results: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exitCode = 1;
+
 

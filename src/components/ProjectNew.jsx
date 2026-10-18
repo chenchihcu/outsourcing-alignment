@@ -109,12 +109,6 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
   };
 
   const handleCancelOrBack = () => {
-    const isDirty = Boolean(name.trim() || importPreview);
-    if (isDirty) {
-      if (!window.confirm('您有未儲存的建立內容，確定要放棄並返回嗎？')) {
-        return;
-      }
-    }
     navigateTo('/projects');
   };
 
