@@ -137,7 +137,7 @@ export default function Dashboard({ data, onGoToSection, sectionStatus = {}, cur
                     onClick={() => handleWarningClick(w)}
                     role="button"
                     tabIndex={0}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { handleWarningClick(w); } }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); handleWarningClick(w); } }}
                     title="點擊前往該填寫區塊"
                   >
                     <span className={`todo-tag ${w.type}`}>{w.type === 'error' ? '異常' : '警告'}</span>

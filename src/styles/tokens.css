@@ -18,6 +18,8 @@ html {
   --c-bg: #f8fafc;           /* slate-50 整體底色 */
   --c-app: #f8fafc;          /* slate-50 整體底色 */
   --c-surface: #ffffff;      /* 卡片 / 面板 */
+  --c-surface-1: var(--c-surface); /* 卡片底色相容別名 */
+  --c-bg-card: var(--c-surface);   /* 卡片底色相容別名 */
   --c-surface-2: #f1f5f9;    /* slate-100 次級面板 / hover 底 */
   --c-surface-3: #e2e8f0;    /* slate-200 更深的襯底 */
 
@@ -34,6 +36,7 @@ html {
   /* ---- 品牌 / 強調色 (Royal Blue 皇家工程藍) ---- */
   --c-accent: #2563eb;       /* blue-600 */
   --c-accent-hover: #1d4ed8; /* blue-700 */
+  --c-accent-strong: #1d4ed8;/* blue-700 強調色別名 */
   --c-accent-weak: #eff6ff;  /* blue-50 選中/標籤底 */
   --c-accent-border: #bfdbfe;/* blue-200 */
 
@@ -51,6 +54,7 @@ html {
   /* ---- 陰影(扁平、克制) ---- */
   --sh-1: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
   --sh-2: 0 2px 8px rgba(16, 24, 40, 0.06);
+  --sh-3: 0 10px 28px rgba(16, 24, 40, 0.12); /* 浮層選單相容別名 */
   --sh-pop: 0 10px 28px rgba(16, 24, 40, 0.12);
 
   /* ---- 圓角 ---- */
@@ -162,6 +166,8 @@ html {
     --c-bg: #0b0d12;
     --c-app: #0b0d12;
     --c-surface: #16181f;
+    --c-surface-1: var(--c-surface);
+    --c-bg-card: var(--c-surface);
     --c-surface-2: #1f222b;
     --c-surface-3: #2a2e38;
 
@@ -176,6 +182,7 @@ html {
 
     --c-accent: #8b85ff;
     --c-accent-hover: #a5a0ff;
+    --c-accent-strong: #a5a0ff;
     --c-accent-weak: #1f2238;
     --c-accent-border: #4c4880;
 
@@ -196,6 +203,7 @@ html {
 
     --sh-1: 0 1px 2px rgba(0, 0, 0, 0.25);
     --sh-2: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --sh-3: 0 10px 28px rgba(0, 0, 0, 0.5);
     --sh-pop: 0 10px 28px rgba(0, 0, 0, 0.5);
   }
 }
@@ -204,6 +212,8 @@ html {
   --c-bg: #0b0d12;
   --c-app: #0b0d12;
   --c-surface: #16181f;
+  --c-surface-1: var(--c-surface);
+  --c-bg-card: var(--c-surface);
   --c-surface-2: #1f222b;
   --c-surface-3: #2a2e38;
 
@@ -218,6 +228,7 @@ html {
 
   --c-accent: #8b85ff;
   --c-accent-hover: #a5a0ff;
+  --c-accent-strong: #a5a0ff;
   --c-accent-weak: #1f2238;
   --c-accent-border: #4c4880;
 
@@ -238,6 +249,7 @@ html {
 
   --sh-1: 0 1px 2px rgba(0, 0, 0, 0.25);
   --sh-2: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --sh-3: 0 10px 28px rgba(0, 0, 0, 0.5);
   --sh-pop: 0 10px 28px rgba(0, 0, 0, 0.5);
 }
 

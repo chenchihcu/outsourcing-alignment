@@ -108,36 +108,46 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
     }
   };
 
+  const handleCancelOrBack = () => {
+    const isDirty = Boolean(name.trim() || importPreview);
+    if (isDirty) {
+      if (!window.confirm('您有未儲存的建立內容，確定要放棄並返回嗎？')) {
+        return;
+      }
+    }
+    navigateTo('/projects');
+  };
+
   return (
     <div className="create-project-page project-new-container animate-fade-in" style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px' }}>
-        <button type="button" className="btn btn-secondary btn-sm" onClick={() => navigateTo('/projects')}>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={handleCancelOrBack}>
           ← 返回清單
         </button>
       </div>
 
-      <div className="glass-card" style={{ padding: '28px', borderRadius: '12px', background: 'var(--c-surface, #ffffff)', border: '1px solid var(--c-border, #e2e8f0)' }}>
+      <div className="glass-card" style={{ padding: '28px', borderRadius: '12px', background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}>
         <h1 style={{ fontSize: 'var(--fs-title-3, 0.84375rem)', fontWeight: 700, marginBottom: '8px' }}>
           ➕ 建立新機種
         </h1>
-        <p style={{ color: 'var(--c-text-2, #64748b)', fontSize: 'var(--fs-md)', marginBottom: '24px' }}>
+        <p style={{ color: 'var(--c-text-2)', fontSize: 'var(--fs-md)', marginBottom: '24px' }}>
           您可以從標準空白範本建立全新機種，或是匯入現有的 Excel 需求表進行對齊與簽核。
         </p>
 
         {/* 分段控制 (Apple HIG Segmented Control) */}
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', background: 'var(--c-surface-2, #f1f5f9)', padding: '4px', borderRadius: '10px', border: '1px solid var(--c-border, #e2e8f0)' }}>
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '24px', background: 'var(--c-surface-2)', padding: '4px', borderRadius: '10px', border: '1px solid var(--c-border)' }}>
           <button
             type="button"
             className="btn btn-sm"
             style={{
               flex: 1,
-              height: '40px',
+              height: '44px',
               borderRadius: '8px',
-              border: mode === 'template' ? '1px solid rgba(0,0,0,0.05)' : 'none',
-              background: mode === 'template' ? '#ffffff' : 'transparent',
-              color: mode === 'template' ? 'var(--c-text-1, #0f172a)' : 'var(--c-text-2, #64748b)',
+              border: mode === 'template' ? '1px solid var(--c-border)' : 'none',
+              background: mode === 'template' ? 'var(--c-surface)' : 'transparent',
+              color: mode === 'template' ? 'var(--c-text-1)' : 'var(--c-text-2)',
               fontWeight: mode === 'template' ? 650 : 500,
-              boxShadow: mode === 'template' ? '0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)' : 'none',
+              boxShadow: mode === 'template' ? 'var(--sh-1)' : 'none',
               transition: 'all 0.18s ease',
             }}
             onClick={() => { setMode('template'); setError(''); }}
@@ -149,13 +159,13 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
             className="btn btn-sm"
             style={{
               flex: 1,
-              height: '40px',
+              height: '44px',
               borderRadius: '8px',
-              border: mode === 'import' ? '1px solid rgba(0,0,0,0.05)' : 'none',
-              background: mode === 'import' ? '#ffffff' : 'transparent',
-              color: mode === 'import' ? 'var(--c-text-1, #0f172a)' : 'var(--c-text-2, #64748b)',
+              border: mode === 'import' ? '1px solid var(--c-border)' : 'none',
+              background: mode === 'import' ? 'var(--c-surface)' : 'transparent',
+              color: mode === 'import' ? 'var(--c-text-1)' : 'var(--c-text-2)',
               fontWeight: mode === 'import' ? 650 : 500,
-              boxShadow: mode === 'import' ? '0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)' : 'none',
+              boxShadow: mode === 'import' ? 'var(--sh-1)' : 'none',
               transition: 'all 0.18s ease',
             }}
             onClick={() => { setMode('import'); setError(''); }}
@@ -165,7 +175,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         </div>
 
         {error && (
-          <div role="alert" className="field-error banner-error" style={{ color: '#dc2626', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: 'var(--fs-md)' }}>
+          <div role="alert" className="field-error banner-error" style={{ color: 'var(--c-error)', background: 'var(--c-error-weak)', border: '1px solid var(--c-error-border)', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px', fontSize: 'var(--fs-md)' }}>
             ⚠️ {error}
           </div>
         )}
@@ -173,8 +183,8 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
         {mode === 'template' ? (
           <form onSubmit={handleCreateSubmit}>
             <div className="form-group" style={{ marginBottom: '20px' }}>
-              <label htmlFor="projectName" className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px', color: 'var(--c-text-1, #1e293b)' }}>
-                機種名稱 <span style={{ color: '#dc2626' }}>*</span>
+              <label htmlFor="projectName" className="form-label" style={{ fontWeight: 600, display: 'block', marginBottom: '8px', color: 'var(--c-text-1)' }}>
+                機種名稱 <span style={{ color: 'var(--c-error)' }}>*</span>
               </label>
               <input
                 id="projectName"
@@ -189,32 +199,15 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   padding: '0 14px',
                   fontSize: 'var(--fs-callout)',
                   borderRadius: '10px',
-                  border: '1.5px solid var(--c-border, #e2e8f0)',
-                  background: 'var(--c-surface, #ffffff)',
-                  color: 'var(--c-text-1, #1e293b)',
+                  border: '1.5px solid var(--c-border)',
+                  background: 'var(--c-surface)',
+                  color: 'var(--c-text-1)',
                   boxSizing: 'border-box',
                 }}
               />
             </div>
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '32px' }}>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{
-                  background: 'var(--c-surface, #ffffff)',
-                  border: '1px solid var(--c-border, #cbd5e1)',
-                  color: 'var(--c-text-2, #475569)',
-                  borderRadius: '10px',
-                  minHeight: '48px',
-                  height: '48px',
-                  padding: '0 20px',
-                  fontSize: 'var(--fs-callout)',
-                }}
-                onClick={() => navigateTo('/projects')}
-              >
-                取消
-              </button>
               <button
                 type="submit"
                 className="btn btn-primary"
@@ -225,17 +218,34 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   padding: '0 24px',
                   fontSize: 'var(--fs-callout)',
                   fontWeight: 600,
-                  boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                  boxShadow: 'var(--sh-1)',
                 }}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? '建立中…' : '建立機種'}
               </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  background: 'var(--c-surface)',
+                  border: '1px solid var(--c-border)',
+                  color: 'var(--c-text-2)',
+                  borderRadius: '10px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 20px',
+                  fontSize: 'var(--fs-callout)',
+                }}
+                onClick={handleCancelOrBack}
+              >
+                取消
+              </button>
             </div>
           </form>
         ) : (
           <div>
-            <div style={{ border: '2px dashed var(--c-border, #cbd5e1)', padding: '32px', textAlign: 'center', borderRadius: '8px', marginBottom: '20px' }}>
+            <div style={{ border: '2px dashed var(--c-border-strong)', padding: '32px', textAlign: 'center', borderRadius: '8px', marginBottom: '20px' }}>
               <input
                 type="file"
                 ref={fileInputRef}
@@ -244,7 +254,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                 onChange={handleFileChange}
               />
               <span style={{ fontSize: 'var(--fs-large-title)', display: 'block', marginBottom: '12px' }}>📂</span>
-              <p style={{ marginBottom: '16px', color: 'var(--c-text-2, #64748b)' }}>
+              <p style={{ marginBottom: '16px', color: 'var(--c-text-2)' }}>
                 請點擊選擇本公司範本格式之新機種委外加工需求一覽表 (.xlsx)
               </p>
               <button
@@ -257,7 +267,7 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
             </div>
 
             {importPreview && (
-              <div style={{ marginBottom: '20px', padding: '16px', background: 'var(--c-surface-2, #f8fafc)', borderRadius: '8px', border: '1px solid var(--c-border, #e2e8f0)' }}>
+              <div style={{ marginBottom: '20px', padding: '16px', background: 'var(--c-surface-2)', borderRadius: '8px', border: '1px solid var(--c-border)' }}>
                 <h3 style={{ fontSize: 'var(--fs-callout)', fontWeight: 600, marginBottom: '12px' }}>檔案預覽確認</h3>
                 <div className="form-group">
                   <label htmlFor="importProjectName" className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
@@ -278,23 +288,6 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '32px' }}>
               <button
                 type="button"
-                className="btn btn-secondary"
-                style={{
-                  background: 'var(--c-surface, #ffffff)',
-                  border: '1px solid var(--c-border, #cbd5e1)',
-                  color: 'var(--c-text-2, #475569)',
-                  borderRadius: '10px',
-                  minHeight: '48px',
-                  height: '48px',
-                  padding: '0 20px',
-                  fontSize: 'var(--fs-callout)',
-                }}
-                onClick={() => navigateTo('/projects')}
-              >
-                取消
-              </button>
-              <button
-                type="button"
                 className="btn btn-primary"
                 style={{
                   borderRadius: '10px',
@@ -303,12 +296,29 @@ export default function ProjectNew({ projects = [], onCreateProject, onImportExc
                   padding: '0 24px',
                   fontSize: 'var(--fs-callout)',
                   fontWeight: 600,
-                  boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                  boxShadow: 'var(--sh-1)',
                 }}
                 disabled={!importPreview || isSubmitting}
                 onClick={handleConfirmImport}
               >
                 {isSubmitting ? '匯入中…' : '確認匯入'}
+              </button>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{
+                  background: 'var(--c-surface)',
+                  border: '1px solid var(--c-border)',
+                  color: 'var(--c-text-2)',
+                  borderRadius: '10px',
+                  minHeight: '48px',
+                  height: '48px',
+                  padding: '0 20px',
+                  fontSize: 'var(--fs-callout)',
+                }}
+                onClick={handleCancelOrBack}
+              >
+                取消
               </button>
             </div>
           </div>

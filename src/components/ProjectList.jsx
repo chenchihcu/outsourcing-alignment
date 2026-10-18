@@ -240,7 +240,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           className={`kpi-card ${filterMode === 'in-progress' ? 'active' : ''}`}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('in-progress'); setCurrentPage(1); } }}
+          aria-pressed={filterMode === 'in-progress'}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); setFilterMode('in-progress'); setCurrentPage(1); } }}
           title="點擊篩選進行中機種"
         >
           <div className="kpi-header">
@@ -256,7 +257,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           className={`kpi-card ${filterMode === 'completed' ? 'active' : ''}`}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('completed'); setCurrentPage(1); } }}
+          aria-pressed={filterMode === 'completed'}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); setFilterMode('completed'); setCurrentPage(1); } }}
           title="點擊篩選已完成簽核機種"
         >
           <div className="kpi-header">
@@ -272,7 +274,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           className={`kpi-card ${filterMode === 'rejected' ? 'active' : ''}`}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('rejected'); setCurrentPage(1); } }}
+          aria-pressed={filterMode === 'rejected'}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); setFilterMode('rejected'); setCurrentPage(1); } }}
           title="點擊篩選品保退件案件"
         >
           <div className="kpi-header">
@@ -288,7 +291,8 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
           className={`kpi-card ${filterMode === 'all' ? 'active' : ''}`}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') { setFilterMode('all'); setCurrentPage(1); } }}
+          aria-pressed={filterMode === 'all'}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); setFilterMode('all'); setCurrentPage(1); } }}
           title="點擊檢視全部機種"
         >
           <div className="kpi-header">
@@ -430,11 +434,11 @@ export default function ProjectList({ projects, onSelectProject, onCreateProject
         <table className="project-table">
           <thead>
             <tr>
-              <th>📁 機種與一覽表名稱</th>
-              <th>📊 完成率</th>
-              <th className="hide-on-mobile">🏷️ 狀態</th>
-              <th className="hide-on-mobile">🕒 更新時間</th>
-              <th className="text-center hide-on-mobile">⚙️ 動作</th>
+              <th scope="col">📁 機種與一覽表名稱</th>
+              <th scope="col">📊 完成率</th>
+              <th scope="col" className="hide-on-mobile">🏷️ 狀態</th>
+              <th scope="col" className="hide-on-mobile">🕒 更新時間</th>
+              <th scope="col" className="text-center hide-on-mobile">⚙️ 動作</th>
             </tr>
           </thead>
           <tbody>

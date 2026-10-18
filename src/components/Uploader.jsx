@@ -101,7 +101,7 @@ export default function Uploader({ onDataLoaded }) {
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === 'Space') {
+          if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
             e.preventDefault();
             fileInputRef.current.click();
           }

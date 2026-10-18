@@ -266,9 +266,9 @@ export default function PrintReport({ data }) {
         <table className="print-table">
           <thead>
             <tr>
-              <th style={{ width: '28%' }}>治工具名稱</th>
-              <th style={{ width: '54%' }}>規格描述 / 加工廠確認</th>
-              <th style={{ width: '18%' }}>提供數量</th>
+              <th scope="col" style={{ width: '28%' }}>治工具名稱</th>
+              <th scope="col" style={{ width: '54%' }}>規格描述 / 加工廠確認</th>
+              <th scope="col" style={{ width: '18%' }}>提供數量</th>
             </tr>
           </thead>
           <tbody>
@@ -402,10 +402,10 @@ export default function PrintReport({ data }) {
             <table className="print-table">
               <thead>
                 <tr>
-                  <th style={{ width: '8%' }}>#</th>
-                  <th style={{ width: '32%' }}>位置 / 位號</th>
-                  <th style={{ width: '30%' }}>零件描述</th>
-                  <th style={{ width: '30%' }}>備註</th>
+                  <th scope="col" style={{ width: '8%' }}>#</th>
+                  <th scope="col" style={{ width: '32%' }}>位置 / 位號</th>
+                  <th scope="col" style={{ width: '30%' }}>零件描述</th>
+                  <th scope="col" style={{ width: '30%' }}>備註</th>
                 </tr>
               </thead>
               <tbody>
@@ -472,8 +472,8 @@ export default function PrintReport({ data }) {
         <table className="print-table print-long-table print-delivery-table">
           <thead>
             <tr>
-              <th style={{ width: '76%' }}>交付項目 / 檢驗紀錄 / 照片清單</th>
-              <th style={{ width: '24%' }}>完成狀態</th>
+              <th scope="col" style={{ width: '76%' }}>交付項目 / 檢驗紀錄 / 照片清單</th>
+              <th scope="col" style={{ width: '24%' }}>完成狀態</th>
             </tr>
           </thead>
           <tbody>
@@ -505,9 +505,9 @@ export default function PrintReport({ data }) {
         <table className="print-table print-pending-table">
           <thead>
             <tr>
-              <th style={{ width: '24%' }}>範圍</th>
-              <th style={{ width: '56%' }}>項目</th>
-              <th style={{ width: '20%' }}>狀態</th>
+              <th scope="col" style={{ width: '24%' }}>範圍</th>
+              <th scope="col" style={{ width: '56%' }}>項目</th>
+              <th scope="col" style={{ width: '20%' }}>狀態</th>
             </tr>
           </thead>
           <tbody>
